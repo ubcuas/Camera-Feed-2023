@@ -1,0 +1,6 @@
+numpy==1.21.2
+opencv-python==4.5.5.62
+pillow==8.4.0
+tk==0.1.0
+matplotlib==3.3.4
+./wheel/arena_api-2.3.3-py3-none-any.whl
