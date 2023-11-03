@@ -1,7 +1,6 @@
 # Camera-Feed
 Camera feed configuration software for lucid cameras, 2023
 
-```markdown
 ## Step 1: Add Arena API Wheel File
 
 1. Download the `arena_api-2.3.3-py3-none-any.whl` wheel file if you haven't already.
@@ -11,9 +10,6 @@ Camera feed configuration software for lucid cameras, 2023
 ## Step 2: Install Requirements
 
 pip install -r requirements.txt
-```
-
-This will install the necessary packages for your project.
 
 ## Step 3: Connect Camera
 
