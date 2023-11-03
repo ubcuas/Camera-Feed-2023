@@ -3,7 +3,7 @@ import socket
 # Configure the server
 server_ip = 'localhost'
 server_port = 12345
-image_file_name = 'received_image.png'  # Name for the saved PNG file
+image_file_name = './images/received_image.png'  # Name for the saved PNG file
 
 # Create a socket and bind it to the server address
 server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
