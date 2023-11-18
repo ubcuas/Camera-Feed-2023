@@ -1,3 +1,6 @@
 .PHONY: test
 test:
-    PYTHONPATH=. pytest
+	pytest tests/test.py
+
+run:
+	python app.py
