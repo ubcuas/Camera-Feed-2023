@@ -1,12 +1,6 @@
-import time
-from io import BytesIO
-
-from PIL import Image as PIL_Image
-import cv2
 import numpy as np
-from CameraController import CameraController
-from ImageProcessor import ImageProcessor
-from arena_api.system import system
+from camera_feed import CameraController
+from camera_feed import ImageProcessor
 
 #
 # class TestCamera:
@@ -49,12 +43,21 @@ from arena_api.system import system
 
 
 class TestBenchmark:
-    # def test_benchmark_png(self, benchmark):
-    #     with open('/home/rrhan/arena/Camera-Feed/images/test2.npy', 'rb') as f:
-    #         npndarray = np.load(f)
-    #
-    #     result, png = benchmark(ImageProcessor.to_png, npndarray)
-    #     assert result
+    def test_benchmark_png(self, benchmark):
+        with open('./tests/data/test2.npy', 'rb') as f:
+            npndarray = np.load(f)
+
+        result, png = benchmark(ImageProcessor.to_png, npndarray)
+        assert result
+    #     # png_data = encoded_image.tobytes()
+    #     # with open('../images/compression.png', 'wb') as file:
+    #     #     file.write(png_data)
+
+    def test_benchmark_png_pil(self, benchmark):
+        with open('./tests/data/test2.npy', 'rb') as f:
+            npndarray = np.load(f)
+
+        img = benchmark(ImageProcessor.to_png_pil, npndarray)
     #     # png_data = encoded_image.tobytes()
     #     # with open('../images/compression.png', 'wb') as file:
     #     #     file.write(png_data)
@@ -68,6 +71,15 @@ class TestBenchmark:
         # jpg_data = encoded_image.tobytes()
         # with open('../images/compression.jpg', 'wb') as file:
         #     file.write(jpg_data)
+
+    def test_benchmark_jpg_pil(self, benchmark):
+        with open('./tests/data/test2.npy', 'rb') as f:
+            npndarray = np.load(f)
+
+        img = benchmark(ImageProcessor.to_jpg_pil, npndarray)
+    #     # png_data = encoded_image.tobytes()
+    #     # with open('../images/compression.png', 'wb') as file:
+    #     #     file.write(png_data)
 
 
 #

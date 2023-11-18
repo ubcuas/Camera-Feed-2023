@@ -1,6 +1,8 @@
 import ctypes
+import datetime
 import time
 from collections import OrderedDict
+from datetime import datetime, timezone
 
 import numpy as np
 from arena_api.buffer import BufferFactory
@@ -33,6 +35,7 @@ class CameraController:
         self.initial_vals = OrderedDict()
         self._create_devices_with_tries()
         self.setup(DEFAULT_NODES, DEFAULT_TL_STREAM_NODES)
+        self.reference_time = self.set_time()
 
     def setup(self, node_keyval, tl_stream_nodes_key_val):
         nodemap = self.device.nodemap
@@ -46,6 +49,12 @@ class CameraController:
 
         for key, val in tl_stream_nodes_key_val.items():
             tl_stream_nodemap[key].value = val
+
+    def set_time(self):
+        nodemap = self.device.nodemap
+        timestamp_reset = nodemap.get_node('TimestampReset')
+        timestamp_reset.execute()
+        return datetime.now(timezone.utc)
 
     def _create_devices_with_tries(self):
         """
@@ -104,8 +113,8 @@ class CameraController:
         """
         npndarray = np.ndarray(buffer=array, dtype=np.uint8,
                                shape=(item.height, item.width, buffer_bytes_per_pixel))
-
-        return npndarray
+        timestamp = self.reference_time + datetime.timedelta(microseconds=item.timestamp_ns // 1000)
+        return npndarray, timestamp
 
     def cleanup(self):
         system.destroy_device(self.device)
