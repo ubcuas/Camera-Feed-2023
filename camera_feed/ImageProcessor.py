@@ -5,10 +5,10 @@ import cv2
 
 class ImageProcessor:
     @staticmethod
-    def to_jpg(img):
+    def to_jpg(npndarray):
         encode_param = [cv2.IMWRITE_JPEG_QUALITY, 95]
-        result, encimg = cv2.imencode('.jpg', img, encode_param)
-        return result, encimg
+        encimg = cv2.imencode('.jpg', npndarray, encode_param)[1].tostring()
+        return encimg
 
     @staticmethod
     def to_jpg_pil(npndarray):

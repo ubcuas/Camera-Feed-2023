@@ -2,14 +2,14 @@ import ctypes
 import datetime
 import time
 from collections import OrderedDict
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 
 import numpy as np
 from arena_api.buffer import BufferFactory
 
 from arena_api.system import system
 DEFAULT_NODES = {
-    'PixelFormat': 'BGR8'
+    'PixelFormat': 'BGR8',
 }
 DEFAULT_TL_STREAM_NODES = {
     "StreamBufferHandlingMode": "NewestOnly",
@@ -34,23 +34,26 @@ class CameraController:
         self.device = None
         self.initial_vals = OrderedDict()
         self._create_devices_with_tries()
-        self.setup(DEFAULT_NODES, DEFAULT_TL_STREAM_NODES)
-        self.reference_time = self.set_time()
+        self.setup(DEFAULT_NODES)
+        self.setup_tl(DEFAULT_TL_STREAM_NODES)
+        self.reference_time = self._set_time()
 
-    def setup(self, node_keyval, tl_stream_nodes_key_val):
+    def setup(self, node_keyval):
         nodemap = self.device.nodemap
-        tl_stream_nodemap = self.device.tl_stream_nodemap
-        keys = node_keyval.keys()
+
+        keys = list(node_keyval.keys())
 
         nodes = nodemap.get_node(keys)
         self._store_initial(nodes, keys)
         for key, val in node_keyval.items():
             nodes[key].value = val
 
+    def setup_tl(self, tl_stream_nodes_key_val):
+        tl_stream_nodemap = self.device.tl_stream_nodemap
         for key, val in tl_stream_nodes_key_val.items():
             tl_stream_nodemap[key].value = val
 
-    def set_time(self):
+    def _set_time(self):
         nodemap = self.device.nodemap
         timestamp_reset = nodemap.get_node('TimestampReset')
         timestamp_reset.execute()
@@ -78,6 +81,7 @@ class CameraController:
                 tries += 1
             else:
                 self.device = devices[0]
+                return
         else:
             raise Exception(f'No device found! Please connect a device and run '
                             f'the example again.')
@@ -91,7 +95,7 @@ class CameraController:
                 self.initial_vals[k] = nodes.get(k).value
 
     def start_stream(self):
-        self.device.start_stream()
+        return self.device.start_stream()
 
     def stop_stream(self):
         self.device.stop_stream()
@@ -106,18 +110,24 @@ class CameraController:
         item = BufferFactory.copy(buffer)
         self.device.requeue_buffer(buffer)
 
-        array = np.ndarray((ctypes.c_ubyte * buffer_bytes_per_pixel * item.width * item.height).from_address(
-            ctypes.addressof(item.pbytes)))
+        array = (ctypes.c_ubyte * buffer_bytes_per_pixel * item.width * item.height).from_address(
+            ctypes.addressof(item.pbytes))
+
         """
         Create a reshaped NumPy array to display using OpenCV
         """
         npndarray = np.ndarray(buffer=array, dtype=np.uint8,
                                shape=(item.height, item.width, buffer_bytes_per_pixel))
-        timestamp = self.reference_time + datetime.timedelta(microseconds=item.timestamp_ns // 1000)
+        timestamp = self.reference_time + timedelta(microseconds=item.timestamp_ns // 1000)
         return npndarray, timestamp
 
-    def cleanup(self):
-        system.destroy_device(self.device)
+    def _reset_settings(self):
+        nodemap = self.device.nodemap
 
-    def __del__(self):
-        self.cleanup()
+        nodes = nodemap.get_node(list(self.initial_vals.keys()))
+        for key, val in self.initial_vals.items():
+            nodes[key] = val
+
+    def cleanup(self):
+        self._reset_settings()
+        system.destroy_device(self.device)
