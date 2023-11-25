@@ -7,7 +7,7 @@ class ImageProcessor:
     @staticmethod
     def to_jpg(npndarray):
         encode_param = [cv2.IMWRITE_JPEG_QUALITY, 95]
-        encimg = cv2.imencode('.jpg', npndarray, encode_param)[1].tostring()
+        encimg = cv2.imencode('.jpg', npndarray, encode_param)[1]
         return encimg
 
     @staticmethod

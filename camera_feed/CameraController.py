@@ -32,7 +32,6 @@ class CameraController:
 
     def __init__(self):
         self.device = None
-        self.initial_vals = OrderedDict()
         self._create_devices_with_tries()
         self.setup(DEFAULT_NODES)
         self.setup_tl(DEFAULT_TL_STREAM_NODES)
@@ -44,7 +43,6 @@ class CameraController:
         keys = list(node_keyval.keys())
 
         nodes = nodemap.get_node(keys)
-        self._store_initial(nodes, keys)
         for key, val in node_keyval.items():
             nodes[key].value = val
 
@@ -86,14 +84,6 @@ class CameraController:
             raise Exception(f'No device found! Please connect a device and run '
                             f'the example again.')
 
-    def _store_initial(self, nodes, keys):
-        '''
-        Stores intial node values, return their values at the end
-        '''
-        for k in keys:
-            if self.initial_vals.get(k) is None:
-                self.initial_vals[k] = nodes.get(k).value
-
     def start_stream(self):
         return self.device.start_stream()
 
@@ -122,11 +112,8 @@ class CameraController:
         return npndarray, timestamp
 
     def _reset_settings(self):
-        nodemap = self.device.nodemap
-
-        nodes = nodemap.get_node(list(self.initial_vals.keys()))
-        for key, val in self.initial_vals.items():
-            nodes[key] = val
+        self.device.nodemap['UserSetSelector'].value = 'Default'
+        self.device.nodemap['UserSetLoad'].execute()
 
     def cleanup(self):
         self._reset_settings()
