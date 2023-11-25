@@ -116,5 +116,5 @@ class CameraController:
         self.device.nodemap['UserSetLoad'].execute()
 
     def cleanup(self):
-        self._reset_settings()
+        # self._reset_settings()
         system.destroy_device(self.device)
