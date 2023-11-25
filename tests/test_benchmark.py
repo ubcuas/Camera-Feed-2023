@@ -43,40 +43,31 @@ from camera_feed import ImageProcessor
 
 
 class TestBenchmark:
-    def test_benchmark_png(self, benchmark):
-        with open('./tests/data/test2.npy', 'rb') as f:
-            npndarray = np.load(f)
+    with open('./tests/data/test2.npy', 'rb') as f:
+        npndarray = np.load(f)
 
-        result, png = benchmark(ImageProcessor.to_png, npndarray)
+    def test_benchmark_png(self, benchmark):
+        result, png = benchmark(ImageProcessor.to_png, self.npndarray)
         assert result
     #     # png_data = encoded_image.tobytes()
     #     # with open('../images/compression.png', 'wb') as file:
     #     #     file.write(png_data)
 
-    def test_benchmark_png_pil(self, benchmark):
-        with open('./tests/data/test2.npy', 'rb') as f:
-            npndarray = np.load(f)
-
-        img = benchmark(ImageProcessor.to_png_pil, npndarray)
-    #     # png_data = encoded_image.tobytes()
-    #     # with open('../images/compression.png', 'wb') as file:
-    #     #     file.write(png_data)
+    # def test_benchmark_png_pil(self, benchmark):
+    #     img = benchmark(ImageProcessor.to_png_pil, self.npndarray)
+    # #     # png_data = encoded_image.tobytes()
+    # #     # with open('../images/compression.png', 'wb') as file:
+    # #     #     file.write(png_data)
 
     def test_benchmark_jpg(self, benchmark):
-        with open('./tests/data/test2.npy', 'rb') as f:
-            npndarray = np.load(f)
-
-        result, jpg = benchmark(ImageProcessor.to_jpg, npndarray)
+        result, jpg = benchmark(ImageProcessor.to_jpg, self.npndarray)
         assert result
         # jpg_data = encoded_image.tobytes()
         # with open('../images/compression.jpg', 'wb') as file:
         #     file.write(jpg_data)
 
     def test_benchmark_jpg_pil(self, benchmark):
-        with open('./tests/data/test2.npy', 'rb') as f:
-            npndarray = np.load(f)
-
-        img = benchmark(ImageProcessor.to_jpg_pil, npndarray)
+        img = benchmark(ImageProcessor.to_jpg_pil, self.npndarray)
     #     # png_data = encoded_image.tobytes()
     #     # with open('../images/compression.png', 'wb') as file:
     #     #     file.write(png_data)
