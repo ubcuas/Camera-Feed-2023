@@ -1,3 +1,5 @@
-.PHONY: test
-test:
-    PYTHONPATH=. pytest
+benchmark:
+	pytest tests/test_benchmark.py
+
+run:
+	python app.py
