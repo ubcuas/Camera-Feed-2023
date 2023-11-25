@@ -8,29 +8,25 @@ url = 'http://localhost:8000'
 
 def main():
     # response = requests.get(f'{url}/start')
-    # data = response.json()
-    # print(data)
+    # print(response.json().get('message'))
     while True:
-        response = requests.get(f'{url}/test')
+        response = requests.get(f'{url}/image')
         data = response.json()
         image_data = data.get('image')
-        image = base64.decode(image_data)
-        npndarray = np.frombuffer(image, dtype=int)
+        image = base64.b64decode(image_data)
         timestamp = data.get('timestamp')
-        cv2.namedWindow("Lucid", cv2.WINDOW_NORMAL)
-        # print('Resized Dimensions : ', resized.shape)
-        cv2.imshow('Lucid', npndarray)
-        """
-        Destroy the copied item to prevent memory leaks
-        """
-        print(timestamp)
-        """
-        Break if esc key is pressed
-        """
-        key = cv2.waitKey(1)
-        if key == 27:
-            break
-    cv2.destroyAllWindows()
+        with open(f'./images/{timestamp}.jpg', 'wb') as out:
+            out.write(image)
+
+# def main():
+#     response = requests.get(f'{url}/test')
+#     data = response.json()
+#     image_data = data.get('image')
+#     image = base64.b64decode(image_data)
+#     timestamp = data.get('timestamp')
+#     print(timestamp)
+#     with open('./images/b64test.jpg', 'wb') as out:
+#         out.write(image)
 
 
 if __name__ == '__main__':
