@@ -3,7 +3,7 @@ import datetime
 from io import BytesIO
 
 import numpy as np
-from fastapi import FastAPI, HTTPException, Response
+from fastapi import FastAPI, HTTPException, Request
 import uvicorn
 import base64
 from camera_feed import CameraController, ImageProcessor
@@ -50,6 +50,18 @@ def take_image():
         return {'message': 'failure'}, 500
     return {'image': image_data,
             'timestamp': timestamp.isoformat()}
+
+
+@app.post("/setup")
+def take_image(request: Request):
+    try:
+        data = request.json()
+        keyval = {v for k, v in data.__dict__.items()}
+        camera_controller.setup(keyval)
+    except Exception as e:
+        print(e)
+        return {'message': 'failure'}, 500
+    return {'message': 'success'}
 
 
 @app.get("/test")

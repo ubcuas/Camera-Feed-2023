@@ -33,6 +33,7 @@ class CameraController:
     def __init__(self):
         self.device = None
         self._create_devices_with_tries()
+        self._reset_settings()
         self.setup(DEFAULT_NODES)
         self.setup_tl(DEFAULT_TL_STREAM_NODES)
         self.reference_time = self._set_time()
@@ -116,5 +117,4 @@ class CameraController:
         self.device.nodemap['UserSetLoad'].execute()
 
     def cleanup(self):
-        # self._reset_settings()
         system.destroy_device(self.device)
