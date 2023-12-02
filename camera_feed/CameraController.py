@@ -8,9 +8,9 @@ import numpy as np
 from arena_api.buffer import BufferFactory
 
 from arena_api.system import system
-DEFAULT_NODES = {
-    'PixelFormat': 'BGR8',
-}
+DEFAULT_NODES = [
+    {'PixelFormat': 'BGR8'}
+]
 DEFAULT_TL_STREAM_NODES = {
     "StreamBufferHandlingMode": "NewestOnly",
     "StreamAutoNegotiatePacketSize": True,
@@ -41,11 +41,12 @@ class CameraController:
     def setup(self, node_keyval):
         nodemap = self.device.nodemap
 
-        keys = list(node_keyval.keys())
+        for dict in node_keyval:
+            k, v = next(iter(dict.items()))
+            nodemap.get_node(k).value = v
 
-        nodes = nodemap.get_node(keys)
-        for key, val in node_keyval.items():
-            nodes[key].value = val
+        for dict in node_keyval:
+            nodemap.get_node(dict.keys()[0]).value = dict.values()[0]
 
     def setup_tl(self, tl_stream_nodes_key_val):
         tl_stream_nodemap = self.device.tl_stream_nodemap
