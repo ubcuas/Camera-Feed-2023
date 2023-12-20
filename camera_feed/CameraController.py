@@ -24,13 +24,19 @@ class CameraController:
     as well as cleanup resources.
 
     Methods:
-    - setup(): Initialize and configure the camera.
-    - stop_stream(): Begin capturing and streaming video.
-    - end_stream(): Stop the video stream.
+    - setup(node_keyval): Initialize and configure the camera with specified node key-value pairs.
+    - setup_tl(tl_stream_nodes_key_val): Configure the transport layer (TL) stream nodes of the camera.
+    - start_stream(number_of_buffers): Begin capturing and streaming video with an optional number of buffers.
+    - stop_stream(): Stop the video stream.
+    - get_npimage(): Retrieve a NumPy array representing the latest captured image and its timestamp.
     - cleanup(): Release resources and perform cleanup tasks.
     """
 
     def __init__(self):
+        """
+        Constructor for CameraController class.
+        Initializes the camera device, resets settings, and sets up default configurations.
+        """
         self.device = None
         self._create_devices_with_tries()
         self._reset_settings()
@@ -39,6 +45,11 @@ class CameraController:
         self.reference_time = self._set_time()
 
     def setup(self, node_keyval):
+        """
+        Configures camera nodes given node_keyval with a list of dicts
+
+        :param node_keyval: list of dicts containing key-value pairs [{key: value}, {key: value}]
+        """
         print('Setting up device')
         nodemap = self.device.nodemap
 
@@ -55,6 +66,10 @@ class CameraController:
             tl_stream_nodemap[key].value = val
 
     def _set_time(self):
+        """
+        Set the reference time for camera timestamps
+        :rtype: datetime: Timestamp representing the UTC reference time.
+        """
         nodemap = self.device.nodemap
         timestamp_reset = nodemap.get_node('TimestampReset')
         timestamp_reset.execute()
@@ -62,8 +77,7 @@ class CameraController:
 
     def _create_devices_with_tries(self):
         """
-        Waits for the user to connect a device before
-            raising an exception if it fails
+        Attempts to connect to camera before raising an exception if it fails
         """
         print('Connecting to device')
         tries = 0
@@ -89,12 +103,29 @@ class CameraController:
                             f'the example again.')
 
     def start_stream(self, number_of_buffers=None):
+        """
+        Begin streaming with an optional number of buffers.
+
+        :param number_of_buffers: Number of buffers to allocate for streaming (default=10)
+
+        :return: Stream object representing the camera stream.
+        """
         return self.device.start_stream(number_of_buffers)
 
     def stop_stream(self):
+        """
+        Stop the camera stream.
+        """
         self.device.stop_stream()
 
     def get_npimage(self):
+        """
+       Retrieve a NumPy array representing the latest captured image and its timestamp.
+
+       :return: Tuple containing:
+          - np.ndarray: NumPy array representing the image.
+          - datetime: Timestamp of the captured image.
+        """
         buffer_bytes_per_pixel = 3
         buffer = self.device.get_buffer()
 
@@ -122,10 +153,16 @@ class CameraController:
         return npndarray, timestamp
 
     def _reset_settings(self):
+        """
+        Reset device settings to default.
+        """
         print('Resetting device')
         self.device.nodemap['UserSetSelector'].value = 'Default'
         self.device.nodemap['UserSetLoad'].execute()
 
     def cleanup(self):
+        """
+        Release camera and perform cleanup tasks.
+        """
         print('Destroying device')
         system.destroy_device()
