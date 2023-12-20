@@ -39,6 +39,7 @@ class CameraController:
         self.reference_time = self._set_time()
 
     def setup(self, node_keyval):
+        print('Setting up device')
         nodemap = self.device.nodemap
 
         for dict in node_keyval:
@@ -46,7 +47,7 @@ class CameraController:
             nodemap.get_node(k).value = v
 
         for dict in node_keyval:
-            nodemap.get_node(dict.keys()[0]).value = dict.values()[0]
+            nodemap.get_node(list(dict.keys())[0]).value = list(dict.values())[0]
 
     def setup_tl(self, tl_stream_nodes_key_val):
         tl_stream_nodemap = self.device.tl_stream_nodemap
@@ -64,6 +65,7 @@ class CameraController:
         Waits for the user to connect a device before
             raising an exception if it fails
         """
+        print('Connecting to device')
         tries = 0
         tries_max = 6
         sleep_time_secs = 10
@@ -86,8 +88,8 @@ class CameraController:
             raise Exception(f'No device found! Please connect a device and run '
                             f'the example again.')
 
-    def start_stream(self):
-        return self.device.start_stream()
+    def start_stream(self, number_of_buffers=None):
+        return self.device.start_stream(number_of_buffers)
 
     def stop_stream(self):
         self.device.stop_stream()
@@ -111,11 +113,19 @@ class CameraController:
         npndarray = np.ndarray(buffer=array, dtype=np.uint8,
                                shape=(item.height, item.width, buffer_bytes_per_pixel))
         timestamp = self.reference_time + timedelta(microseconds=item.timestamp_ns // 1000)
+
+        """
+        Destroy the copied item to prevent memory leaks
+        """
+        BufferFactory.destroy(item)
+
         return npndarray, timestamp
 
     def _reset_settings(self):
+        print('Resetting device')
         self.device.nodemap['UserSetSelector'].value = 'Default'
         self.device.nodemap['UserSetLoad'].execute()
 
     def cleanup(self):
-        system.destroy_device(self.device)
+        print('Destroying device')
+        system.destroy_device()
