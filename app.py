@@ -3,10 +3,11 @@ import datetime
 from io import BytesIO
 
 import numpy as np
-from fastapi import FastAPI, HTTPException, Response
+from fastapi import FastAPI, HTTPException, Request
 import uvicorn
 import base64
-from camera_feed import CameraController, ImageProcessor
+from camera_feed import CameraController
+from camera_feed import MockCameraController, ImageProcessor
 
 app = FastAPI()
 camera_controller = CameraController()
@@ -52,16 +53,28 @@ def take_image():
             'timestamp': timestamp.isoformat()}
 
 
-@app.get("/test")
-def test_image():
+@app.post("/setup")
+async def setup(request: Request):
     try:
-        with open('./tests/data/test2.npy', 'rb') as f:
-            npndarray = np.load(f)
-        image_data = base64.b64encode(ImageProcessor.to_jpg(npndarray))
+        data = await request.json()
+        nodes = data.get('data')
+        camera_controller.setup(nodes)
     except Exception as e:
-        raise HTTPException(status_code=500, detail=e)
-    return {'image': image_data,
-            'timestamp': 1}
+        print(e)
+        return {'message': 'failure'}, 500
+    return {'message': 'success'}
+
+
+# @app.get("/test")
+# def test_image():
+#     try:
+#         with open('./tests/data/test2.npy', 'rb') as f:
+#             npndarray = np.load(f)
+#         image_data = base64.b64encode(ImageProcessor.to_jpg(npndarray))
+#     except Exception as e:
+#         raise HTTPException(status_code=500, detail=e)
+#     return {'image': image_data,
+#             'timestamp': 1}
 
 
 if __name__ == "__main__":
