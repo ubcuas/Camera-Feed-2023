@@ -47,9 +47,8 @@ void CameraController::set_exposuretime(float exposuretime) {
     }
 
 	pExposureTime->SetValue(exposuretime);
-
-
 }
+
 void CameraController::set_gain(float gain) {
     GenApi::CFloatPtr pGain = pDevice->GetNodeMap()->GetNode("Gain");
 	if (!pGain || !GenApi::IsReadable(pGain) || !GenApi::IsWritable(pGain)) {
@@ -68,9 +67,18 @@ void CameraController::stop_stream() {
 }
 
 bool CameraController::get_image(Arena::IImage *pImage, long *timestamp) {
-    pImage = pDevice->GetImage(IMAGE_TIMEOUT);
-    *timestamp = epoch + (pImage->GetTimestampNs() / 1000000);
-    pDevice->RequeueBuffer(pImage);
+    try {
+        pImage = pDevice->GetImage(IMAGE_TIMEOUT);
+        *timestamp = epoch + (pImage->GetTimestampNs() / 1000000);
+        pDevice->RequeueBuffer(pImage);
+
+        if (pImage->IsIncomplete()) {
+            return false;
+        }
+    } catch (GenICam::TimeoutException& ge) {
+        return false;
+    }
+
     return true;
 }
 
