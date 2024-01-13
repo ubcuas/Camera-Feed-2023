@@ -22,3 +22,23 @@ target_include_directories(${PROJECT_NAME} PUBLIC ${arena_sdk_INCLUDE_DIRS})
 #     ${CMAKE_SOURCE_DIR}/external/ArenaSDK_Linux_ARM64/GenICam/library/CPP/include
 # )
 target_link_libraries(${PROJECT_NAME} PRIVATE ${arena_sdk_LIBRARIES})
+
+target_compile_options(${PROJECT_NAME} PUBLIC 
+    "-Wall" 
+    "-Wextra" 
+    "-Wpedantic" 
+    "-Wcast-align" 
+    "-Wcast-qual" 
+    "-Wdisabled-optimization" 
+    "-Wduplicated-branches"
+    "-Wduplicated-cond"
+    "-Wformat=2"
+    "-Wlogical-op"
+    "-Wmissing-include-dirs"
+    "-Wnull-dereference"
+    "-Woverloaded-virtual"
+    "-Wpointer-arith"
+    "-Wshadow"
+    # "-Wswitch-enum"
+    "-Wvla"
+    )
