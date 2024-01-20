@@ -21,11 +21,13 @@ int main() {
     camera_controller.start_stream();
     Arena::IImage* pImage;
     long timestamp;
+    for (int i = 0; i < 50; i++) {
+        bool success = camera_controller.get_image(&pImage, &timestamp);
+        std::cout << "Image capture: " << i << " " << success << "\n";
+    }
 
-    bool success = camera_controller.get_image(&pImage, &timestamp);
     camera_controller.stop_stream();
     camera_controller.cleanup();
 
-    std::cout << "Image capture: " << success << "\n";
 
 }
