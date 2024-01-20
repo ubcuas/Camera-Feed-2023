@@ -1,4 +1,5 @@
 #include "CameraController.h"
+#include "ArenaApi.h"
 #include <chrono>
 
 int main() {
@@ -14,4 +15,17 @@ int main() {
     int64_t millis = duration.count();
 
     std::cout << "Current timestamp in milliseconds: " << millis << std::endl;
+    CameraController camera_controller;
+
+    camera_controller.set_default();
+    camera_controller.start_stream();
+    Arena::IImage* pImage;
+    long timestamp;
+
+    bool success = camera_controller.get_image(&pImage, &timestamp);
+    camera_controller.stop_stream();
+    camera_controller.cleanup();
+
+    std::cout << "Image capture: " << success << "\n";
+
 }
