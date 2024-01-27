@@ -2,6 +2,7 @@
 #include "ArenaApi.h"
 #include <chrono>
 #include <unistd.h>
+#include <thread>         // std::this_thread::sleep_for
 
 
 int main() {
@@ -25,7 +26,7 @@ int main() {
 
     long end = 0;
     for (int i = 0; i < 500; i++) {
-        sleep(2);
+        std::this_thread::sleep_for(std::chrono::seconds(1));
         bool success = camera_controller.get_image(&pImage, &timestamp, false);
         end = timestamp;
         if (!success) {
