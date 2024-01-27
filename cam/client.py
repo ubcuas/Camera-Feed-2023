@@ -5,7 +5,7 @@ import struct
 
 
 
-HOST = '128.189.82.120'
+HOST = socket.gethostbyname(socket.gethostname())
  
 '''
 alternatively we can dynamically get the host 

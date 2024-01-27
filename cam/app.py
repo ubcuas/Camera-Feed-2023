@@ -76,8 +76,7 @@ def send_TCP(HOST, PORT):
             prev_frame_time = curr_frame_time
 
         camera.stop_stream()
-    except:
-        print("An exception occurred")
+    
     finally:
         camera.cleanup()
 
