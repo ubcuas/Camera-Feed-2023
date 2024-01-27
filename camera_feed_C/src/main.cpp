@@ -1,6 +1,7 @@
 #include "CameraController.h"
 #include "ArenaApi.h"
 #include <chrono>
+#include <unistd.h>
 
 
 int main() {
@@ -24,6 +25,7 @@ int main() {
 
     long end = 0;
     for (int i = 0; i < 500; i++) {
+        sleep(1);
         bool success = camera_controller.get_image(&pImage, &timestamp, false);
         end = timestamp;
         if (!success) {
