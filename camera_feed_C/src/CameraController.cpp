@@ -111,13 +111,13 @@ void CameraController::start_stream(int num_buffers) {
     std::cout << "Starting stream with " << num_buffers << " buffers\n";
     pDevice->StartStream(num_buffers);
 
-    std::cout << "Wait until trigger is armed\n";
-	bool triggerArmed = false;
+    // std::cout << "Wait until trigger is armed\n";
+	// bool triggerArmed = false;
 
-    do
-	{
-		triggerArmed = Arena::GetNodeValue<bool>(pDevice->GetNodeMap(), "TriggerArmed");
-	} while (triggerArmed == false);
+    // do
+	// {
+	// 	triggerArmed = Arena::GetNodeValue<bool>(pDevice->GetNodeMap(), "TriggerArmed");
+	// } while (triggerArmed == false);
 }
 
 void CameraController::stop_stream() {
