@@ -26,8 +26,8 @@ int main() {
 
     long end = 0;
     for (int i = 0; i < 500; i++) {
-        std::cout.flush();
-        sleep(5);
+        // std::cout.flush();
+        // sleep(5);
         bool success = camera_controller.get_image(&pImage, &timestamp, false);
         end = timestamp;
         if (!success) {
