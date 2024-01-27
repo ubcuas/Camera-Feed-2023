@@ -33,20 +33,8 @@ BUFF_SIZE = 65536
 PORT_UDP = 9999
 
 
-def start_TCP_server(HOST, PORT):
-   
-    # we dont wanna use 80 which is for http and 22 which i think is used for ssh 
+
     
-    server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-
-    #UDP server = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    print(f"Host IP: {HOST}, PORT: {PORT}")
-    # we send in a tuple containing host and port 
-    server.bind((HOST,PORT))
-
-    server.listen(1) # 5 means how many unaccepted connections we allow before we accept any new ones, so in this case its 5, not necessary always
-    comm_socket, address = server.accept()  # the address is the address of client we connect to and comm_socket is what we use to talk to that client 
-    return comm_socket, address
 def start_UDP_server(HOST, PORT, BUFF_SIZE): 
     
 
@@ -60,8 +48,15 @@ def start_UDP_server(HOST, PORT, BUFF_SIZE):
     
 
 def send_TCP(HOST, PORT):
+    server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
-    comm_socket, address = start_TCP_server(HOST, PORT)
+    #UDP server = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    print(f"Host IP: {HOST}, PORT: {PORT}")
+    # we send in a tuple containing host and port 
+    server.bind((HOST,PORT))
+
+    server.listen(5) # 5 means how many unaccepted connections we allow before we accept any new ones, so in this case its 5, not necessary always
+    comm_socket, address = server.accept()  # the address is the address of client we connect to and comm_socket is what we use to talk to that client 
     try: 
         
         camera = CameraController()
