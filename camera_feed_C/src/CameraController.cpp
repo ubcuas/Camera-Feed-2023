@@ -18,6 +18,13 @@ CameraController::CameraController() {
         throw std::runtime_error("No camera connected");
     }
     pDevice = pSystem->CreateDevice(deviceInfos[0]);
+
+    Arena::SetNodeValue<GenICam::gcstring>(pDevice->GetNodeMap(), "UserSetSelector", "Default");
+    Arena::ExecuteNode(pDevice->GetNodeMap(), "UserSetLoad");
+
+    set_epoch();
+    set_default();
+
 }
 
 void CameraController::set_epoch() {
@@ -76,16 +83,17 @@ void CameraController::stop_stream() {
 
 bool CameraController::get_image(Arena::IImage **pImage, long *timestamp) {
     try {
-        *pImage = pDevice->GetImage(IMAGE_TIMEOUT);
-        *timestamp = epoch + ((*pImage)->GetTimestampNs() / 1000000);
+        Arena::IImage* testImage = pDevice->GetImage(IMAGE_TIMEOUT);
+        *timestamp = epoch + (testImage->GetTimestampNs() / 1000000);
         std::cout << "Image captured\n";
 
-        if ((*pImage)->IsIncomplete()) {
+        if (testImage->IsIncomplete()) {
             std::cout << "Image incomplete\n";
             return false;
         }
-        pDevice->RequeueBuffer(*pImage);
+        pDevice->RequeueBuffer(testImage);
     } catch (GenICam::TimeoutException& ge) {
+        // std::cout << "Image timeout\n";
         return false;
     }
 

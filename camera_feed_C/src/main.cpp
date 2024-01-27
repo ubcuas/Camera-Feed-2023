@@ -3,6 +3,13 @@
 #include <chrono>
 
 int main() {
+    CameraController camera_controller;
+
+    camera_controller.set_default();
+    camera_controller.start_stream();
+    Arena::IImage* pImage;
+    long timestamp;
+    
     // Get the current time point
     std::chrono::system_clock::time_point currentTime = std::chrono::system_clock::now();
 
@@ -12,22 +19,20 @@ int main() {
     );
 
     // Retrieve the count of milliseconds
-    int64_t millis = duration.count();
+    int64_t start = duration.count();
 
-    std::cout << "Current timestamp in milliseconds: " << millis << std::endl;
-    CameraController camera_controller;
-
-    camera_controller.set_default();
-    camera_controller.start_stream();
-    Arena::IImage* pImage;
-    long timestamp;
-    for (int i = 0; i < 50; i++) {
+    long end = 0;
+    for (int i = 0; i < 1000; i++) {
         bool success = camera_controller.get_image(&pImage, &timestamp);
-        std::cout << "Image capture: " << i << " " << success << "\n";
+        end = timestamp;
+        if (!success) {
+            i--;
+        } else {
+            std::cout << "Image capture: " << i << " " << end - start << " " << success << "\n";
+            start = timestamp;
+        }
     }
 
     camera_controller.stop_stream();
     camera_controller.cleanup();
-
-
 }
