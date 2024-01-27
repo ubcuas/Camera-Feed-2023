@@ -2,6 +2,7 @@
 #include "ArenaApi.h"
 #include <chrono>
 
+
 int main() {
     CameraController camera_controller;
 
@@ -22,8 +23,8 @@ int main() {
     int64_t start = duration.count();
 
     long end = 0;
-    for (int i = 0; i < 1000; i++) {
-        bool success = camera_controller.get_image(&pImage, &timestamp);
+    for (int i = 0; i < 500; i++) {
+        bool success = camera_controller.get_image(&pImage, &timestamp, false);
         end = timestamp;
         if (!success) {
             i--;
@@ -32,6 +33,32 @@ int main() {
             start = timestamp;
         }
     }
+
+    // camera_controller.set_trigger(true);
+    
+    // // Get the current time point
+    // currentTime = std::chrono::system_clock::now();
+
+    // // Convert the time point to milliseconds since the epoch
+    // duration = std::chrono::duration_cast<std::chrono::milliseconds>(
+    //     currentTime.time_since_epoch()
+    // );
+
+    // // Retrieve the count of milliseconds
+    // start = duration.count();
+
+    // end = 0;
+    // for (int i = 0; i < 500; i++) {
+    //     sleep(1);
+    //     bool success = camera_controller.get_image(&pImage, &timestamp, true);
+    //     end = timestamp;
+    //     if (!success) {
+    //         i--;
+    //     } else {
+    //         std::cout << "Image capture: " << i << " " << end - start << " " << success << "\n";
+    //         start = timestamp;
+    //     }
+    // }
 
     camera_controller.stop_stream();
     camera_controller.cleanup();

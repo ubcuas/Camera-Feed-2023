@@ -71,9 +71,53 @@ void CameraController::set_gain(float gain) {
     pGain->SetValue(gain);
 }
 
+void CameraController::set_trigger(bool trigger_state) {
+    if (trigger_state) {
+        Arena::SetNodeValue<GenICam::gcstring>(
+            pDevice->GetNodeMap(),
+            "TriggerSelector",
+            "FrameStart");
+
+        // Set trigger mode
+        //    Enable trigger mode before setting the source and selector and before
+        //    starting the stream. Trigger mode cannot be turned on and off while the
+        //    device is streaming.
+        std::cout << "Enable trigger mode\n";
+
+        Arena::SetNodeValue<GenICam::gcstring>(
+            pDevice->GetNodeMap(),
+            "TriggerMode",
+            "On");
+
+        // Set trigger source
+        //    Set the trigger source to software in order to trigger images without
+        //    the use of any additional hardware. Lines of the GPIO can also be used
+        //    to trigger.
+        std::cout << "Set trigger source to Software\n";
+
+        Arena::SetNodeValue<GenICam::gcstring>(
+            pDevice->GetNodeMap(),
+            "TriggerSource",
+            "Software");
+    } else {
+        Arena::SetNodeValue<GenICam::gcstring>(
+            pDevice->GetNodeMap(),
+            "TriggerMode",
+            "Off");
+    }
+}
+
 void CameraController::start_stream(int num_buffers) {
     std::cout << "Starting stream with " << num_buffers << " buffers\n";
     pDevice->StartStream(num_buffers);
+
+    std::cout << "Wait until trigger is armed\n";
+	bool triggerArmed = false;
+
+    do
+	{
+		triggerArmed = Arena::GetNodeValue<bool>(pDevice->GetNodeMap(), "TriggerArmed");
+	} while (triggerArmed == false);
 }
 
 void CameraController::stop_stream() {
@@ -81,17 +125,24 @@ void CameraController::stop_stream() {
     pDevice->StopStream();
 }
 
-bool CameraController::get_image(Arena::IImage **pImage, long *timestamp) {
+bool CameraController::get_image(Arena::IImage **pImage, long *timestamp, bool trigger_state) {
     try {
+        if (trigger_state) {
+            Arena::ExecuteNode(
+                pDevice->GetNodeMap(),
+                "TriggerSoftware");
+        }
         Arena::IImage* testImage = pDevice->GetImage(IMAGE_TIMEOUT);
         *timestamp = epoch + (testImage->GetTimestampNs() / 1000000);
-        std::cout << "Image captured\n";
+        // std::cout << "Image captured\n";
 
         if (testImage->IsIncomplete()) {
             std::cout << "Image incomplete\n";
+            pDevice->RequeueBuffer(testImage);
             return false;
+        } else {
+            pDevice->RequeueBuffer(testImage);
         }
-        pDevice->RequeueBuffer(testImage);
     } catch (GenICam::TimeoutException& ge) {
         // std::cout << "Image timeout\n";
         return false;
