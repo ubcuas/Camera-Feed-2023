@@ -20,9 +20,10 @@ public:
     void set_pixelformat(GenICam::gcstring pixelformat);
     void set_exposuretime(float exposuretime);
     void set_gain(float gain);
+    void set_trigger(bool trigger_state);
     void start_stream(int num_buffers = 10);
     void stop_stream();
-    bool get_image(Arena::IImage **pImage, long *timestamp);
+    bool get_image(Arena::IImage **pImage, long *timestamp, bool trigger_state);
     void set_default();
 
     void cleanup();
