@@ -1,6 +1,7 @@
 import signal
 import sys
 import time
+from datetime import datetime, timezone
 
 from camera_feed import CameraController
 
@@ -13,14 +14,13 @@ camera_controller = CameraController()
 def main():
     try:
         camera_controller.start_stream()
-        prev_frame_time = 0
+        curr_frame_time = datetime.now(timezone.utc)
         for i in range(100):
-            curr_frame_time = time.time()
             npndarray, timestamp = camera_controller.get_npimage()
-            fps = str(1 / (curr_frame_time - prev_frame_time))
-            print(timestamp)
-            print(fps)
-            prev_frame_time = curr_frame_time
+            prev_frame_time = timestamp
+            print(prev_frame_time - curr_frame_time)
+
+            curr_frame_time = timestamp
 
         camera_controller.stop_stream()
     finally:
