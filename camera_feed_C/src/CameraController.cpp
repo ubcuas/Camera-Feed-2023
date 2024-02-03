@@ -7,7 +7,7 @@
 
 #define IMAGE_TIMEOUT 100
 
-#define FILE_NAME_PATTERN "data/image<count>-<datetime:yyMMdd_hhmmss_fff>.jpg"
+// #define FILE_NAME_PATTERN "data/image<count>-<datetime:yyMMdd_hhmmss_fff>.jpg"
 
 
 
@@ -42,8 +42,7 @@ CameraController::CameraController() {
     Arena::GetBitsPerPixel(pPixelFormat->GetCurrentEntry()->GetValue()));
 
 	writer = new Save::ImageWriter(
-        params,
-        FILE_NAME_PATTERN);
+        params);
 
 }
 
