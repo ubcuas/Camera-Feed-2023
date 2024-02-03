@@ -7,7 +7,7 @@
 
 #define IMAGE_TIMEOUT 100
 
-#define FILE_NAME_PATTERN "data/<datetime:yyMMdd_hhmmss_fff>_image.jpg"
+#define FILE_NAME_PATTERN "data/image<count>-<datetime:yyMMdd_hhmmss_fff>.jpg"
 
 
 
@@ -31,6 +31,7 @@ CameraController::CameraController() {
     set_default();
 
     	// get width, height, and pixel format nodes
+    std::cout << "Configuring writer\n";
 	GenApi::CIntegerPtr pWidth = pDevice->GetNodeMap()->GetNode("Width");
 	GenApi::CIntegerPtr pHeight = pDevice->GetNodeMap()->GetNode("Height");
 	GenApi::CEnumerationPtr pPixelFormat = pDevice->GetNodeMap()->GetNode("PixelFormat");
@@ -153,7 +154,7 @@ bool CameraController::get_image(Arena::IImage **pImage, long *timestamp, bool t
         }
         (*pImage) = pDevice->GetImage(IMAGE_TIMEOUT);
         *timestamp = epoch + ((*pImage)->GetTimestampNs() / 1000000);
-        // std::cout << "Image captured\n";
+        std::cout << "Image captured\n";
 
         // if ((*pImage)->IsIncomplete()) {
         //     std::cout << "Image incomplete\n";
@@ -177,6 +178,7 @@ std::string CameraController::save_image() {
     if (!success) {
         std::cout << "Incomplete\n";
     }
+    std::cout << "Saving image\n";
     *writer << pImage->GetData();
     pDevice->RequeueBuffer(pImage);
     return writer->GetLastFileName(true);
