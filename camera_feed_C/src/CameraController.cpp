@@ -179,7 +179,8 @@ void CameraController::save_image() {
     }
     std::cout << "Saving image\n";
     // *writer << pImage->GetData();
-    // pDevice->RequeueBuffer(pImage);
+    std::cout << "requeue image\n";
+    pDevice->RequeueBuffer(pImage);
     std::cout << "Image saved\n";
 }
 
