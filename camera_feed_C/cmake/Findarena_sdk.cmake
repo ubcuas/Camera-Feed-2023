@@ -30,7 +30,10 @@ if(EXISTS ${_arena_sdk_conf})
 
 	set(arena_sdk_INCLUDE_DIRS
 		${arena_sdk_installation_root}/GenICam/library/CPP/include
-		${arena_sdk_installation_root}/include/Arena)
+		${arena_sdk_installation_root}/include/Arena
+		${arena_sdk_installation_root}/include/Save)
+		
+		
 	set (arena_sdk_INCLUDES ${arena_sdk_INCLUDE_DIRS})
 
 	#message(${_LOG_LVL_FRMT} "arena_sdk_INCLUDE_DIRS = ${arena_sdk_INCLUDE_DIRS}")
@@ -123,6 +126,7 @@ if(EXISTS ${_arena_sdk_conf})
 		## release
 		${arena_sdk_installation_root}/lib/libarena.so
 		${arena_sdk_installation_root}/lib/libsave.so
+		# ${arena_sdk_installation_root}/lib/libsavec.so
 		${arena_sdk_installation_root}/lib/libgentl.so
 		#${arena_sdk_installation_root}/lib/liblucidlog.so
 
@@ -142,10 +146,10 @@ if(EXISTS ${_arena_sdk_conf})
 		#${arena_sdk_installation_root}/GenICam/library/lib/Linux64_ARM/libXmlParser_gcc54_v3_3_LUCID.so
 		
 		## fmpeg
-		#${arena_sdk_installation_root}/ffmpeg/libavcodec.so
-		#${arena_sdk_installation_root}/ffmpeg/libavformat.so
-		#${arena_sdk_installation_root}/ffmpeg/libavutil.so
-		#${arena_sdk_installation_root}/ffmpeg/libswresample.so
+		${arena_sdk_installation_root}/ffmpeg/libavcodec.so
+		${arena_sdk_installation_root}/ffmpeg/libavformat.so
+		${arena_sdk_installation_root}/ffmpeg/libavutil.so
+		${arena_sdk_installation_root}/ffmpeg/libswresample.so
 		)
 	endif()
 

@@ -15,6 +15,7 @@ set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/")
 find_package(arena_sdk REQUIRED)
 
 target_include_directories(${PROJECT_NAME} PUBLIC ${arena_sdk_INCLUDE_DIRS})
+message(arena_sdk_INCLUDE_DIRS="${arena_sdk_INCLUDE_DIRS}")
 # target_include_directories(${PROJECT_NAME} PUBLIC 
 #     ${CMAKE_SOURCE_DIR}/external/ArenaSDK_Linux_ARM64/include/Arena
 #     ${CMAKE_SOURCE_DIR}/external/ArenaSDK_Linux_ARM64/include/GenTL
