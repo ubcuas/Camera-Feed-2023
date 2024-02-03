@@ -40,9 +40,9 @@ CameraController::CameraController() {
     static_cast<size_t>(pHeight->GetValue()),
     Arena::GetBitsPerPixel(pPixelFormat->GetCurrentEntry()->GetValue()));
 
-	Save::ImageWriter writer(
-		params,
-		FILE_NAME_PATTERN);
+	writer = new Save::ImageWriter(
+        params,
+        FILE_NAME_PATTERN);
 
 }
 
@@ -177,9 +177,9 @@ std::string CameraController::save_image() {
     if (!success) {
         std::cout << "Incomplete\n";
     }
-    writer << pImage->GetData();
+    *writer << pImage->GetData();
     pDevice->RequeueBuffer(pImage);
-    return writer.GetLastFileName(true);
+    return writer->GetLastFileName(true);
 }
 
 void CameraController::set_default() {
