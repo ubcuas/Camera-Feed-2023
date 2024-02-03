@@ -26,8 +26,9 @@ int main(int argc, char *argv[]) {
 
     for (int i = 0; i < 200; i++) {
         std::cout << "Save start\n";
-        std::string filename = camera_controller.save_image();
-        std::cout << "Save " << filename << "\n";
+        camera_controller.save_image();
+        std::cout << "Save end\n";
+        // std::cout << "Save " << filename << "\n";
     }
     
     // // Get the current time point
