@@ -26,7 +26,7 @@ public:
     void start_stream(int num_buffers = 10);
     void stop_stream();
     bool get_image(Arena::IImage **pImage, long *timestamp, bool trigger_state);
-    std::string save_image();
+    void save_image();
     void set_default();
 
     void cleanup();

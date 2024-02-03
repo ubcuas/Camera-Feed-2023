@@ -171,7 +171,7 @@ bool CameraController::get_image(Arena::IImage **pImage, long *timestamp, bool t
     return true;
 }
 
-std::string CameraController::save_image() {
+void CameraController::save_image() {
     Arena::IImage *pImage;
     long timestamp;
     bool success = CameraController::get_image(&pImage, &timestamp, false);
@@ -181,7 +181,6 @@ std::string CameraController::save_image() {
     std::cout << "Saving image\n";
     *writer << pImage->GetData();
     pDevice->RequeueBuffer(pImage);
-    return writer->GetLastFileName(true);
 }
 
 void CameraController::set_default() {

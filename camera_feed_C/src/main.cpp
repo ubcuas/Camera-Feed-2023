@@ -18,7 +18,7 @@ int main(int argc, char *argv[]) {
     camera_controller.set_exposuretime(exposureTime);
 
     // std::cout << "Wait 30 seconds\n";
-    std::this_thread::sleep_for (std::chrono::seconds(30));
+    // std::this_thread::sleep_for (std::chrono::seconds(30));
     camera_controller.start_stream();
 
     // Arena::IImage* pImage;
