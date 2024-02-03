@@ -166,7 +166,7 @@ bool CameraController::get_image(Arena::IImage **pImage, long *timestamp, bool t
         // std::cout << "Image timeout\n";
         return false;
     }
-
+    std::cout << "return\n";
     return true;
 }
 
