@@ -2,8 +2,13 @@
 #include "ArenaApi.h"
 // #include <stdio.h>
 #include <chrono>
+#include "SaveApi.h"
+
 
 #define IMAGE_TIMEOUT 100
+
+#define FILE_NAME_PATTERN "data/<datetime:yyMMdd_hhmmss_fff>_image.jpg"
+
 
 
 CameraController::CameraController() {
@@ -24,6 +29,20 @@ CameraController::CameraController() {
 
     set_epoch();
     set_default();
+
+    	// get width, height, and pixel format nodes
+	GenApi::CIntegerPtr pWidth = pDevice->GetNodeMap()->GetNode("Width");
+	GenApi::CIntegerPtr pHeight = pDevice->GetNodeMap()->GetNode("Height");
+	GenApi::CEnumerationPtr pPixelFormat = pDevice->GetNodeMap()->GetNode("PixelFormat");
+
+    Save::ImageParams params(
+    static_cast<size_t>(pWidth->GetValue()),
+    static_cast<size_t>(pHeight->GetValue()),
+    Arena::GetBitsPerPixel(pPixelFormat->GetCurrentEntry()->GetValue()));
+
+	Save::ImageWriter writer(
+		params,
+		FILE_NAME_PATTERN);
 
 }
 
@@ -132,23 +151,35 @@ bool CameraController::get_image(Arena::IImage **pImage, long *timestamp, bool t
                 pDevice->GetNodeMap(),
                 "TriggerSoftware");
         }
-        Arena::IImage* testImage = pDevice->GetImage(IMAGE_TIMEOUT);
-        *timestamp = epoch + (testImage->GetTimestampNs() / 1000000);
+        (*pImage) = pDevice->GetImage(IMAGE_TIMEOUT);
+        *timestamp = epoch + ((*pImage)->GetTimestampNs() / 1000000);
         // std::cout << "Image captured\n";
 
-        if (testImage->IsIncomplete()) {
-            std::cout << "Image incomplete\n";
-            pDevice->RequeueBuffer(testImage);
-            return false;
-        } else {
-            pDevice->RequeueBuffer(testImage);
-        }
+        // if ((*pImage)->IsIncomplete()) {
+        //     std::cout << "Image incomplete\n";
+        //     // pDevice->RequeueBuffer((*pImage));
+        //     return false;
+        // } else {
+        //     // pDevice->RequeueBuffer((*pImage));
+        // }
     } catch (GenICam::TimeoutException& ge) {
         // std::cout << "Image timeout\n";
         return false;
     }
 
     return true;
+}
+
+std::string CameraController::save_image() {
+    Arena::IImage *pImage;
+    long timestamp;
+    bool success = CameraController::get_image(&pImage, &timestamp, false);
+    if (!success) {
+        std::cout << "Incomplete\n";
+    }
+    writer << pImage->GetData();
+    pDevice->RequeueBuffer(pImage);
+    return writer.GetLastFileName(true);
 }
 
 void CameraController::set_default() {
