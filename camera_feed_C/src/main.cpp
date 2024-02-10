@@ -24,7 +24,7 @@ int main(int argc, char *argv[]) {
     Arena::IImage* pImage;
     long timestamp;
 
-    for (int i = 0; i < 200; i++) {
+    for (int i = 0; i < 2; i++) {
         (void) camera_controller.get_image(&pImage, &timestamp);
         camera_controller.save_image(pImage);
     }
