@@ -25,8 +25,8 @@ public:
     void set_trigger(bool trigger_state);
     void start_stream(int num_buffers = 10);
     void stop_stream();
-    bool get_image(Arena::IImage **pImage, long *timestamp, bool trigger_state);
-    void save_image();
+    bool get_image(Arena::IImage **pImage, long *timestamp);
+    void save_image(Arena::IImage *pImage);
     void set_default();
 
     void cleanup();

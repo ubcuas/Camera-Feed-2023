@@ -21,14 +21,12 @@ int main(int argc, char *argv[]) {
     // std::this_thread::sleep_for (std::chrono::seconds(30));
     camera_controller.start_stream();
 
-    // Arena::IImage* pImage;
-    // long timestamp;
+    Arena::IImage* pImage;
+    long timestamp;
 
     for (int i = 0; i < 200; i++) {
-        std::cout << "Save start\n";
-        camera_controller.save_image();
-        std::cout << "Save end\n";
-        // std::cout << "Save " << filename << "\n";
+        (void) camera_controller.get_image(&pImage, &timestamp);
+        camera_controller.save_image(pImage);
     }
     
     // // Get the current time point
