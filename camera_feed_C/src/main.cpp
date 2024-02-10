@@ -6,16 +6,16 @@
 
 
 int main(int argc, char *argv[]) {
-    if (argc != 2) {
-        std::cerr << "Usage: " << argv[0] << " <exposure_time_float>" << std::endl;
-        return 1; // indicate error
-    }
-    float exposureTime = std::atof(argv[1]);
+    // if (argc != 2) {
+    //     std::cerr << "Usage: " << argv[0] << " <exposure_time_float>" << std::endl;
+    //     return 1; // indicate error
+    // }
+    // float exposureTime = std::atof(argv[1]);
 
     CameraController camera_controller;
 
-    camera_controller.set_default();
-    camera_controller.set_exposuretime(exposureTime);
+    // camera_controller.set_default();
+    // camera_controller.set_exposuretime(exposureTime);
 
     // std::cout << "Wait 30 seconds\n";
     // std::this_thread::sleep_for (std::chrono::seconds(30));
