@@ -37,7 +37,7 @@ private:
     Arena::IDevice* pDevice;
     Save::ImageWriter writer;
     int64_t epoch;
-    bool trigger_state;
+    bool trigger_state = false;
 
     int64_t SetIntValue(GenApi::INodeMap* pNodeMap, const char* nodeName, int64_t value);
 };
