@@ -165,7 +165,7 @@ bool CameraController::get_image(Arena::IImage **pImage, long *timestamp) {
                 "TriggerSoftware");
         }
         Arena::IImage *pBuffer = pDevice->GetImage(IMAGE_TIMEOUT);
-        *timestamp = epoch + ((*pImage)->GetTimestampNs() / 1000000);
+        *timestamp = epoch + (pBuffer->GetTimestampNs() / 1000000);
         std::cout << "Image captured\n";
 
         *pImage = Arena::ImageFactory::Copy(pBuffer);
@@ -187,9 +187,9 @@ bool CameraController::get_image(Arena::IImage **pImage, long *timestamp) {
 void CameraController::save_image(Arena::IImage *pImage) {
     std::cout << "Saving image\n";
     if (pImage->IsIncomplete()) {
-        writer.SetFileNamePattern("data/INCOMPLETE-image<count>-<datetime:yyMMdd_hhmmss_fff>.jpg");
+        writer.SetFileNamePattern("data/INCOMPLETE-<datetime:yyMMdd_hhmmss_fff>-image<count>.jpg");
     } else {
-        writer.SetFileNamePattern("data/image<count>-<datetime:yyMMdd_hhmmss_fff>.jpg");
+        writer.SetFileNamePattern("data/<datetime:yyMMdd_hhmmss_fff>-image<count>.jpg");
     }
     writer.Save(pImage->GetData());
     std::cout << "image Saved\n";
