@@ -5,7 +5,7 @@
 #include "SaveApi.h"
 
 
-#define IMAGE_TIMEOUT 100
+#define IMAGE_TIMEOUT 2000
 
 #define FILE_NAME_PATTERN "data/image<count>-<datetime:yyMMdd_hhmmss_fff>.jpg"
 
@@ -41,9 +41,8 @@ CameraController::CameraController() {
     static_cast<size_t>(pHeight->GetValue()),
     Arena::GetBitsPerPixel(pPixelFormat->GetCurrentEntry()->GetValue()));
 
-	writer = new Save::ImageWriter(
-        params);
-
+    writer.SetParams(params);
+    writer.SetFileNamePattern(FILE_NAME_PATTERN);
 }
 
 void CameraController::set_epoch() {
@@ -90,8 +89,8 @@ void CameraController::set_gain(float gain) {
     pGain->SetValue(gain);
 }
 
-void CameraController::set_trigger(bool trigger_state) {
-    if (trigger_state) {
+void CameraController::set_trigger(bool trigger_on) {
+    if (trigger_on) {
         Arena::SetNodeValue<GenICam::gcstring>(
             pDevice->GetNodeMap(),
             "TriggerSelector",
@@ -118,25 +117,39 @@ void CameraController::set_trigger(bool trigger_state) {
             pDevice->GetNodeMap(),
             "TriggerSource",
             "Software");
+
+        trigger_state = true;
     } else {
         Arena::SetNodeValue<GenICam::gcstring>(
             pDevice->GetNodeMap(),
             "TriggerMode",
             "Off");
+        trigger_state = false;
     }
 }
+
+void CameraController::set_acquisitionmode(GenICam::gcstring acq_mode) {
+    	Arena::SetNodeValue<GenICam::gcstring>(
+		pDevice->GetNodeMap(),
+		"AcquisitionMode",
+		acq_mode);
+}
+
 
 void CameraController::start_stream(int num_buffers) {
     std::cout << "Starting stream with " << num_buffers << " buffers\n";
     pDevice->StartStream(num_buffers);
 
-    // std::cout << "Wait until trigger is armed\n";
-	// bool triggerArmed = false;
+    if (trigger_state) {
+        std::cout << "Wait until trigger is armed\n";
+        bool triggerArmed = false;
 
-    // do
-	// {
-	// 	triggerArmed = Arena::GetNodeValue<bool>(pDevice->GetNodeMap(), "TriggerArmed");
-	// } while (triggerArmed == false);
+        do
+        {
+            triggerArmed = Arena::GetNodeValue<bool>(pDevice->GetNodeMap(), "TriggerArmed");
+        } while (triggerArmed == false);  
+    }
+    
 }
 
 void CameraController::stop_stream() {
@@ -146,24 +159,23 @@ void CameraController::stop_stream() {
 
 bool CameraController::get_image(Arena::IImage **pImage, long *timestamp) {
     try {
-        // if (trigger_state) {
-        //     Arena::ExecuteNode(
-        //         pDevice->GetNodeMap(),
-        //         "TriggerSoftware");
-        // }
-        Arena::IImage *image = pDevice->GetImage(IMAGE_TIMEOUT);
-        // (*pImage) = pDevice->GetImage(IMAGE_TIMEOUT);
+        if (trigger_state) {
+            Arena::ExecuteNode(
+                pDevice->GetNodeMap(),
+                "TriggerSoftware");
+        }
+        Arena::IImage *pBuffer = pDevice->GetImage(IMAGE_TIMEOUT);
         *timestamp = epoch + ((*pImage)->GetTimestampNs() / 1000000);
         std::cout << "Image captured\n";
 
-        *pImage = Arena::ImageFactory::Copy(image);
+        *pImage = Arena::ImageFactory::Copy(pBuffer);
 
-        pDevice->RequeueBuffer(image);
+        pDevice->RequeueBuffer(pBuffer);
 
-        if ((*pImage)->IsIncomplete()) {
-            // std::cout << "Image incomplete\n";
-            return false;
-        }
+        // if ((*pImage)->IsIncomplete()) {
+        //     // std::cout << "Image incomplete\n";
+        //     return false;
+        // }
     } catch (GenICam::TimeoutException& ge) {
         // std::cout << "Image timeout\n";
         return false;
@@ -175,12 +187,13 @@ bool CameraController::get_image(Arena::IImage **pImage, long *timestamp) {
 void CameraController::save_image(Arena::IImage *pImage) {
     std::cout << "Saving image\n";
     if (pImage->IsIncomplete()) {
-        writer->SetFileNamePattern("data/INCOMPLETE-image<count>-<datetime:yyMMdd_hhmmss_fff>.jpg");
+        writer.SetFileNamePattern("data/INCOMPLETE-image<count>-<datetime:yyMMdd_hhmmss_fff>.jpg");
     } else {
-        writer->SetFileNamePattern("data/image<count>-<datetime:yyMMdd_hhmmss_fff>.jpg");
+        writer.SetFileNamePattern("data/image<count>-<datetime:yyMMdd_hhmmss_fff>.jpg");
     }
-    writer->Save(pImage->GetData());
-    std::cout << " at " << writer->GetLastFileName(true) << "\n";
+    writer.Save(pImage->GetData());
+    std::cout << "image Saved\n";
+    std::cout << " at " << writer.GetLastFileName(true) << "\n";
     Arena::ImageFactory::Destroy(pImage);
 }
 
