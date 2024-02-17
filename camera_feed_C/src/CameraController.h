@@ -22,7 +22,8 @@ public:
     void set_pixelformat(GenICam::gcstring pixelformat);
     void set_exposuretime(float exposuretime);
     void set_gain(float gain);
-    void set_trigger(bool trigger_state);
+    void set_trigger(bool trigger_on);
+    void set_acquisitionmode(GenICam::gcstring acq_mode);
     void start_stream(int num_buffers = 10);
     void stop_stream();
     bool get_image(Arena::IImage **pImage, long *timestamp);
@@ -34,8 +35,9 @@ public:
 private:
     Arena::ISystem* pSystem;
     Arena::IDevice* pDevice;
-    Save::ImageWriter* writer;
+    Save::ImageWriter writer;
     int64_t epoch;
+    bool trigger_state;
 
     int64_t SetIntValue(GenApi::INodeMap* pNodeMap, const char* nodeName, int64_t value);
 };

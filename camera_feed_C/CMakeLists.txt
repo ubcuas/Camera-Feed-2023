@@ -10,6 +10,9 @@ add_executable(${PROJECT_NAME}
     ${CMAKE_SOURCE_DIR}/src/main.cpp
     ${CMAKE_SOURCE_DIR}/src/CameraController.cpp)
 
+add_executable(multithread
+    ${CMAKE_SOURCE_DIR}/src/multithreadtest.cpp)
+
 # install(TARGETS ${PROJECT_NAME} DESTINATION bin)
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/")
 find_package(arena_sdk REQUIRED)
@@ -42,4 +45,5 @@ target_compile_options(${PROJECT_NAME} PUBLIC
     "-Wshadow"
     # "-Wswitch-enum"
     "-Wvla"
+    "-g"
     )
