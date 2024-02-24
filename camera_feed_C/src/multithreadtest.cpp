@@ -2,9 +2,6 @@
 #include <vector>
 #include <thread>
 
-
-
-
 bool stopFlag = false;
 
 TSQueue<int> ImageQueue;
@@ -19,7 +16,6 @@ void run(int seconds)
     std::cout << "DONE RUNNING\n";
 }
 
-
 void producer() {
     while (!stopFlag) {
         std::this_thread::sleep_for(std::chrono::seconds(1)); 
@@ -33,60 +29,54 @@ void saver() {
     while (!stopFlag) {
         int r = ImageQueue.pop();
         std::this_thread::sleep_for(std::chrono::seconds(3)); 
+        TagQueue.push(r);
         // std::cout << "Popped " << r << "\n";
     }
 }
 
 void printer() {
     while (!stopFlag) {
-        std::cout << ImageQueue.size() << "\r";
+        std::this_thread::sleep_for(std::chrono::seconds()); 
+        std::cout << "ImageQueue: " << ImageQueue.size() << ", TagQueue: " << TagQueue.size() << "\r";
     }
     std::cout << "\n";
 }
 
-// void tagger(int j) {
-//     while (!stopFlag) {
-//         int r = TagQueue.pop();
-//         std::this_thread::sleep_for(std::chrono::seconds(2)); 
-//         std::cout << " Popped " << r << "\n";
-//     }
-// }
+void tagger() {
+    while (!stopFlag) {
+        int r = TagQueue.pop();
+        std::this_thread::sleep_for(std::chrono::seconds(2)); 
+    }
+}
 
-// void Saver(int j) {
-//     while (!stopFlag) {
-//         int r = queue.pop();
-//         std::this_thread::sleep_for(std::chrono::seconds(2)); 
-//         std::cout << " Popped " << r << "\n";
-//     }
-// }
 
 void start_threads() {
-    const int numProducers = 2;
-    const int numSavers = 4;
+    const int numProducers = 1;
+    const int numSavers = 3;
     const int numTaggers = 1;
     
     std::vector<std::thread> producers;
     std::vector<std::thread> savers;
-    // std::vector<std::thread> Taggers;
+    std::vector<std::thread> taggers;
 
     for (int i = 0; i < numProducers; i++) {
         savers.push_back(std::thread(producer));
     }
 
-    
     for (int i = 0; i < numSavers; i++) {
         savers.push_back(std::thread(saver));
     }
-    std::thread help(printer);
 
-    // for (int i = 0; i < numTaggers; ++i) {
-    //     Savers.push_back(std::thread(tagger, i));
-    // }
+    for (int i = 0; i < numTaggers; ++i) {
+        taggers.push_back(std::thread(tagger));
+    }
+
+    std::thread help(printer);
 
     // std::cout << "help\r";
 
     
-    run(10);
+    run(20);
     
     // // Enqueue some data (for demonstration purposes)
     // for (int i = 1; i <= 10; ++i) {
@@ -103,6 +93,10 @@ void start_threads() {
 
     for (std::thread& saver : savers) {
         saver.join();
+    }
+
+    for (std::thread& tagger : taggers) {
+        tagger.join();
     }
 
     help.join();
