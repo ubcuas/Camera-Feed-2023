@@ -81,10 +81,10 @@ if(EXISTS ${_arena_sdk_conf})
 		#${arena_sdk_installation_root}/GenICam/library/lib/Linux64_x64/libNodeMapData_gcc421_v3_0.so
 		#${arena_sdk_installation_root}/GenICam/library/lib/Linux64_x64/libXmlParser_gcc421_v3_0.so
 		## fmpeg
-		#${arena_sdk_installation_root}/ffmpeg/libavcodec.so
-		#${arena_sdk_installation_root}/ffmpeg/libavformat.so
-		#${arena_sdk_installation_root}/ffmpeg/libavutil.so
-		#${arena_sdk_installation_root}/ffmpeg/libswresample.so
+		${arena_sdk_installation_root}/ffmpeg/libavcodec.so
+		${arena_sdk_installation_root}/ffmpeg/libavformat.so
+		${arena_sdk_installation_root}/ffmpeg/libavutil.so
+		${arena_sdk_installation_root}/ffmpeg/libswresample.so
 		)
 	elseif("${ArenaSDK_Build}" STREQUAL "Linux64_x64_54")
 		set(arena_sdk_LIBS
@@ -113,10 +113,10 @@ if(EXISTS ${_arena_sdk_conf})
 		#${arena_sdk_installation_root}/GenICam/library/lib/Linux64_x64/libXmlParser_gcc54_v3_3_LUCID.so
 		
 		## fmpeg
-		#${arena_sdk_installation_root}/ffmpeg/libavcodec.so
-		#${arena_sdk_installation_root}/ffmpeg/libavformat.so
-		#${arena_sdk_installation_root}/ffmpeg/libavutil.so
-		#${arena_sdk_installation_root}/ffmpeg/libswresample.so
+		${arena_sdk_installation_root}/ffmpeg/libavcodec.so
+		${arena_sdk_installation_root}/ffmpeg/libavformat.so
+		${arena_sdk_installation_root}/ffmpeg/libavutil.so
+		${arena_sdk_installation_root}/ffmpeg/libswresample.so
 		)
 	elseif("${ArenaSDK_Build}" STREQUAL "Linux64_ARM")
 		set(arena_sdk_LIBS

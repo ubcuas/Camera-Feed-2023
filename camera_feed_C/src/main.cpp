@@ -85,15 +85,15 @@ void run(int seconds)
     stopFlag = true;
 }
 
-void image_producer(CameraController camera_controller) {
-    while (!stopFlag) {
-        Arena::IImage* pImage;
-        long timestamp;
+// void image_producer(CameraController camera_controller) {
+//     while (!stopFlag) {
+//         Arena::IImage* pImage;
+//         long timestamp;
 
-        bool success = camera_controller.get_image(&pImage, &timestamp);
-        Arena::ImageFactory::Destroy(pImage);
-    }
-}
+//         bool success = camera_controller.get_image(&pImage, &timestamp);
+//         Arena::ImageFactory::Destroy(pImage);
+//     }
+// }
 
 // void start_threads() {
 //     // Number of consumer threads
