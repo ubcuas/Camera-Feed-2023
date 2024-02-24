@@ -144,6 +144,7 @@ int main(int argc, char *argv[]) {
 
     int i = 0;
     while (i < num_images) {
+        std::this_thread::sleep_for(std::chrono::seconds(1)); 
         bool success = camera_controller.get_image(&pImage, &timestamp);
         if (success) {
             camera_controller.save_image(pImage);
