@@ -167,14 +167,13 @@ bool CameraController::get_image(Arena::IImage **pImage, long *timestamp) {
         Arena::IImage *pBuffer = pDevice->GetImage(IMAGE_TIMEOUT);
         *timestamp = epoch + (pBuffer->GetTimestampNs() / 1000000);
 
+        if (pBuffer->IsIncomplete()) {
+            // std::cout << "Image incomplete\n";
+            return false;
+        }
+
         *pImage = Arena::ImageFactory::Copy(pBuffer);
-
         pDevice->RequeueBuffer(pBuffer);
-
-        // if ((*pImage)->IsIncomplete()) {
-        //     // std::cout << "Image incomplete\n";
-        //     return false;
-        // }
     } catch (GenICam::TimeoutException& ge) {
         return false;
     }
