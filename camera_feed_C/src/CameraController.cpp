@@ -5,7 +5,7 @@
 #include "SaveApi.h"
 
 
-#define IMAGE_TIMEOUT 2000
+#define IMAGE_TIMEOUT 100
 
 #define FILE_NAME_PATTERN "data/image<count>-<datetime:yyMMdd_hhmmss_fff>.jpg"
 
@@ -166,7 +166,6 @@ bool CameraController::get_image(Arena::IImage **pImage, long *timestamp) {
         }
         Arena::IImage *pBuffer = pDevice->GetImage(IMAGE_TIMEOUT);
         *timestamp = epoch + (pBuffer->GetTimestampNs() / 1000000);
-        std::cout << "Image captured\n";
 
         *pImage = Arena::ImageFactory::Copy(pBuffer);
 
@@ -177,22 +176,18 @@ bool CameraController::get_image(Arena::IImage **pImage, long *timestamp) {
         //     return false;
         // }
     } catch (GenICam::TimeoutException& ge) {
-        // std::cout << "Image timeout\n";
         return false;
     }
-    // std::cout << "return\n";
     return true;
 }
 
 void CameraController::save_image(Arena::IImage *pImage) {
-    std::cout << "Saving image\n";
     if (pImage->IsIncomplete()) {
         writer.SetFileNamePattern("data/INCOMPLETE-<datetime:yyMMdd_hhmmss_fff>-image<count>.jpg");
     } else {
         writer.SetFileNamePattern("data/<datetime:yyMMdd_hhmmss_fff>-image<count>.jpg");
     }
     writer.Save(pImage->GetData());
-    std::cout << "image Saved\n";
     std::cout << " at " << writer.GetLastFileName(true) << "\n";
     Arena::ImageFactory::Destroy(pImage);
 }

@@ -121,17 +121,17 @@ void image_producer(CameraController camera_controller) {
 // }
 
 int main(int argc, char *argv[]) {
+    std::cerr << "Usage: " << argv[0] << " <num_images> <exposure_time_float>" << std::endl;
     CameraController camera_controller;
+    int num_images = 1;
 
-    if (argc != 2) {
-        std::cerr << "Usage: " << argv[0] << " <exposure_time_float>" << std::endl;
-        // return 1; // indicate error
-    } else {
-        float exposureTime = std::atof(argv[1]);
+    if (argc >= 2) {
+        num_images = std::stoi(argv[1]);
+    }
 
-
+    if (argc >= 3) {
+        float exposureTime = std::stof(argv[2]);
         camera_controller.set_exposuretime(exposureTime);
-
     }
     
     // std::cout << "Wait 30 seconds\n";
@@ -141,10 +141,12 @@ int main(int argc, char *argv[]) {
     Arena::IImage* pImage;
     long timestamp;
 
-    for (int i = 0; i < 20; i++) {
+    int i = 0;
+    while (i < num_images) {
         bool success = camera_controller.get_image(&pImage, &timestamp);
         if (success) {
             camera_controller.save_image(pImage);
+            i++;
         }
     }
     
