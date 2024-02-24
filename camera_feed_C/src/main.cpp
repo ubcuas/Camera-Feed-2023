@@ -133,6 +133,7 @@ int main(int argc, char *argv[]) {
         float exposureTime = std::stof(argv[2]);
         camera_controller.set_exposuretime(exposureTime);
     }
+    camera_controller.set_trigger(true);
     
     // std::cout << "Wait 30 seconds\n";
     // std::this_thread::sleep_for (std::chrono::seconds(30));
