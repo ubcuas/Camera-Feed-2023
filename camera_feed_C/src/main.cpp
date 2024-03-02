@@ -121,7 +121,7 @@ void run(int seconds)
 // }
 
 int main(int argc, char *argv[]) {
-    std::cerr << "Usage: " << argv[0] << " <num_images> <exposure_time_float>" << std::endl;
+    std::cerr << "Usage: " << argv[0] << " <num_images> <exposure_time_float> <gain_float>" << std::endl;
     CameraController camera_controller;
     int num_images = 1;
 
@@ -132,6 +132,11 @@ int main(int argc, char *argv[]) {
     if (argc >= 3) {
         float exposureTime = std::stof(argv[2]);
         camera_controller.set_exposuretime(exposureTime);
+    }
+
+    if (argc >= 4) {
+        float gain = std::stof(argv[3]);
+        camera_controller.set_gain(gain);
     }
     // camera_controller.set_trigger(true);
     
