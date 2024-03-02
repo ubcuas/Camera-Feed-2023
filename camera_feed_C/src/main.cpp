@@ -146,8 +146,8 @@ int main(int argc, char *argv[]) {
     while (i < num_images) {
         bool success = camera_controller.get_image(&pImage, &timestamp);
         if (success) {
-            // camera_controller.save_image(pImage);
-            Arena::ImageFactory::Destroy(pImage);
+            camera_controller.save_image(pImage);
+            // Arena::ImageFactory::Destroy(pImage);
             std::cout << "Image complete\n";
             i++;
         }
