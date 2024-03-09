@@ -27,15 +27,16 @@ bool stopFlag = false;
 void run(int seconds)
 {
     int i = 0;
-    while (!stopFlag) {
-        std::this_thread::sleep_for(std::chrono::seconds(1));
-        std::cout << "ImageQueue: " << ImageQueue.size() << "\n";
-        if (i > seconds) {
-            stopFlag = true;
-        }
-        i++;
+    // while (!stopFlag) {
+    //     std::this_thread::sleep_for(std::chrono::seconds(1));
+    //     std::cout << "ImageQueue: " << ImageQueue.size() << "\n";
+    //     if (i > seconds) {
+    //         stopFlag = true;
+    //     }
+    //     i++;
 
-    }
+    // }
+    std::this_thread::sleep_for(std::chrono::seconds(seconds));
     stopFlag = true;
     std::cout << "DONE RUNNING\n";
 }
@@ -49,6 +50,7 @@ void image_producer(CameraController camera_controller) {
         if (success) {
             ImageData data = {pImage, timestamp};
             ImageQueue.push(data);
+            std::cout << "Pushed Image\n";
         }
     }
 }
