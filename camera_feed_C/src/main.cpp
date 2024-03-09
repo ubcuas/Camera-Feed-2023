@@ -50,7 +50,7 @@ void image_producer(CameraController camera_controller) {
         if (success) {
             ImageData data = {pImage, timestamp};
             ImageQueue.push(data);
-            std::cout << "Pushed Image"
+            std::cout << "Pushed Image";
         }
     }
 }
