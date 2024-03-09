@@ -73,7 +73,7 @@ void printer() {
 
 
 
-void start_threads(CameraController camera_controller) {
+void start_threads(CameraController camera_controller, int seconds) {
     const int numProducers = 1;
     const int numSavers = 2;
     
@@ -90,7 +90,7 @@ void start_threads(CameraController camera_controller) {
     
     // std::thread help(printer);
 
-    run(10);
+    run(seconds);
 
     for (std::thread& saver : savers) {
         saver.join();
@@ -108,12 +108,12 @@ void start_threads(CameraController camera_controller) {
 }
 
 int main(int argc, char *argv[]) {
-    std::cerr << "Usage: " << argv[0] << " <num_images> <exposure_time_float> <gain_float>" << std::endl;
+    std::cerr << "Usage: " << argv[0] << " <seconds> <exposure_time_float> <gain_float>" << std::endl;
     CameraController camera_controller;
-    int num_images = 1;
+    int seconds = 1;
 
     if (argc >= 2) {
-        num_images = std::stoi(argv[1]);
+        seconds = std::stoi(argv[1]);
     }
 
     if (argc >= 3) {
@@ -129,7 +129,7 @@ int main(int argc, char *argv[]) {
     
     camera_controller.start_stream();
 
-    start_threads(camera_controller);
+    start_threads(camera_controller, seconds);
 
     camera_controller.stop_stream();
     camera_controller.cleanup();
