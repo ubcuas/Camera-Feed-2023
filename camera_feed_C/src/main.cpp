@@ -81,7 +81,7 @@ void start_threads(CameraController camera_controller) {
     std::vector<std::thread> savers;
     
     for (int i = 0; i < numProducers; i++) {
-        savers.push_back(std::thread(image_producer, camera_controller));
+        producers.push_back(std::thread(image_producer, camera_controller));
     }
 
     for (int i = 0; i < numSavers; i++) {
