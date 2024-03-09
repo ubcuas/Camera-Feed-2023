@@ -50,7 +50,7 @@ void image_producer(CameraController camera_controller) {
         if (success) {
             ImageData data = {pImage, timestamp};
             ImageQueue.push(data);
-            std::cout << "Pushed Image";
+            std::cout << "Pushed Image UNIX Timestamp: " << timestamp << "\n";;
         }
     }
 }
@@ -61,8 +61,9 @@ void image_consumer(CameraController camera_controller) {
         Arena::IImage* pImage = data.pImage;
         long timestamp = data.timestamp;
 
-        std::string filename = camera_controller.save_image(pImage);
-        std::cout << " at " << filename << " UNIX Timestamp: " << timestamp << "\n";
+        // std::string filename = camera_controller.save_image(pImage);
+        Arena::ImageFactory::Destroy(pImage);
+        // std::cout << " at " << filename << " UNIX Timestamp: " << timestamp << "\n";
     }
 }
 
@@ -77,7 +78,7 @@ void printer() {
 
 void start_threads(CameraController camera_controller, int seconds) {
     const int numProducers = 1;
-    const int numSavers = 1;
+    const int numSavers = 2;
     
     std::vector<std::thread> producers;
     std::vector<std::thread> savers;
