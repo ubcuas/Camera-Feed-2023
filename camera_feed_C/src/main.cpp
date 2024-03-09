@@ -41,6 +41,8 @@ void run(int seconds)
     std::cout << "DONE RUNNING\n";
 }
 
+long prod_start = 0;
+long prod_end = 0;
 void image_producer(CameraController camera_controller) {
     while (!stopFlag) {
         Arena::IImage* pImage;
@@ -49,12 +51,16 @@ void image_producer(CameraController camera_controller) {
         bool success = camera_controller.get_image(&pImage, &timestamp);
         if (success) {
             ImageData data = {pImage, timestamp};
+            prod_end = timestamp;
             ImageQueue.push(data);
-            std::cout << "Pushed Image UNIX Timestamp: " << timestamp << "\n";;
+            std::cout << "Pushed in: " << prod_end - prod_start << "\n";;
+            prod_start = timestamp;
         }
     }
 }
 
+long con_start = 0;
+long con_end = 0;
 void image_consumer(CameraController camera_controller) {
     while (!stopFlag) {
         ImageData data = ImageQueue.pop();
@@ -62,8 +68,10 @@ void image_consumer(CameraController camera_controller) {
         long timestamp = data.timestamp;
 
         std::string filename = camera_controller.save_image(pImage);
+        con_end = timestamp;
         // Arena::ImageFactory::Destroy(pImage);
-        std::cout << " at " << filename << " UNIX Timestamp: " << timestamp << "\n";
+        std::cout << "Pushed in: " << con_end - con_start << "\n";
+        con_start = timestamp;
     }
 }
 
