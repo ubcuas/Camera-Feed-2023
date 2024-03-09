@@ -26,17 +26,17 @@ bool stopFlag = false;
 
 void run(int seconds)
 {
-    int i = 0;
-    while (!stopFlag) {
-        std::this_thread::sleep_for(std::chrono::seconds(1));
-        std::cout << "ImageQueue: " << ImageQueue.size() << "\r";
-        if (i > seconds) {
-            stopFlag = true;
-        }
-        i++;
+    // int i = 0;
+    // while (!stopFlag) {
+    //     std::this_thread::sleep_for(std::chrono::seconds(1));
+    //     std::cout << "ImageQueue: " << ImageQueue.size() << "\r";
+    //     if (i > seconds) {
+    //         stopFlag = true;
+    //     }
+    //     i++;
 
-    }
-    // std::this_thread::sleep_for(std::chrono::seconds(seconds));
+    // }
+    std::this_thread::sleep_for(std::chrono::seconds(seconds));
     stopFlag = true;
     std::cout << "DONE RUNNING\n";
 }
