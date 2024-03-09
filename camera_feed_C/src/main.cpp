@@ -86,7 +86,7 @@ void printer() {
 
 void start_threads(CameraController camera_controller, int seconds) {
     const int numProducers = 1;
-    const int numSavers = 4;
+    const int numSavers = 2;
     
     std::vector<std::thread> producers;
     std::vector<std::thread> savers;
