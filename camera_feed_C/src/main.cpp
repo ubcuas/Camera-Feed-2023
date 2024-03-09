@@ -61,9 +61,9 @@ void image_consumer(CameraController camera_controller) {
         Arena::IImage* pImage = data.pImage;
         long timestamp = data.timestamp;
 
-        // std::string filename = camera_controller.save_image(pImage);
-        Arena::ImageFactory::Destroy(pImage);
-        // std::cout << " at " << filename << " UNIX Timestamp: " << timestamp << "\n";
+        std::string filename = camera_controller.save_image(pImage);
+        // Arena::ImageFactory::Destroy(pImage);
+        std::cout << " at " << filename << " UNIX Timestamp: " << timestamp << "\n";
     }
 }
 
