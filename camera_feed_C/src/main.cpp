@@ -75,7 +75,7 @@ void printer() {
 
 void start_threads(CameraController camera_controller) {
     const int numProducers = 1;
-    const int numSavers = 3;
+    const int numSavers = 2;
     
     std::vector<std::thread> producers;
     std::vector<std::thread> savers;
@@ -92,15 +92,14 @@ void start_threads(CameraController camera_controller) {
 
     run(10);
 
+    for (std::thread& saver : savers) {
+        saver.join();
+        std::cout << "Saver joined\n";
+    }
 
     for (std::thread& producer : producers) {
         producer.join();
         std::cout << "Producer joined\n";
-    }
-
-    for (std::thread& saver : savers) {
-        saver.join();
-        std::cout << "Saver joined\n";
     }
 
     // help.join();
