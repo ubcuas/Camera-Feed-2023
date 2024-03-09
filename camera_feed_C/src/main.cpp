@@ -79,7 +79,7 @@ void start_threads(CameraController camera_controller) {
         savers.push_back(std::thread(image_consumer, camera_controller));
     }
     
-    std::thread help(printer);
+    // std::thread help(printer);
 
     run(500);
 
@@ -92,7 +92,7 @@ void start_threads(CameraController camera_controller) {
         saver.join();
     }
 
-    help.join();
+    // help.join();
 
 
 }
