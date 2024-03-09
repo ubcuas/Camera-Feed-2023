@@ -169,9 +169,8 @@ bool CameraController::get_image(Arena::IImage **pImage, long *timestamp) {
 
         if (pBuffer->IsIncomplete()) {
             // pDevice->RequeueBuffer(pBuffer);
-            // *pImage = Arena::ImageFactory::Copy(pBuffer);
             std::cout << "Image incomplete\n";
-            // return true;
+            return false;
         }
 
         *pImage = Arena::ImageFactory::Copy(pBuffer);
