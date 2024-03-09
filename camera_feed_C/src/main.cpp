@@ -70,7 +70,7 @@ void image_consumer(CameraController camera_controller) {
         std::string filename = camera_controller.save_image(pImage);
         con_end = timestamp;
         // Arena::ImageFactory::Destroy(pImage);
-        std::cout << "Popped in: " << filename << con_end - con_start << "\n";
+        std::cout << "Popped in: " << con_end - con_start << filename << "\n";
         con_start = timestamp;
     }
 }
