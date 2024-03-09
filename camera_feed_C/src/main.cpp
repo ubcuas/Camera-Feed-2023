@@ -26,7 +26,16 @@ bool stopFlag = false;
 
 void run(int seconds)
 {
-    std::this_thread::sleep_for(std::chrono::seconds(seconds));
+    int i = 0;
+    while (!stopFlag) {
+        std::this_thread::sleep_for(std::chrono::seconds(1));
+        std::cout << "ImageQueue: " << ImageQueue.size() << "\n";
+        if (i > seconds) {
+            stopFlag = true;
+        }
+        i++;
+
+    }
     stopFlag = true;
     std::cout << "DONE RUNNING\n";
 }
@@ -65,7 +74,7 @@ void printer() {
 
 
 void start_threads(CameraController camera_controller) {
-    const int numProducers = 1;
+    const int numProducers = 2;
     const int numSavers = 3;
     
     std::vector<std::thread> producers;
@@ -81,15 +90,17 @@ void start_threads(CameraController camera_controller) {
     
     // std::thread help(printer);
 
-    run(500);
+    run(10);
 
 
     for (std::thread& producer : producers) {
         producer.join();
+        std::cout << "Producer joined\n";
     }
 
     for (std::thread& saver : savers) {
         saver.join();
+        std::cout << "Saver joined\n";
     }
 
     // help.join();
