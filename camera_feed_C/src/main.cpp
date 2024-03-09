@@ -70,7 +70,7 @@ void image_consumer(CameraController camera_controller) {
         std::string filename = camera_controller.save_image(pImage);
         con_end = timestamp;
         // Arena::ImageFactory::Destroy(pImage);
-        std::cout << "Popped in: " << con_end - con_start << filename << "\n";
+        std::cout << "Popped in: " << con_end - con_start << " " << filename << "\n";
         con_start = timestamp;
     }
 }
@@ -85,7 +85,7 @@ void printer() {
 
 
 void start_threads(CameraController camera_controller, int seconds) {
-    const int numProducers = 2;
+    const int numProducers = 1;
     const int numSavers = 3;
     
     std::vector<std::thread> producers;
