@@ -140,8 +140,6 @@ int main(int argc, char *argv[]) {
     }
     // camera_controller.set_trigger(true);
     
-    // std::cout << "Wait 30 seconds\n";
-    // std::this_thread::sleep_for (std::chrono::seconds(30));
     camera_controller.start_stream();
 
     Arena::IImage* pImage;
@@ -151,9 +149,9 @@ int main(int argc, char *argv[]) {
     while (i < num_images) {
         bool success = camera_controller.get_image(&pImage, &timestamp);
         if (success) {
-            camera_controller.save_image(pImage);
+            std::string filename = camera_controller.save_image(pImage);
             // Arena::ImageFactory::Destroy(pImage);
-            std::cout << "Image complete\n";
+            std::cout << " at " << filename << " UNIX Timestamp: " << timestamp << "\n";
             i++;
         }
     }

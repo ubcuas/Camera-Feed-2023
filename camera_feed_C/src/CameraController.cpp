@@ -181,15 +181,16 @@ bool CameraController::get_image(Arena::IImage **pImage, long *timestamp) {
     return true;
 }
 
-void CameraController::save_image(Arena::IImage *pImage) {
+std::string CameraController::save_image(Arena::IImage *pImage) {
     if (pImage->IsIncomplete()) {
         writer.SetFileNamePattern("data/INCOMPLETE-<datetime:yyMMdd_hhmmss_fff>-image<count>.jpg");
     } else {
         writer.SetFileNamePattern("data/<datetime:yyMMdd_hhmmss_fff>-image<count>.jpg");
     }
     writer.Save(pImage->GetData());
-    std::cout << " at " << writer.GetLastFileName(true) << "\n";
     Arena::ImageFactory::Destroy(pImage);
+    std::string filename = writer.GetLastFileName(true, true);
+    return filename;
 }
 
 void CameraController::set_default() {
