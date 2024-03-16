@@ -50,10 +50,10 @@ void image_producer(CameraController camera_controller) {
 
         bool success = camera_controller.get_image(&pImage, &timestamp);
         if (success) {
-            Arena::ImageFactory::Destroy(pImage);
-            // ImageData data = {pImage, timestamp};
+            // Arena::ImageFactory::Destroy(pImage);
+            ImageData data = {pImage, timestamp};
             prod_end = timestamp;
-            // ImageQueue.push(data);
+            ImageQueue.push(data);
             std::cout << "Pushed in: " << prod_end - prod_start << "\n";;
             prod_start = timestamp;
         }
@@ -96,18 +96,18 @@ void start_threads(CameraController camera_controller, int seconds) {
         producers.push_back(std::thread(image_producer, camera_controller));
     }
 
-    // for (int i = 0; i < numSavers; i++) {
-    //     savers.push_back(std::thread(image_consumer, camera_controller));
-    // }
+    for (int i = 0; i < numSavers; i++) {
+        savers.push_back(std::thread(image_consumer, camera_controller));
+    }
     
     // std::thread help(printer);
 
     run(seconds);
 
-    // for (std::thread& saver : savers) {
-    //     saver.join();
-    //     std::cout << "Saver joined\n";
-    // }
+    for (std::thread& saver : savers) {
+        saver.join();
+        std::cout << "Saver joined\n";
+    }
 
     for (std::thread& producer : producers) {
         producer.join();
