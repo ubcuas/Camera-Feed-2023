@@ -20,7 +20,6 @@ add_executable(curltest
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/")
 find_package(arena_sdk REQUIRED)
 
-target_include_directories(${PROJECT_NAME} PUBLIC ${arena_sdk_INCLUDE_DIRS})
 message(arena_sdk_INCLUDE_DIRS="${arena_sdk_INCLUDE_DIRS}")
 # target_include_directories(${PROJECT_NAME} PUBLIC 
 #     ${CMAKE_SOURCE_DIR}/external/ArenaSDK_Linux_ARM64/include/Arena
@@ -32,16 +31,20 @@ include(FetchContent)
 FetchContent_Declare(json URL https://github.com/nlohmann/json/releases/download/v3.11.3/json.tar.xz)
 FetchContent_MakeAvailable(json)
 
-FetchContent_Declare(
-  googletest
-  GIT_REPOSITORY https://github.com/curl/curl.git
-  GIT_TAG         curl-8_6_0
+# FetchContent_Declare(
+#   googletest
+#   GIT_REPOSITORY https://github.com/curl/curl.git
+#   GIT_TAG         curl-8_6_0
+# )
+target_include_directories(${PROJECT_NAME} PUBLIC 
+    ${arena_sdk_INCLUDE_DIRS}
 )
 
 
 target_link_libraries(${PROJECT_NAME} PRIVATE 
     ${arena_sdk_LIBRARIES}
     nlohmann_json::nlohmann_json
+    curl
 )
 
 target_compile_options(${PROJECT_NAME} PUBLIC 

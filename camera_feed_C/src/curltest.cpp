@@ -14,7 +14,7 @@ int main() {
 
     curl_easy_setopt(curl, CURLOPT_URL, "https://www.google.com");
 
-    
+
 
     return 0;
 }
