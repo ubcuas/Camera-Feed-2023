@@ -31,22 +31,19 @@ include(FetchContent)
 FetchContent_Declare(json URL https://github.com/nlohmann/json/releases/download/v3.11.3/json.tar.xz)
 FetchContent_MakeAvailable(json)
 
-# FetchContent_Declare(
-#   googletest
-#   GIT_REPOSITORY https://github.com/curl/curl.git
-#   GIT_TAG         curl-8_6_0
-# )
+FetchContent_Declare(
+  googletest
+  GIT_REPOSITORY https://github.com/curl/curl.git
+  GIT_TAG         curl-8_6_0
+)
+
 target_include_directories(${PROJECT_NAME} PUBLIC 
     ${arena_sdk_INCLUDE_DIRS}
-    nlohmann_json::nlohmann_json
-    curl
 )
 
 
 target_link_libraries(${PROJECT_NAME} PRIVATE 
     ${arena_sdk_LIBRARIES}
-    nlohmann_json::nlohmann_json
-    curl
 )
 
 target_compile_options(${PROJECT_NAME} PUBLIC 
