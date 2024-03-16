@@ -55,8 +55,8 @@ void image_producer(CameraController camera_controller) {
             prod_end = timestamp;
             // ImageQueue.push(data);
             std::cout << "Pushed in: " << prod_end - prod_start << "\n";;
+            prod_start = timestamp;
         }
-        prod_start = timestamp;
     }
 }
 
