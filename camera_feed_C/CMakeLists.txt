@@ -27,23 +27,25 @@ message(arena_sdk_INCLUDE_DIRS="${arena_sdk_INCLUDE_DIRS}")
 #     ${CMAKE_SOURCE_DIR}/external/ArenaSDK_Linux_ARM64/include/Save
 #     ${CMAKE_SOURCE_DIR}/external/ArenaSDK_Linux_ARM64/GenICam/library/CPP/include
 # )
-include(FetchContent)
-FetchContent_Declare(json URL https://github.com/nlohmann/json/releases/download/v3.11.3/json.tar.xz)
-FetchContent_MakeAvailable(json)
+# include(FetchContent)
 
-FetchContent_Declare(
-  googletest
-  GIT_REPOSITORY https://github.com/curl/curl.git
-  GIT_TAG         curl-8_6_0
-)
-
+# FetchContent_Declare(
+#   curl
+#   GIT_REPOSITORY https://github.com/curl/curl.git
+#   GIT_TAG         curl-8_5_0
+# )
+# FetchContent_MakeAvailable(curl)
+find_package(CURL REQUIRED)
+message(STATUS "CURL_INCLUDE_DIR: ${CURL_INCLUDE_DIR}")
+message(STATUS "CURL_LIBRARIES: ${CURL_LIBRARIES}")
 target_include_directories(${PROJECT_NAME} PUBLIC 
     ${arena_sdk_INCLUDE_DIRS}
+    ${CURL_INCLUDE_DIRS}
 )
-
 
 target_link_libraries(${PROJECT_NAME} PRIVATE 
     ${arena_sdk_LIBRARIES}
+    CURL::libcurl
 )
 
 target_compile_options(${PROJECT_NAME} PUBLIC 
