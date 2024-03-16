@@ -38,6 +38,8 @@ FetchContent_MakeAvailable(json)
 # )
 target_include_directories(${PROJECT_NAME} PUBLIC 
     ${arena_sdk_INCLUDE_DIRS}
+    nlohmann_json::nlohmann_json
+    curl
 )
 
 
