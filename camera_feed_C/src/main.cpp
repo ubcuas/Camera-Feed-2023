@@ -52,10 +52,10 @@ void image_producer(CameraController camera_controller) {
         if (success) {
             // Arena::ImageFactory::Destroy(pImage);
             ImageData data = {pImage, timestamp};
-            prod_end = timestamp;
+            // prod_end = timestamp;
             ImageQueue.push(data);
-            std::cout << "Pushed in: " << prod_end - prod_start << "\n";;
-            prod_start = timestamp;
+            // std::cout << "Pushed in: " << prod_end - prod_start << "\n";;
+            // prod_start = timestamp;
         }
     }
 }
