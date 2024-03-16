@@ -139,7 +139,7 @@ int main(int argc, char *argv[]) {
     }
     // camera_controller.set_trigger(true);
     
-    camera_controller.start_stream(20);
+    camera_controller.start_stream();
 
     start_threads(camera_controller, seconds);
 
