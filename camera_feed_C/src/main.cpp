@@ -22,6 +22,7 @@ struct ImageData {
 
 TSQueue<ImageData> ImageQueue;
 bool stopFlag = false;
+bool stopSaving = false;
 
 
 void run(int seconds)
@@ -37,7 +38,7 @@ void run(int seconds)
 
     // }
     std::this_thread::sleep_for(std::chrono::seconds(seconds));
-    stopFlag = true;
+    stopSaving = true;
     std::cout << "DONE RUNNING\n";
 }
 
@@ -63,7 +64,7 @@ void image_producer(CameraController camera_controller) {
 long con_start = 0;
 long con_end = 0;
 void image_consumer(CameraController camera_controller) {
-    while (!stopFlag) {
+    while (!stopSaving) {
         ImageData data = ImageQueue.pop();
         Arena::IImage* pImage = data.pImage;
         long timestamp = data.timestamp;
@@ -76,12 +77,12 @@ void image_consumer(CameraController camera_controller) {
     }
 }
 
-void printer() {
-    while (!stopFlag) {
-        std::this_thread::sleep_for(std::chrono::seconds()); 
-        std::cout << "ImageQueue: " << ImageQueue.size() << "\n";
-    }
-}
+// void printer() {
+//     while (!stopFlag) {
+//         std::this_thread::sleep_for(std::chrono::seconds()); 
+//         std::cout << "ImageQueue: " << ImageQueue.size() << "\n";
+//     }
+// }
 
 
 
@@ -108,6 +109,7 @@ void start_threads(CameraController camera_controller, int seconds) {
         saver.join();
         std::cout << "Saver joined\n";
     }
+    stopFlag = true;
 
     for (std::thread& producer : producers) {
         producer.join();
