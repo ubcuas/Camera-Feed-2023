@@ -174,7 +174,7 @@ bool CameraController::get_image(Arena::IImage **pImage, long *timestamp) {
             return false;
         }
 
-        *pImage = Arena::ImageFactory::Convert(pBuffer, BGR8);
+        *pImage = Arena::ImageFactory::Copy(pBuffer);
         pDevice->RequeueBuffer(pBuffer);
     } catch (GenICam::TimeoutException& ge) {
         return false;
