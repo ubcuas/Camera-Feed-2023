@@ -185,9 +185,9 @@ bool CameraController::get_image(Arena::IImage **pImage, long *timestamp) {
 
 std::string CameraController::save_image(Arena::IImage *pImage) {
     if (pImage->IsIncomplete()) {
-        writer.SetFileNamePattern("data/INCOMPLETE-<datetime:yyMMdd_hhmmss_fff>-image<count>.jpg");
+        writer.SetFileNamePattern("data/INCOMPLETE-<datetime:yyMMdd_hhmmss_fff>-image<count>.bmp");
     } else {
-        writer.SetFileNamePattern("data/<datetime:yyMMdd_hhmmss_fff>-image<count>.jpg");
+        writer.SetFileNamePattern("data/<datetime:yyMMdd_hhmmss_fff>-image<count>.bmp");
     }
     writer.Save(pImage->GetData());
     Arena::ImageFactory::Destroy(pImage);

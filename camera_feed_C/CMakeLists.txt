@@ -10,8 +10,11 @@ add_executable(${PROJECT_NAME}
     ${CMAKE_SOURCE_DIR}/src/main.cpp
     ${CMAKE_SOURCE_DIR}/src/CameraController.cpp)
 
-add_executable(multithread
-    ${CMAKE_SOURCE_DIR}/src/multithreadtest.cpp)
+# add_executable(multithread
+#     ${CMAKE_SOURCE_DIR}/src/multithreadtest.cpp)
+
+add_executable(curltest
+    ${CMAKE_SOURCE_DIR}/src/curltest.cpp)
 
 # install(TARGETS ${PROJECT_NAME} DESTINATION bin)
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/")
@@ -25,7 +28,21 @@ message(arena_sdk_INCLUDE_DIRS="${arena_sdk_INCLUDE_DIRS}")
 #     ${CMAKE_SOURCE_DIR}/external/ArenaSDK_Linux_ARM64/include/Save
 #     ${CMAKE_SOURCE_DIR}/external/ArenaSDK_Linux_ARM64/GenICam/library/CPP/include
 # )
-target_link_libraries(${PROJECT_NAME} PRIVATE ${arena_sdk_LIBRARIES})
+include(FetchContent)
+FetchContent_Declare(json URL https://github.com/nlohmann/json/releases/download/v3.11.3/json.tar.xz)
+FetchContent_MakeAvailable(json)
+
+FetchContent_Declare(
+  googletest
+  GIT_REPOSITORY https://github.com/curl/curl.git
+  GIT_TAG         curl-8_6_0
+)
+
+
+target_link_libraries(${PROJECT_NAME} PRIVATE 
+    ${arena_sdk_LIBRARIES}
+    nlohmann_json::nlohmann_json
+)
 
 target_compile_options(${PROJECT_NAME} PUBLIC 
     "-Wall" 
