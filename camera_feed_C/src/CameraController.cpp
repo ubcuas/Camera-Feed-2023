@@ -5,7 +5,7 @@
 #include "SaveApi.h"
 
 
-#define IMAGE_TIMEOUT 500
+#define IMAGE_TIMEOUT 100
 
 #define FILE_NAME_PATTERN "data/image<count>-<datetime:yyMMdd_hhmmss_fff>.jpg"
 
