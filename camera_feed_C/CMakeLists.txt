@@ -1,7 +1,12 @@
 cmake_minimum_required(VERSION 3.22.1)
 
-# add_subdirectory(${CMAKE_SOURCE_DIR}/external/Are)
+if(NOT CMAKE_BUILD_TYPE)
+  set(CMAKE_BUILD_TYPE Release)
+endif()
 
+set(CMAKE_CXX_FLAGS "-Wall -Wextra -Wpedantic -Wcast-align -Wcast-qual -Wdisabled-optimization -Wduplicated-branches -Wduplicated-cond -Wformat=2 -Wlogical-op -Wmissing-include-dirs -Wnull-dereference -Woverloaded-virtual -Wpointer-arith -Wshadow -Wvla")
+set(CMAKE_CXX_FLAGS_DEBUG "-g")
+set(CMAKE_CXX_FLAGS_RELEASE "-O3")
 
 project(camerafeed)
 set(CMAKE_CXX_STANDARD 17)
@@ -52,22 +57,23 @@ target_link_libraries(curltest PRIVATE
     CURL::libcurl
 )
 
-target_compile_options(${PROJECT_NAME} PUBLIC 
-    "-Wall" 
-    "-Wextra" 
-    "-Wpedantic" 
-    "-Wcast-align" 
-    "-Wcast-qual" 
-    "-Wdisabled-optimization" 
-    "-Wduplicated-branches"
-    "-Wduplicated-cond"
-    "-Wformat=2"
-    "-Wlogical-op"
-    "-Wmissing-include-dirs"
-    "-Wnull-dereference"
-    "-Woverloaded-virtual"
-    "-Wpointer-arith"
-    "-Wshadow"
-    # "-Wswitch-enum"
-    "-Wvla"
-    )
+# target_compile_options(${PROJECT_NAME} PUBLIC 
+#     "-Wall" 
+#     "-Wextra" 
+#     "-Wpedantic" 
+#     "-Wcast-align" 
+#     "-Wcast-qual" 
+#     "-Wdisabled-optimization" 
+#     "-Wduplicated-branches"
+#     "-Wduplicated-cond"
+#     "-Wformat=2"
+#     "-Wlogical-op"
+#     "-Wmissing-include-dirs"
+#     "-Wnull-dereference"
+#     "-Woverloaded-virtual"
+#     "-Wpointer-arith"
+#     "-Wshadow"
+#     # "-Wswitch-enum"
+#     "-Wvla"
+#     )
+# sudo apt-get install libssh2-1-dev
