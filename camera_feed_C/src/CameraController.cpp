@@ -165,7 +165,6 @@ bool CameraController::get_image(Arena::IImage **pImage, long *timestamp) {
                 "TriggerSoftware");
         }
         Arena::IImage *pBuffer = pDevice->GetImage(IMAGE_TIMEOUT);
-        Arena::IImage *pBuffer = Arena::ImageFactory::Convert(pBuffer, BGR8);
         *timestamp = epoch + (pBuffer->GetTimestampNs() / 1000000);
 
         if (pBuffer->IsIncomplete()) {
@@ -175,7 +174,7 @@ bool CameraController::get_image(Arena::IImage **pImage, long *timestamp) {
             return false;
         }
 
-        *pImage = Arena::ImageFactory::Copy(pBuffer);
+        *pImage = Arena::ImageFactory::Convert(pBuffer, BGR8);
         pDevice->RequeueBuffer(pBuffer);
     } catch (GenICam::TimeoutException& ge) {
         return false;
