@@ -5,7 +5,7 @@
 #include "SaveApi.h"
 
 
-#define IMAGE_TIMEOUT 100
+#define IMAGE_TIMEOUT 500
 
 #define FILE_NAME_PATTERN "data/image<count>-<datetime:yyMMdd_hhmmss_fff>.jpg"
 
@@ -168,9 +168,11 @@ bool CameraController::get_image(Arena::IImage **pImage, long *timestamp) {
         *timestamp = epoch + (pBuffer->GetTimestampNs() / 1000000);
 
         if (pBuffer->IsIncomplete()) {
+            *pImage = Arena::ImageFactory::Copy(pBuffer);
             pDevice->RequeueBuffer(pBuffer);
             std::cout << "Image incomplete\n";
-            return false;
+            return true;
+            // return false;
         }
 
         *pImage = Arena::ImageFactory::Copy(pBuffer);
@@ -181,22 +183,23 @@ bool CameraController::get_image(Arena::IImage **pImage, long *timestamp) {
     return true;
 }
 
-void CameraController::save_image(Arena::IImage *pImage) {
+std::string CameraController::save_image(Arena::IImage *pImage) {
     if (pImage->IsIncomplete()) {
         writer.SetFileNamePattern("data/INCOMPLETE-<datetime:yyMMdd_hhmmss_fff>-image<count>.jpg");
     } else {
         writer.SetFileNamePattern("data/<datetime:yyMMdd_hhmmss_fff>-image<count>.jpg");
     }
     writer.Save(pImage->GetData());
-    std::cout << " at " << writer.GetLastFileName(true) << "\n";
     Arena::ImageFactory::Destroy(pImage);
+    std::string filename = writer.GetLastFileName(true, true);
+    return filename;
 }
 
 void CameraController::set_default() {
-    Arena::SetNodeValue<GenICam::gcstring>(pDevice->GetTLStreamNodeMap(), "StreamBufferHandlingMode", "NewestOnly");
+    Arena::SetNodeValue<GenICam::gcstring>(pDevice->GetTLStreamNodeMap(), "StreamBufferHandlingMode", "OldestFirst");
     Arena::SetNodeValue<bool>(pDevice->GetTLStreamNodeMap(), "StreamAutoNegotiatePacketSize", true);
     Arena::SetNodeValue<bool>(pDevice->GetTLStreamNodeMap(), "StreamPacketResendEnable", true);
-    // Arena::SetNodeValue<int64_t>(pDevice->GetNodeMap(), "DeviceLinkThroughputReserve", 30);  
+    Arena::SetNodeValue<int64_t>(pDevice->GetNodeMap(), "DeviceLinkThroughputReserve", 30);  
 
     set_pixelformat("BGR8");
 }
