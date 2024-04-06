@@ -1,31 +1,240 @@
 #include "CameraController.h"
 #include "ArenaApi.h"
+#include "TSQueue.h"
+
 #include <chrono>
+#include <unistd.h>
+#include <thread>         // std::this_thread::sleep_for
+#include <condition_variable> 
+#include <iostream> 
+#include <mutex> 
+#include <queue> 
 
-int main() {
-    // Get the current time point
-    std::chrono::system_clock::time_point currentTime = std::chrono::system_clock::now();
+struct ImagePath {
+    std::string image_path;
+    long timestamp;
+};
 
-    // Convert the time point to milliseconds since the epoch
-    std::chrono::milliseconds duration = std::chrono::duration_cast<std::chrono::milliseconds>(
-        currentTime.time_since_epoch()
-    );
-
-    // Retrieve the count of milliseconds
-    int64_t millis = duration.count();
-
-    std::cout << "Current timestamp in milliseconds: " << millis << std::endl;
-    CameraController camera_controller;
-
-    camera_controller.set_default();
-    camera_controller.start_stream();
+struct ImageData {
     Arena::IImage* pImage;
     long timestamp;
+};
 
-    bool success = camera_controller.get_image(&pImage, &timestamp);
+TSQueue<ImageData> ImageQueue;
+bool stopFlag = false;
+bool stopSaving = false;
+
+
+void run(int seconds)
+{
+    // int i = 0;
+    // while (!stopFlag) {
+    //     std::this_thread::sleep_for(std::chrono::seconds(1));
+    //     std::cout << "ImageQueue: " << ImageQueue.size() << "\r";
+    //     if (i > seconds) {
+    //         stopFlag = true;
+    //     }
+    //     i++;
+
+    // }
+    std::this_thread::sleep_for(std::chrono::seconds(seconds));
+    stopSaving = true;
+    std::cout << "DONE RUNNING\n";
+}
+
+long prod_start = 0;
+long prod_end = 0;
+void image_producer(CameraController camera_controller) {
+    while (!stopFlag) {
+        Arena::IImage* pImage;
+        long timestamp;
+
+        bool success = camera_controller.get_image(&pImage, &timestamp);
+        if (success) {
+            // Arena::ImageFactory::Destroy(pImage);
+            ImageData data = {pImage, timestamp};
+            // prod_end = timestamp;
+            ImageQueue.push(data);
+            // std::cout << "Pushed in: " << prod_end - prod_start << "\n";;
+            // prod_start = timestamp;
+        }
+    }
+}
+
+long con_start = 0;
+long con_end = 0;
+void image_consumer(CameraController camera_controller) {
+    while (!stopSaving) {
+        ImageData data = ImageQueue.pop();
+        Arena::IImage* pImage = data.pImage;
+        long timestamp = data.timestamp;
+
+        std::string filename = camera_controller.save_image(pImage);
+        con_end = timestamp;
+        // Arena::ImageFactory::Destroy(pImage);
+        std::cout << "Popped in: " << con_end - con_start << " " << filename << "\n";
+        con_start = timestamp;
+    }
+}
+
+// void printer() {
+//     while (!stopFlag) {
+//         std::this_thread::sleep_for(std::chrono::seconds()); 
+//         std::cout << "ImageQueue: " << ImageQueue.size() << "\n";
+//     }
+// }
+
+
+
+void start_threads(CameraController camera_controller, int seconds) {
+    const int numProducers = 1;
+    const int numSavers = 8;
+    
+    std::vector<std::thread> producers;
+    std::vector<std::thread> savers;
+    
+    for (int i = 0; i < numProducers; i++) {
+        producers.push_back(std::thread(image_producer, camera_controller));
+    }
+
+    for (int i = 0; i < numSavers; i++) {
+        savers.push_back(std::thread(image_consumer, camera_controller));
+    }
+    
+    // std::thread help(printer);
+
+    run(seconds);
+
+    for (std::thread& saver : savers) {
+        saver.join();
+        std::cout << "Saver joined\n";
+    }
+    stopFlag = true;
+
+    for (std::thread& producer : producers) {
+        producer.join();
+        std::cout << "Producer joined\n";
+    }
+
+    // help.join();
+
+
+}
+
+int main(int argc, char *argv[]) {
+    std::cerr << "Usage: " << argv[0] << " <seconds> <exposure_time_float> <gain_float>" << std::endl;
+    CameraController camera_controller;
+    int seconds = 1;
+
+    if (argc >= 2) {
+        seconds = std::stoi(argv[1]);
+    }
+
+    if (argc >= 3) {
+        float exposureTime = std::stof(argv[2]);
+        camera_controller.set_exposuretime(exposureTime);
+    }
+
+    if (argc >= 4) {
+        float gain = std::stof(argv[3]);
+        camera_controller.set_gain(gain);
+    }
+    // camera_controller.set_trigger(true);
+    
+    camera_controller.start_stream();
+
+    start_threads(camera_controller, seconds);
+
     camera_controller.stop_stream();
     camera_controller.cleanup();
 
-    std::cout << "Image capture: " << success << "\n";
-
 }
+
+// int main(int argc, char *argv[]) {
+//     std::cerr << "Usage: " << argv[0] << " <num_images> <exposure_time_float> <gain_float>" << std::endl;
+//     CameraController camera_controller;
+//     int num_images = 1;
+
+//     if (argc >= 2) {
+//         num_images = std::stoi(argv[1]);
+//     }
+
+//     if (argc >= 3) {
+//         float exposureTime = std::stof(argv[2]);
+//         camera_controller.set_exposuretime(exposureTime);
+//     }
+
+//     if (argc >= 4) {
+//         float gain = std::stof(argv[3]);
+//         camera_controller.set_gain(gain);
+//     }
+//     // camera_controller.set_trigger(true);
+    
+//     camera_controller.start_stream();
+
+//     Arena::IImage* pImage;
+//     long timestamp;
+
+//     int i = 0;
+//     while (i < num_images) {
+//         bool success = camera_controller.get_image(&pImage, &timestamp);
+//         if (success) {
+//             std::string filename = camera_controller.save_image(pImage);
+//             // Arena::ImageFactory::Destroy(pImage);
+//             std::cout << " at " << filename << " UNIX Timestamp: " << timestamp << "\n";
+//             i++;
+//         }
+//     }
+
+//     // // Get the current time point
+//     // std::chrono::system_clock::time_point currentTime = std::chrono::system_clock::now();
+
+//     // // Convert the time point to milliseconds since the epoch
+//     // std::chrono::milliseconds duration = std::chrono::duration_cast<std::chrono::milliseconds>(
+//     //     currentTime.time_since_epoch()
+//     // );
+
+//     // // Retrieve the count of milliseconds
+//     // int64_t start = duration.count();
+
+//     // long end = 0;
+//     // for (int i = 0; i < 500; i++) {
+//     //     bool success = camera_controller.get_image(&pImage, &timestamp, false);
+//     //     end = timestamp;
+//     //     if (!success) {
+//     //         i--;
+//     //     } else {
+//     //         std::cout << "Image capture: " << i << " " << end - start << " " << success << "\n";
+//     //         start = timestamp;
+//     //     }
+//     // }
+
+//     // camera_controller.set_trigger(true);
+    
+//     // // Get the current time point
+//     // currentTime = std::chrono::system_clock::now();
+
+//     // // Convert the time point to milliseconds since the epoch
+//     // duration = std::chrono::duration_cast<std::chrono::milliseconds>(
+//     //     currentTime.time_since_epoch()
+//     // );
+
+//     // // Retrieve the count of milliseconds
+//     // start = duration.count();
+
+//     // end = 0;
+//     // for (int i = 0; i < 500; i++) {
+//     //     sleep(1);
+//     //     bool success = camera_controller.get_image(&pImage, &timestamp, true);
+//     //     end = timestamp;
+//     //     if (!success) {
+//     //         i--;
+//     //     } else {
+//     //         std::cout << "Image capture: " << i << " " << end - start << " " << success << "\n";
+//     //         start = timestamp;
+//     //     }
+//     // }
+
+//     camera_controller.stop_stream();
+//     camera_controller.cleanup();
+// }

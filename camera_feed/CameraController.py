@@ -127,7 +127,12 @@ class CameraController:
           - datetime: Timestamp of the captured image.
         """
         buffer_bytes_per_pixel = 3
-        buffer = self.device.get_buffer()
+        while True:
+            try:
+                buffer = self.device.get_buffer(timeout=100)
+                break
+            except Exception as e:
+                pass
 
         """
         Copy buffer and requeue to avoid running out of buffers
