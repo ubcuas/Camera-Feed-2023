@@ -1,7 +1,21 @@
 # Camera-Feed
-Camera feed configuration software for lucid cameras, 2023
+A C++ program for the operation and integration a LUCID GigE Vision camera. 
 
-## Step 1: Add Arena API Wheel File
+## Features
+
+* A C++ API for configuring and operating the camera
+* Multithreaded image capture, saving, and HTTP file transer
+* Command arguments for run length, exposure time, and gain
+
+
+## Getting Started
+
+### Dependencies
+* Cmake >= 3.22.1
+* ArenaSDK
+
+
+### Python version
 
 1. Download the `arena_api-2.3.3-py3-none-any.whl` wheel file if you haven't already.
 
@@ -10,9 +24,3 @@ Camera feed configuration software for lucid cameras, 2023
 ## Step 2: Install Requirements
 
 pip install -r requirements.txt
-
-## Step 3: Connect Camera
-
-## Step 4: Run Server
-
-## Step 5: Run Client
