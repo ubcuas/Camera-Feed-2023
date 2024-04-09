@@ -18,9 +18,9 @@ A C++ program for the operation and integration a LUCID GigE Vision camera.
 ### Python version
 
 1. Download the `arena_api-2.3.3-py3-none-any.whl` wheel file if you haven't already.
-
 2. Place the wheel file in your project's `wheel` directory.
+3. Install packages
 
-## Step 2: Install Requirements
-
+```
 pip install -r requirements.txt
+```
