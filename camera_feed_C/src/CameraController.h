@@ -12,6 +12,7 @@
 class CameraController {
 public:
     CameraController();
+    ~CameraController();
     void set_epoch();
     
     void set_pixelformat(GenICam::gcstring pixelformat);
@@ -22,10 +23,9 @@ public:
     void start_stream(int num_buffers = 10);
     void stop_stream();
     bool get_image(Arena::IImage **pImage, long *timestamp);
-    std::string save_image(Arena::IImage *pImage);
+    std::string save_image(Arena::IImage *pImage, long timestamp);
     void set_default();
 
-    void cleanup();
     
 private:
     Arena::ISystem* pSystem;

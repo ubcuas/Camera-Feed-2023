@@ -4,7 +4,10 @@
 #include <iostream> 
 #include <mutex> 
 #include <queue> 
+#include <atomic> 
 #include <condition_variable> 
+
+struct AbortedPopException {};
 
 
 // Thread-safe queue https://www.geeksforgeeks.org/implement-thread-safe-queue-in-c/
@@ -19,6 +22,9 @@ private:
   
     // Condition variable for signaling 
     std::condition_variable m_cond; 
+
+    mutable std::atomic<bool> abort_flag = false;
+
   
 public: 
     // Pushes an element to the queue 
@@ -44,7 +50,10 @@ public:
   
         // wait until queue is not empty 
         m_cond.wait(lock, 
-                    [this]() { return !m_queue.empty(); }); 
+                    [this]() { return !m_queue.empty() || abort_flag; }); 
+
+        if (abort_flag)
+            throw AbortedPopException{};
   
         // retrieve item 
         T item = m_queue.front(); 
@@ -54,20 +63,11 @@ public:
         return item; 
     } 
 
-    // Check if the queue is empty
-    bool empty()
-    {
-        std::lock_guard<std::mutex> lock(m_mutex);
-        return m_queue.empty();
+    void abort() const {
+        abort_flag = true;  
     }
 
-    // Get the size of the queue
-    size_t size()
-    {
-        std::lock_guard<std::mutex> lock(m_mutex);
-        return m_queue.size();
-    }
 }; 
 
 
-#endif // TSQUEUE_H
+#endif

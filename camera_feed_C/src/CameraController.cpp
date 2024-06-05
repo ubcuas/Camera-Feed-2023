@@ -5,12 +5,14 @@
 #include "SaveApi.h"
 
 
-#define IMAGE_TIMEOUT 500
+#define IMAGE_TIMEOUT 1000
 
-#define FILE_NAME_PATTERN "data/image<count>-<datetime:yyMMdd_hhmmss_fff>.jpg"
+#define FILE_NAME_PATTERN "data/<timestampms>.jpg"
 
 
-
+/*
+Should probably be a singleton, does not work with multiple devices
+*/
 CameraController::CameraController() {
     std::cout << "Connecting to camera\n";
     pSystem = Arena::OpenSystem();
@@ -183,12 +185,14 @@ bool CameraController::get_image(Arena::IImage **pImage, long *timestamp) {
     return true;
 }
 
-std::string CameraController::save_image(Arena::IImage *pImage) {
-    if (pImage->IsIncomplete()) {
-        writer.SetFileNamePattern("data/INCOMPLETE-<datetime:yyMMdd_hhmmss_fff>-image<count>.jpg");
-    } else {
-        writer.SetFileNamePattern("data/<datetime:yyMMdd_hhmmss_fff>-image<count>.jpg");
-    }
+std::string CameraController::save_image(Arena::IImage *pImage, long timestamp) {
+    // if (pImage->IsIncomplete()) {
+    //     writer.SetFileNamePattern("data/INCOMPLETE-<datetime:yyMMdd_hhmmss_fff>-image<count>.jpg");
+    // } else {
+    //     writer.SetFileNamePattern("data/<datetime:yyMMdd_hhmmss_fff>-image<count>.jpg");
+    // }
+    std::string timestamp_str = std::to_string(timestamp);
+    writer.UpdateTag("<timestampms>", timestamp_str.c_str());
     writer.Save(pImage->GetData());
     Arena::ImageFactory::Destroy(pImage);
     std::string filename = writer.GetLastFileName(true, true);
@@ -204,7 +208,7 @@ void CameraController::set_default() {
     set_pixelformat("BGR8");
 }
 
-void CameraController::cleanup() {
+CameraController::~CameraController() {
     std::cout << "Cleaning up\n";
     pSystem->DestroyDevice(pDevice);
     Arena::CloseSystem(pSystem);
