@@ -20,7 +20,8 @@ add_executable(${PROJECT_NAME}
 #     ${CMAKE_SOURCE_DIR}/src/multithreadtest.cpp)
 
 add_executable(curltest
-    ${CMAKE_SOURCE_DIR}/src/curltest.cpp)
+    ${CMAKE_SOURCE_DIR}/src/curltest.cpp
+    ${CMAKE_SOURCE_DIR}/src/HttpTransmitter.cpp)
 
 # install(TARGETS ${PROJECT_NAME} DESTINATION bin)
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/")
