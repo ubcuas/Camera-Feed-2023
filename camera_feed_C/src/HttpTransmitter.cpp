@@ -85,7 +85,7 @@ std::string HttpTransmitter::send(std::string image_path, long timestamp) {
         fprintf(stderr, "Maximum attempts exceeded, skipping\n");
 
     }
-    std::cout << "Success\n";
+    std::cout << "Sent " << image_path << '\n';
 
     return ""; // Placeholder response
 }

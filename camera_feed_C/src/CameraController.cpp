@@ -16,35 +16,21 @@ Should probably be a singleton, does not work with multiple devices
 CameraController::CameraController() {
     std::cout << "Connecting to camera\n";
     pSystem = Arena::OpenSystem();
-    pSystem->UpdateDevices(100);
 
+    // Check for cameras
+    pSystem->UpdateDevices(100);
     std::vector<Arena::DeviceInfo> deviceInfos = pSystem->GetDevices();
     if (deviceInfos.size() == 0)
     {
         Arena::CloseSystem(pSystem);
         throw std::runtime_error("No camera connected");
     }
+    // Get the first camera
     pDevice = pSystem->CreateDevice(deviceInfos[0]);
 
-    Arena::SetNodeValue<GenICam::gcstring>(pDevice->GetNodeMap(), "UserSetSelector", "Default");
-    Arena::ExecuteNode(pDevice->GetNodeMap(), "UserSetLoad");
-
-    set_epoch();
     set_default();
-
-    	// get width, height, and pixel format nodes
-    std::cout << "Configuring writer\n";
-	GenApi::CIntegerPtr pWidth = pDevice->GetNodeMap()->GetNode("Width");
-	GenApi::CIntegerPtr pHeight = pDevice->GetNodeMap()->GetNode("Height");
-	GenApi::CEnumerationPtr pPixelFormat = pDevice->GetNodeMap()->GetNode("PixelFormat");
-
-    Save::ImageParams params(
-    static_cast<size_t>(pWidth->GetValue()),
-    static_cast<size_t>(pHeight->GetValue()),
-    Arena::GetBitsPerPixel(pPixelFormat->GetCurrentEntry()->GetValue()));
-
-    writer.SetParams(params);
-    writer.SetFileNamePattern(FILE_NAME_PATTERN);
+    set_epoch();
+    writer_config();
 }
 
 void CameraController::set_epoch() {
@@ -61,6 +47,34 @@ void CameraController::set_epoch() {
     // Calculate epoch reference time
     epoch = duration.count() - (timestamp / 1000000);
     std::cout << "Current epoch in milliseconds: " << epoch << "\n";
+}
+
+void CameraController::set_default() {
+    std::cout << "Setting default configuration\n";
+    // Reset to default settings
+    Arena::SetNodeValue<GenICam::gcstring>(pDevice->GetNodeMap(), "UserSetSelector", "Default");
+    Arena::ExecuteNode(pDevice->GetNodeMap(), "UserSetLoad");
+
+    Arena::SetNodeValue<GenICam::gcstring>(pDevice->GetTLStreamNodeMap(), "StreamBufferHandlingMode", "OldestFirst");
+    Arena::SetNodeValue<bool>(pDevice->GetTLStreamNodeMap(), "StreamAutoNegotiatePacketSize", true);
+    Arena::SetNodeValue<bool>(pDevice->GetTLStreamNodeMap(), "StreamPacketResendEnable", true);
+    Arena::SetNodeValue<int64_t>(pDevice->GetNodeMap(), "DeviceLinkThroughputReserve", 30);  
+    set_pixelformat("BGR8");
+}
+
+void CameraController::writer_config() {
+    std::cout << "Configuring writer\n";
+    GenApi::CIntegerPtr pWidth = pDevice->GetNodeMap()->GetNode("Width");
+    GenApi::CIntegerPtr pHeight = pDevice->GetNodeMap()->GetNode("Height");
+    GenApi::CEnumerationPtr pPixelFormat = pDevice->GetNodeMap()->GetNode("PixelFormat");
+
+    Save::ImageParams params(
+        static_cast<size_t>(pWidth->GetValue()),
+        static_cast<size_t>(pHeight->GetValue()),
+        Arena::GetBitsPerPixel(pPixelFormat->GetCurrentEntry()->GetValue()));
+
+    writer.SetParams(params);
+    writer.SetFileNamePattern(FILE_NAME_PATTERN);
 }
 
 void CameraController::set_pixelformat(GenICam::gcstring pixelformat) {
@@ -197,15 +211,6 @@ std::string CameraController::save_image(Arena::IImage *pImage, long timestamp) 
     Arena::ImageFactory::Destroy(pImage);
     std::string filename = writer.GetLastFileName(true, true);
     return filename;
-}
-
-void CameraController::set_default() {
-    Arena::SetNodeValue<GenICam::gcstring>(pDevice->GetTLStreamNodeMap(), "StreamBufferHandlingMode", "OldestFirst");
-    Arena::SetNodeValue<bool>(pDevice->GetTLStreamNodeMap(), "StreamAutoNegotiatePacketSize", true);
-    Arena::SetNodeValue<bool>(pDevice->GetTLStreamNodeMap(), "StreamPacketResendEnable", true);
-    Arena::SetNodeValue<int64_t>(pDevice->GetNodeMap(), "DeviceLinkThroughputReserve", 30);  
-
-    set_pixelformat("BGR8");
 }
 
 CameraController::~CameraController() {
