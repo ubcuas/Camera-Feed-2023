@@ -63,8 +63,9 @@ public:
         return item; 
     } 
 
-    void abort() const {
-        abort_flag = true;  
+    void abort() {
+        abort_flag = true;
+        m_cond.notify_all(); 
     }
 
 }; 
