@@ -17,10 +17,9 @@ public:
     CameraController();
 
     /**
-     * @brief Destructor for CameraController.
-     * Cleans up resources.
+     * @brief Frees resources created by CameraController.
      */
-    ~CameraController();
+    void cleanup();
 
     /**
      * @brief Sets the pixel format for the camera.

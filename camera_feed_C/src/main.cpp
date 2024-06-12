@@ -167,6 +167,7 @@ int main(int argc, char *argv[]) {
     }
 
     camera_controller.stop_stream();
+    camera_controller.cleanup();
 
     std::cout << "SYSTEM SHUTDOWN\n";
 }
