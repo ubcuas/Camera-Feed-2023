@@ -213,7 +213,7 @@ std::string CameraController::save_image(Arena::IImage *pImage, long timestamp) 
     return filename;
 }
 
-CameraController::~CameraController() {
+void CameraController::cleanup() {
     std::cout << "Cleaning up\n";
     pSystem->DestroyDevice(pDevice);
     Arena::CloseSystem(pSystem);
