@@ -34,6 +34,7 @@ void run(int seconds)
     stop_flag = true;
     data_queue.abort();
     path_queue.abort();
+    std::cout << "Aborting pop\n";
 }
 
 long prod_start = 0;
