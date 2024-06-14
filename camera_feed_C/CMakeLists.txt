@@ -90,22 +90,22 @@ FetchContent_Declare(
 
 FetchContent_MakeAvailable(cli11_proj)
 
-# FetchContent_Declare(
-#         opencv
-#         GIT_REPOSITORY https://github.com/opencv/opencv.git
-#         GIT_TAG        4.10.0
-# )
-# FetchContent_MakeAvailable(opencv)
+FetchContent_Declare(
+        opencv
+        GIT_REPOSITORY https://github.com/opencv/opencv.git
+        GIT_TAG        4.10.0
+)
+FetchContent_MakeAvailable(opencv)
 
 
 target_include_directories(${PROJECT_NAME} PRIVATE
     ${arena_sdk_INCLUDE_DIRS}
-    # ${opencv_INCLUDE_DIRS}
+    ${opencv_INCLUDE_DIRS}
 )
 
 target_link_libraries(${PROJECT_NAME}  PRIVATE
     ${arena_sdk_LIBRARIES}
-    # ${opencv_LIBRARIES}
+    ${opencv_LIBRARIES}
     CURL::libcurl
     CLI11::CLI11
 )
