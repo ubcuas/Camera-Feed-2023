@@ -90,6 +90,14 @@ FetchContent_Declare(
 
 FetchContent_MakeAvailable(cli11_proj)
 
+FetchContent_Declare(
+        opencv
+        GIT_REPOSITORY https://github.com/opencv/opencv.git
+        GIT_TAG        4.10.0
+)
+FetchContent_MakeAvailable(opencv)
+
+
 target_include_directories(${PROJECT_NAME} PRIVATE
     ${arena_sdk_INCLUDE_DIRS}
 )

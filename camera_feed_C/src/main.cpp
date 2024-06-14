@@ -83,7 +83,7 @@ void image_sender(std::string url) {
         long timestamp = image_path.timestamp;
         (void) http_transmitter.send(path, timestamp);
     }
-}
+}   
 
 int main(int argc, char *argv[]) {
     int seconds = 0;
@@ -120,7 +120,7 @@ int main(int argc, char *argv[]) {
 
 
     const int numProducers = 1;
-    const int numSavers = 3;
+    const int numSavers = 2;
     const int numSenders = 2;
 
     
