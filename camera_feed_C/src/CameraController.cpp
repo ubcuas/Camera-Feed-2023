@@ -59,7 +59,7 @@ void CameraController::set_default() {
     Arena::SetNodeValue<bool>(pDevice->GetTLStreamNodeMap(), "StreamAutoNegotiatePacketSize", true);
     Arena::SetNodeValue<bool>(pDevice->GetTLStreamNodeMap(), "StreamPacketResendEnable", true);
     Arena::SetNodeValue<int64_t>(pDevice->GetNodeMap(), "DeviceLinkThroughputReserve", 30);  
-    set_pixelformat("BGR8");
+    // set_pixelformat("BGR8");
 }
 
 void CameraController::writer_config() {
