@@ -68,12 +68,12 @@ void CameraController::writer_config() {
     GenApi::CIntegerPtr pHeight = pDevice->GetNodeMap()->GetNode("Height");
     GenApi::CEnumerationPtr pPixelFormat = pDevice->GetNodeMap()->GetNode("PixelFormat");
 
-    Save::ImageParams params(
-        static_cast<size_t>(pWidth->GetValue()),
-        static_cast<size_t>(pHeight->GetValue()),
-        Arena::GetBitsPerPixel(pPixelFormat->GetCurrentEntry()->GetValue()));
+    // Save::ImageParams params(
+    //     static_cast<size_t>(pWidth->GetValue()),
+    //     static_cast<size_t>(pHeight->GetValue()),
+    //     Arena::GetBitsPerPixel(pPixelFormat->GetCurrentEntry()->GetValue()));
 
-    writer.SetParams(params);
+    // writer.SetParams(params);
     writer.SetFileNamePattern(FILE_NAME_PATTERN);
     writer.SetRaw(".raw");
 }
@@ -206,6 +206,13 @@ std::string CameraController::save_image(Arena::IImage *pImage, long timestamp) 
     // } else {
     //     writer.SetFileNamePattern("data/<datetime:yyMMdd_hhmmss_fff>-image<count>.jpg");
     // }
+    Save::ImageParams params(
+        pImage->GetWidth(),
+        pImage->GetHeight(),
+        pImage->GetBitsPerPixel());
+
+    writer.SetParams(params);
+
     std::string timestamp_str = std::to_string(timestamp);
     writer.UpdateTag("<timestampms>", timestamp_str.c_str());
     writer.Save(pImage->GetData());
