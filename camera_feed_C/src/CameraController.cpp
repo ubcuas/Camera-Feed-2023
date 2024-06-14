@@ -7,7 +7,7 @@
 
 #define IMAGE_TIMEOUT 1000
 
-#define FILE_NAME_PATTERN "data/<timestampms>.raw"
+#define FILE_NAME_PATTERN "data/<timestampms>raw.raw"
 
 
 /*
