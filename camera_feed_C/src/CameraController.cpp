@@ -7,7 +7,7 @@
 
 #define IMAGE_TIMEOUT 1000
 
-#define FILE_NAME_PATTERN "data/<timestampms>raw.raw"
+#define FILE_NAME_PATTERN "data/<timestampms>.jpg"
 
 
 /*
@@ -59,7 +59,7 @@ void CameraController::set_default() {
     Arena::SetNodeValue<bool>(pDevice->GetTLStreamNodeMap(), "StreamAutoNegotiatePacketSize", true);
     Arena::SetNodeValue<bool>(pDevice->GetTLStreamNodeMap(), "StreamPacketResendEnable", true);
     Arena::SetNodeValue<int64_t>(pDevice->GetNodeMap(), "DeviceLinkThroughputReserve", 30);  
-    // set_pixelformat("BGR8");
+    set_pixelformat("BGR8");
 }
 
 void CameraController::writer_config() {
@@ -68,14 +68,13 @@ void CameraController::writer_config() {
     GenApi::CIntegerPtr pHeight = pDevice->GetNodeMap()->GetNode("Height");
     GenApi::CEnumerationPtr pPixelFormat = pDevice->GetNodeMap()->GetNode("PixelFormat");
 
-    // Save::ImageParams params(
-    //     static_cast<size_t>(pWidth->GetValue()),
-    //     static_cast<size_t>(pHeight->GetValue()),
-    //     Arena::GetBitsPerPixel(pPixelFormat->GetCurrentEntry()->GetValue()));
+    Save::ImageParams params(
+        static_cast<size_t>(pWidth->GetValue()),
+        static_cast<size_t>(pHeight->GetValue()),
+        Arena::GetBitsPerPixel(pPixelFormat->GetCurrentEntry()->GetValue()));
 
-    // writer.SetParams(params);
+    writer.SetParams(params);
     writer.SetFileNamePattern(FILE_NAME_PATTERN);
-    writer.SetRaw(".raw");
 }
 
 void CameraController::set_pixelformat(GenICam::gcstring pixelformat) {
@@ -206,13 +205,6 @@ std::string CameraController::save_image(Arena::IImage *pImage, long timestamp) 
     // } else {
     //     writer.SetFileNamePattern("data/<datetime:yyMMdd_hhmmss_fff>-image<count>.jpg");
     // }
-    Save::ImageParams params(
-        pImage->GetWidth(),
-        pImage->GetHeight(),
-        pImage->GetBitsPerPixel());
-
-    writer.SetParams(params);
-
     std::string timestamp_str = std::to_string(timestamp);
     writer.UpdateTag("<timestampms>", timestamp_str.c_str());
     writer.Save(pImage->GetData());
