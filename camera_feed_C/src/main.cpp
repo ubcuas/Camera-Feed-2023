@@ -6,6 +6,7 @@
 #include <mutex> 
 #include <queue> 
 #include <CLI/CLI.hpp>
+// #include <opencv2/opencv.hpp>
 
 #include "CameraController.h"
 #include "ArenaApi.h"
