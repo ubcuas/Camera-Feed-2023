@@ -75,6 +75,7 @@ void CameraController::writer_config() {
 
     writer.SetParams(params);
     writer.SetFileNamePattern(FILE_NAME_PATTERN);
+    writer.SetRaw(".raw");
 }
 
 void CameraController::set_pixelformat(GenICam::gcstring pixelformat) {
