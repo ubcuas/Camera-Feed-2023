@@ -1,1 +1,2 @@
-sudo apt-get install libssh2-1-dev
+sudo apt install libssl-dev
+sudo apt install nghttp2
