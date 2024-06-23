@@ -27,7 +27,7 @@ struct ImageData {
 TSQueue<ImageData> data_queue;
 TSQueue<ImagePath> path_queue;
 
-std::atomic<bool> stop_flag = false;
+std::atomic<bool> stop_flag = ATOMIC_VAR_INIT(false);
 
 void run(int seconds)
 {
@@ -38,8 +38,6 @@ void run(int seconds)
     std::cout << "Aborting pop\n";
 }
 
-long prod_start = 0;
-long prod_end = 0;
 void image_producer(CameraController camera_controller) {
     while (!stop_flag) {
         Arena::IImage* pImage;
@@ -68,6 +66,7 @@ void image_consumer(CameraController camera_controller) {
         std::string filename = camera_controller.save_image(pImage, timestamp);
         ImagePath path = {filename, timestamp};
         path_queue.push(path);
+        std::cout << "Saved " << filename << "\n";
     }
 }
 
@@ -83,6 +82,7 @@ void image_sender(std::string url) {
         std::string path = image_path.path;
         long timestamp = image_path.timestamp;
         (void) http_transmitter.send(path, timestamp);
+        std::cout << "Sent " << path << "\n";
     }
 }   
 
@@ -120,8 +120,8 @@ int main(int argc, char *argv[]) {
     camera_controller.start_stream();
 
 
-    const int numProducers = 1;
-    const int numSavers = 2;
+    const int numProducers = 8;
+    const int numSavers = 3;
     const int numSenders = 2;
 
     
