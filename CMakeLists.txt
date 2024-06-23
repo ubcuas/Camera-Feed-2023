@@ -10,6 +10,7 @@ endif()
 project(camerafeed)
 set(CMAKE_CXX_STANDARD 17)
 
+set(BUILD_LIST core,imgcodecs,highgui)
 
 add_executable(${PROJECT_NAME} 
     ${CMAKE_SOURCE_DIR}/src/main.cpp
