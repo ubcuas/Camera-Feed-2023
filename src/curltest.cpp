@@ -10,8 +10,9 @@
 
 void image_sender(std::string url) {
     HttpTransmitter http_transmitter(url);
-    for (int i = 0; i < 2; i++) {
-        (void) http_transmitter.send("data/20240302_120654_836-image2.jpg", 1234567890l);
+    for (int i = 0; i < 1; i++) {
+        (void) http_transmitter.send("asdf.txt", 1719296810737l);
+        std::cout << "sent\n";
     }
 }
 
@@ -32,9 +33,11 @@ int main(int argc, char *argv[]) {
 
     std::cout << url << '\n';
     
-    // curl_global_init(CURL_GLOBAL_ALL);
+    curl_global_init(CURL_GLOBAL_ALL);
 
-    // const int numSenders = 10;
+    HttpTransmitter http_transmitter(url);
+    (void) http_transmitter.send("1719296810737.jpg", 1719296810737l);
+    std::cout << "sent\n";
     
     // std::vector<std::thread> senders;
 

@@ -3,6 +3,7 @@
 // #include <stdio.h>
 #include <chrono>
 #include "SaveApi.h"
+#include <opencv2/opencv.hpp>
 
 
 #define IMAGE_TIMEOUT 100
@@ -59,7 +60,7 @@ void CameraController::set_default() {
     Arena::SetNodeValue<bool>(pDevice->GetTLStreamNodeMap(), "StreamAutoNegotiatePacketSize", true);
     Arena::SetNodeValue<bool>(pDevice->GetTLStreamNodeMap(), "StreamPacketResendEnable", true);
     Arena::SetNodeValue<int64_t>(pDevice->GetNodeMap(), "DeviceLinkThroughputReserve", 30);  
-    // set_pixelformat("BGR8");
+    set_pixelformat("BGR8");
 }
 
 void CameraController::writer_config() {
@@ -200,24 +201,12 @@ bool CameraController::get_image(Arena::IImage **pImage, long *timestamp) {
 }
 
 std::string CameraController::save_image(Arena::IImage *pImage, long timestamp) {
-    // if (pImage->IsIncomplete()) {
-    //     writer.SetFileNamePattern("data/INCOMPLETE-<datetime:yyMMdd_hhmmss_fff>-image<count>.jpg");
-    // } else {
-    //     writer.SetFileNamePattern("data/<datetime:yyMMdd_hhmmss_fff>-image<count>.jpg");
-    // }
-    
-    Save::ImageParams params(
-        pImage->GetWidth(),
-        pImage->GetHeight(),
-        pImage->GetBitsPerPixel());
-
-    writer.SetParams(params);
-
+    std::string extension = ".jpg";
     std::string timestamp_str = std::to_string(timestamp);
-    writer.UpdateTag("<timestampms>", timestamp_str.c_str());
-    writer.Save(pImage->GetData());
+    std::string filename = timestamp_str + extension;
+    cv::Mat img = cv::Mat((int)pImage->GetHeight(), (int)pImage->GetWidth(), CV_8UC3, (void *)pImage->GetData());
+    cv::imwrite(filename, img);
     Arena::ImageFactory::Destroy(pImage);
-    std::string filename = writer.GetLastFileName(true, true);
     return filename;
 }
 

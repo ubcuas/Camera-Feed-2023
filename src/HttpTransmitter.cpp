@@ -47,28 +47,30 @@ std::string HttpTransmitter::send(std::string image_path, long timestamp) {
     curl_mimepart *field = NULL;
 
     int attempts = 0;
-    while ((form = curl_mime_init(curl)) == NULL && attempts < MAX_ATTEMPTS) {
-        fprintf(stderr, "Failed to initialize mime handle, attempt %d of %d\n", attempts + 1, MAX_ATTEMPTS);
-        attempts++;
-    }
-
+    // while ((form = curl_mime_init(curl)) == NULL && attempts < MAX_ATTEMPTS) {
+    //     fprintf(stderr, "Failed to initialize mime handle, attempt %d of %d\n", attempts + 1, MAX_ATTEMPTS);
+    //     attempts++;
+    // }
+    form = curl_mime_init(curl);
     if (form) {
         /* Fill in the file upload field */
-        attempts = 0;
-        while ((field = curl_mime_addpart(form)) == NULL && attempts < MAX_ATTEMPTS) {
-            fprintf(stderr, "Failed to initialize mime part, attempt %d of %d\n", attempts + 1, MAX_ATTEMPTS);
-            attempts++;
-        }
+        // attempts = 0;
+        // while ((field = curl_mime_addpart(form)) == NULL && attempts < MAX_ATTEMPTS) {
+        //     fprintf(stderr, "Failed to initialize mime part, attempt %d of %d\n", attempts + 1, MAX_ATTEMPTS);
+        //     attempts++;
+        // }
+        field = curl_mime_addpart(form);
         curl_mime_name(field, "image");
+        std::cout << image_path.c_str() << "\n";
         curl_mime_filedata(field, image_path.c_str());
     
         /* Fill in the filename field */
         std::string timestamp_str = std::to_string(timestamp);
 
         // Might be unnecessary, maybe include timestamp in name
-        field = curl_mime_addpart(form);
-        curl_mime_name(field, "timestamp");
-        curl_mime_data(field, timestamp_str.c_str(), CURL_ZERO_TERMINATED);
+        // field = curl_mime_addpart(form);
+        // curl_mime_name(field, "timestamp");
+        // curl_mime_data(field, timestamp_str.c_str(), CURL_ZERO_TERMINATED);
     
         curl_easy_setopt(curl, CURLOPT_MIMEPOST, form);
 

@@ -10,7 +10,7 @@ endif()
 project(camerafeed)
 set(CMAKE_CXX_STANDARD 17)
 
-set(BUILD_LIST core,imgcodecs,highgui)
+# set(BUILD_LIST core,imgcodecs,highgui)
 
 add_executable(${PROJECT_NAME} 
     ${CMAKE_SOURCE_DIR}/src/main.cpp
@@ -69,18 +69,16 @@ target_compile_options(curltest PUBLIC
     "$<$<CONFIG:RELEASE>:-O2>"
     )
 # install(TARGETS ${PROJECT_NAME} DESTINATION bin)
-set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/")
-find_package(arena_sdk REQUIRED)
-
+find_package(OpenCV REQUIRED)
 
 include(FetchContent)
 
-FetchContent_Declare(
-  curl
-  GIT_REPOSITORY https://github.com/curl/curl.git
-  GIT_TAG         curl-8_5_0
-)
-FetchContent_MakeAvailable(curl)
+# FetchContent_Declare(
+#   curl
+#   GIT_REPOSITORY https://github.com/curl/curl.git
+#   GIT_TAG         curl-8_5_0
+# )
+# FetchContent_MakeAvailable(curl)
 
 FetchContent_Declare(
     cli11_proj
@@ -91,23 +89,30 @@ FetchContent_Declare(
 
 FetchContent_MakeAvailable(cli11_proj)
 
-FetchContent_Declare(
-        opencv
-        GIT_REPOSITORY https://github.com/opencv/opencv.git
-        GIT_TAG        4.10.0
-)
-FetchContent_MakeAvailable(opencv)
+find_package(CURL REQUIRED) 
+
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
+find_package(arena_sdk REQUIRED)
 
 
-target_include_directories(${PROJECT_NAME} PRIVATE
+#FetchContent_Declare(
+#        opencv
+#        GIT_REPOSITORY https://github.com/opencv/opencv.git
+#        GIT_TAG        4.10.0
+#)
+#FetchContent_MakeAvailable(opencv)
+
+
+target_include_directories(${PROJECT_NAME}  PRIVATE
     ${arena_sdk_INCLUDE_DIRS}
-    ${opencv_INCLUDE_DIRS}
+    ${OpenCV_INCLUDE_DIRS}
+    ${CURL_INCLUDE_DIR}
 )
 
 target_link_libraries(${PROJECT_NAME}  PRIVATE
     ${arena_sdk_LIBRARIES}
-    ${opencv_LIBRARIES}
-    CURL::libcurl
+    ${OpenCV_LIBS}
+    ${CURL_LIBRARIES}
     CLI11::CLI11
 )
 
