@@ -6,7 +6,7 @@
 #include <mutex> 
 #include <queue> 
 #include <CLI/CLI.hpp>
-// #include <opencv2/opencv.hpp>
+#include <opencv2/opencv.hpp>
 
 #include "CameraController.h"
 #include "ArenaApi.h"
@@ -42,12 +42,9 @@ void image_producer(CameraController camera_controller) {
     while (!stop_flag) {
         Arena::IImage* pImage;
         long timestamp;
-
         bool success = camera_controller.get_image(&pImage, &timestamp);
         if (success) {
-            // Arena::ImageFactory::Destroy(pImage);
-            ImageData data = {pImage, timestamp};
-            data_queue.push(data);
+            data_queue.push({pImage, timestamp});
         }
     }
 }
@@ -87,6 +84,7 @@ void image_sender(std::string url) {
 }   
 
 int main(int argc, char *argv[]) {
+    std::cout << "help me\n";
     int seconds = 0;
     float exposureTime = 0;
     float gain = 0;
@@ -100,10 +98,10 @@ int main(int argc, char *argv[]) {
 
     CLI11_PARSE(app, argc, argv);
 
-    // std::cout << seconds << '\n';
-    // std::cout << exposureTime << '\n';
-    // std::cout << gain << '\n';
-    // std::cout << url << '\n';
+    std::cout << seconds << '\n';
+    std::cout << exposureTime << '\n';
+    std::cout << gain << '\n';
+    std::cout << url << '\n';
     
     CameraController camera_controller;
 
@@ -120,7 +118,7 @@ int main(int argc, char *argv[]) {
     camera_controller.start_stream();
 
 
-    const int numProducers = 8;
+    const int numProducers = 1;
     const int numSavers = 3;
     const int numSenders = 2;
 
