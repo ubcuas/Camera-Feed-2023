@@ -2,8 +2,11 @@
 #include "ArenaApi.h"
 // #include <stdio.h>
 #include <chrono>
-#include "SaveApi.h"
 #include <opencv2/opencv.hpp>
+#include <fstream>
+#include <iostream>
+
+#include "SaveApi.h"
 
 
 #define IMAGE_TIMEOUT 100
@@ -201,12 +204,19 @@ bool CameraController::get_image(Arena::IImage **pImage, long *timestamp) {
 }
 
 std::string CameraController::save_image(Arena::IImage *pImage, long timestamp) {
+    std::vector<int> compression_params;
+    compression_params.push_back(cv::IMWRITE_JPEG_QUALITY);
+    compression_params.push_back(100); // Change the quality value (0-100)
+
     std::string extension = ".jpg";
     std::string timestamp_str = std::to_string(timestamp);
     std::string filename = timestamp_str + extension;
+
     cv::Mat img = cv::Mat((int)pImage->GetHeight(), (int)pImage->GetWidth(), CV_8UC3, (void *)pImage->GetData());
-    cv::imwrite(filename, img);
+    cv::imwrite(filename, img, compression_params);
+
     Arena::ImageFactory::Destroy(pImage);
+
     return filename;
 }
 
