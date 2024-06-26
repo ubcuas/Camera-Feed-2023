@@ -37,7 +37,18 @@ void run(int seconds)
     path_queue.abort();
     std::cout << "Aborting pop\n";
 }
+    // compression_params.push_back(cv::IMWRITE_JPEG_QUALITY);
+    // compression_params.push_back(100); // Change the quality value (0-100)
 
+    // std::string extension = ".jpg";
+    // std::string timestamp_str = std::to_string(timestamp);
+    // std::string filename = timestamp_str + extension;
+
+    // cv::Mat img = cv::Mat((int)pImage->GetHeight(), (int)pImage->GetWidth(), CV_8UC3, (void *)pImage->GetData());
+    // // cv::imwrite(filename, img, compression_params);
+    // std::vector<uchar> buf;
+
+    // cv::imencode(".jpg", img, buf, compression_params);
 void image_producer(CameraController camera_controller) {
     while (!stop_flag) {
         Arena::IImage* pImage;
@@ -119,7 +130,7 @@ int main(int argc, char *argv[]) {
 
 
     const int numProducers = 1;
-    const int numSavers = 3;
+    const int numSavers = 1;
     const int numSenders = 2;
 
     

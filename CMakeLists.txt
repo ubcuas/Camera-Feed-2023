@@ -89,6 +89,13 @@ FetchContent_Declare(
 
 FetchContent_MakeAvailable(cli11_proj)
 
+# FetchContent_Declare(
+#     cpr 
+#     GIT_REPOSITORY https://github.com/libcpr/cpr.git
+#     GIT_TAG 1.10.5
+# ) # Replace with your desired git commit from: https://github.com/libcpr/cpr/releases
+# FetchContent_MakeAvailable(cpr)
+
 find_package(CURL REQUIRED) 
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
@@ -114,11 +121,14 @@ target_link_libraries(${PROJECT_NAME}  PRIVATE
     ${OpenCV_LIBS}
     ${CURL_LIBRARIES}
     CLI11::CLI11
+    # cpr::cpr
 )
 
 target_link_libraries(curltest PRIVATE
     CURL::libcurl
     CLI11::CLI11
+    ${OpenCV_LIBS}
+    # cpr::cpr
 )
 
 
