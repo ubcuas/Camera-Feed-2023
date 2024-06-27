@@ -1,35 +1,40 @@
 import os
 import shutil
 
-from fastapi import FastAPI, File, UploadFile
-from fastapi.responses import JSONResponse
-import uvicorn
+from flask import Flask, request, jsonify
+
+app = Flask(__name__)
 
 
-app = FastAPI()
+@app.route("/", methods=["GET"])
+def feed():
+    return jsonify({"msg": "hello world"})
 
 
-@app.get("/")
-async def feed():
-    return {"msg": "hello world"}
-
-
-@app.post("/image")
-async def upload_file(image: UploadFile = File(...)):
+@app.route("/image", methods=["POST"])
+def upload_file():
     try:
         # change directory as preferred
         directory = "./imgs"
         os.makedirs(directory, exist_ok=True)
 
-        # Save the file to a specified location
-        with open(os.path.join(directory, image.filename), "wb") as buffer:
-            shutil.copyfileobj(image.file, buffer)
+        if 'image' not in request.files:
+            return jsonify({"message": "No file part"}), 400
 
-        return JSONResponse(status_code=200, content={"message": "File uploaded successfully"})
+        image = request.files['image']
+
+        if image.filename == '':
+            return jsonify({"message": "No selected file"}), 400
+
+        # Save the file to a specified location
+        file_path = os.path.join(directory, image.filename)
+        image.save(file_path)
+
+        return jsonify({"message": "File uploaded successfully"}), 200
 
     except Exception as e:
-        return JSONResponse(status_code=500, content={"message": f"Could not upload file. Error: {str(e)}"})
+        return jsonify({"message": f"Could not upload file. Error: {str(e)}"}), 500
 
 
 if __name__ == "__main__":
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    app.run(debug=True)
