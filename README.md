@@ -12,14 +12,14 @@ A C++ program for the operation and integration a LUCID GigE Vision camera.
 
 ### Dependencies
 * Cmake >= 3.22.1
-* ArenaSDK
+* ArenaSDK (https://thinklucid.com/downloads-hub/)
 ```
 sudo apt install libssl-dev
 sudo apt install nghttp2
-sudo apt-get install libopencv-dev
-
+sudo apt install libopencv-dev
+sudo apt install libcurl4-openssl-dev
 ```
-### Python version
+### Python ArenaSDK
 
 1. Download the `arena_api-2.3.3-py3-none-any.whl` wheel file if you haven't already.
 2. Place the wheel file in your project's `wheel` directory.
