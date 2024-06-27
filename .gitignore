@@ -1,4 +1,6 @@
 /wheel/arena_api-2.3.3-py3-none-any.whl
 .vscode/
+.idea/
 .devcontainer/
 /build/
+/images/
