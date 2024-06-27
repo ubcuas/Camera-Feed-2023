@@ -16,6 +16,8 @@ A C++ program for the operation and integration a LUCID GigE Vision camera.
 ```
 sudo apt install libssl-dev
 sudo apt install nghttp2
+sudo apt-get install libopencv-dev
+
 ```
 ### Python version
 

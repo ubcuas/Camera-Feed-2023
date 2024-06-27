@@ -2,12 +2,16 @@
 #include "ArenaApi.h"
 // #include <stdio.h>
 #include <chrono>
+#include <opencv2/opencv.hpp>
+#include <fstream>
+#include <iostream>
+
 #include "SaveApi.h"
 
 
-#define IMAGE_TIMEOUT 1000
+#define IMAGE_TIMEOUT 100
 
-#define FILE_NAME_PATTERN "data/<timestampms>.jpg"
+#define FILE_NAME_PATTERN "data/<timestampms>.raw"
 
 
 /*
@@ -64,16 +68,16 @@ void CameraController::set_default() {
 
 void CameraController::writer_config() {
     std::cout << "Configuring writer\n";
-    GenApi::CIntegerPtr pWidth = pDevice->GetNodeMap()->GetNode("Width");
-    GenApi::CIntegerPtr pHeight = pDevice->GetNodeMap()->GetNode("Height");
-    GenApi::CEnumerationPtr pPixelFormat = pDevice->GetNodeMap()->GetNode("PixelFormat");
+    // GenApi::CIntegerPtr pWidth = pDevice->GetNodeMap()->GetNode("Width");
+    // GenApi::CIntegerPtr pHeight = pDevice->GetNodeMap()->GetNode("Height");
+    // GenApi::CEnumerationPtr pPixelFormat = pDevice->GetNodeMap()->GetNode("PixelFormat");
+    
+    // Save::ImageParams params(
+    //     static_cast<size_t>(pWidth->GetValue()),
+    //     static_cast<size_t>(pHeight->GetValue()),
+    //     Arena::GetBitsPerPixel(pPixelFormat->GetCurrentEntry()->GetValue()));
 
-    Save::ImageParams params(
-        static_cast<size_t>(pWidth->GetValue()),
-        static_cast<size_t>(pHeight->GetValue()),
-        Arena::GetBitsPerPixel(pPixelFormat->GetCurrentEntry()->GetValue()));
-
-    writer.SetParams(params);
+    // writer.SetParams(params);
     writer.SetFileNamePattern(FILE_NAME_PATTERN);
 }
 
@@ -200,16 +204,19 @@ bool CameraController::get_image(Arena::IImage **pImage, long *timestamp) {
 }
 
 std::string CameraController::save_image(Arena::IImage *pImage, long timestamp) {
-    // if (pImage->IsIncomplete()) {
-    //     writer.SetFileNamePattern("data/INCOMPLETE-<datetime:yyMMdd_hhmmss_fff>-image<count>.jpg");
-    // } else {
-    //     writer.SetFileNamePattern("data/<datetime:yyMMdd_hhmmss_fff>-image<count>.jpg");
-    // }
+    std::vector<int> compression_params;
+    compression_params.push_back(cv::IMWRITE_JPEG_QUALITY);
+    compression_params.push_back(100); // Change the quality value (0-100)
+
+    std::string extension = ".jpg";
     std::string timestamp_str = std::to_string(timestamp);
-    writer.UpdateTag("<timestampms>", timestamp_str.c_str());
-    writer.Save(pImage->GetData());
+    std::string filename = timestamp_str + extension;
+
+    cv::Mat img = cv::Mat((int)pImage->GetHeight(), (int)pImage->GetWidth(), CV_8UC3, (void *)pImage->GetData());
+    cv::imwrite(filename, img, compression_params);
+
     Arena::ImageFactory::Destroy(pImage);
-    std::string filename = writer.GetLastFileName(true, true);
+
     return filename;
 }
 

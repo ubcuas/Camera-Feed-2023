@@ -6,7 +6,7 @@
 #include <mutex> 
 #include <queue> 
 #include <CLI/CLI.hpp>
-// #include <opencv2/opencv.hpp>
+#include <opencv2/opencv.hpp>
 
 #include "CameraController.h"
 #include "ArenaApi.h"
@@ -27,7 +27,7 @@ struct ImageData {
 TSQueue<ImageData> data_queue;
 TSQueue<ImagePath> path_queue;
 
-std::atomic<bool> stop_flag = false;
+std::atomic<bool> stop_flag = ATOMIC_VAR_INIT(false);
 
 void run(int seconds)
 {
@@ -37,19 +37,25 @@ void run(int seconds)
     path_queue.abort();
     std::cout << "Aborting pop\n";
 }
+    // compression_params.push_back(cv::IMWRITE_JPEG_QUALITY);
+    // compression_params.push_back(100); // Change the quality value (0-100)
 
-long prod_start = 0;
-long prod_end = 0;
+    // std::string extension = ".jpg";
+    // std::string timestamp_str = std::to_string(timestamp);
+    // std::string filename = timestamp_str + extension;
+
+    // cv::Mat img = cv::Mat((int)pImage->GetHeight(), (int)pImage->GetWidth(), CV_8UC3, (void *)pImage->GetData());
+    // // cv::imwrite(filename, img, compression_params);
+    // std::vector<uchar> buf;
+
+    // cv::imencode(".jpg", img, buf, compression_params);
 void image_producer(CameraController camera_controller) {
     while (!stop_flag) {
         Arena::IImage* pImage;
         long timestamp;
-
         bool success = camera_controller.get_image(&pImage, &timestamp);
         if (success) {
-            // Arena::ImageFactory::Destroy(pImage);
-            ImageData data = {pImage, timestamp};
-            data_queue.push(data);
+            data_queue.push({pImage, timestamp});
         }
     }
 }
@@ -68,6 +74,7 @@ void image_consumer(CameraController camera_controller) {
         std::string filename = camera_controller.save_image(pImage, timestamp);
         ImagePath path = {filename, timestamp};
         path_queue.push(path);
+        std::cout << "Saved " << filename << "\n";
     }
 }
 
@@ -83,10 +90,12 @@ void image_sender(std::string url) {
         std::string path = image_path.path;
         long timestamp = image_path.timestamp;
         (void) http_transmitter.send(path, timestamp);
+        std::cout << "Sent " << path << "\n";
     }
 }   
 
 int main(int argc, char *argv[]) {
+    std::cout << "help me\n";
     int seconds = 0;
     float exposureTime = 0;
     float gain = 0;
@@ -100,10 +109,10 @@ int main(int argc, char *argv[]) {
 
     CLI11_PARSE(app, argc, argv);
 
-    // std::cout << seconds << '\n';
-    // std::cout << exposureTime << '\n';
-    // std::cout << gain << '\n';
-    // std::cout << url << '\n';
+    std::cout << seconds << '\n';
+    std::cout << exposureTime << '\n';
+    std::cout << gain << '\n';
+    std::cout << url << '\n';
     
     CameraController camera_controller;
 
@@ -121,7 +130,7 @@ int main(int argc, char *argv[]) {
 
 
     const int numProducers = 1;
-    const int numSavers = 2;
+    const int numSavers = 1;
     const int numSenders = 2;
 
     
