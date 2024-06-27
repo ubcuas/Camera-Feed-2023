@@ -1,5 +1,4 @@
 import os
-import shutil
 
 from flask import Flask, request, jsonify
 
@@ -15,7 +14,7 @@ def feed():
 def upload_file():
     try:
         # change directory as preferred
-        directory = "./imgs"
+        directory = "./images"
         os.makedirs(directory, exist_ok=True)
 
         if 'image' not in request.files:

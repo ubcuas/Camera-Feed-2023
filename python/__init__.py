@@ -1,3 +1,3 @@
-from camera_feed.CameraController import CameraController
-from camera_feed.ImageProcessor import ImageProcessor
-from camera_feed.MockCameraController import MockCameraController
+from python.CameraController import CameraController
+from python.ImageProcessor import ImageProcessor
+from python.MockCameraController import MockCameraController
