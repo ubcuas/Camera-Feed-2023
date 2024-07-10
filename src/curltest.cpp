@@ -39,20 +39,20 @@ int main(int argc, char *argv[]) {
     
     curl_global_init(CURL_GLOBAL_ALL);
 
-    std::vector<int> compression_params;
+    // std::vector<int> compression_params;
 
-    compression_params.push_back(cv::IMWRITE_JPEG_QUALITY);
-    compression_params.push_back(100); // Change the quality value (0-100)
+    // compression_params.push_back(cv::IMWRITE_JPEG_QUALITY);
+    // compression_params.push_back(100); // Change the quality value (0-100)
 
-    cv::Mat img = cv::imread("1918183719895.jpg", cv::IMREAD_COLOR);
-    std::vector<uchar> buf;
+    // cv::Mat img = cv::imread("1918183719895.jpg", cv::IMREAD_COLOR);
+    // std::vector<uchar> buf;
 
-    cv::imencode(".jpg", img, buf, compression_params);
+    // cv::imencode(".jpg", img, buf, compression_params);
     
 
     HttpTransmitter http_transmitter(url);
-    // (void) http_transmitter.send(filename, 1719296810737l);
-    http_transmitter.send_imen(buf, 1918183719895l);
+    (void) http_transmitter.send(filename, 1719296810737l);
+    // http_transmitter.send_imen(buf, 1918183719895l);
     std::cout << "sent\n";
     
     // std::vector<std::thread> senders;
