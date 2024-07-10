@@ -10,10 +10,10 @@
 #define MAX_ATTEMPTS 100
 
 
-struct WriteThis {
-  const char *readptr;
-  size_t sizeleft;
-};
+// struct WriteThis {
+//   const char *readptr;
+//   size_t sizeleft;
+// };
 
 
 HttpTransmitter::HttpTransmitter(std::string setURL) : url(setURL) {
@@ -36,7 +36,8 @@ HttpTransmitter::HttpTransmitter(std::string setURL) : url(setURL) {
     // need sudo apt-get install -y nghttp2
     curl_easy_setopt(curl, CURLOPT_HTTP_VERSION,
                      (long)CURL_HTTP_VERSION_2_0);
-    
+    // curl_easy_setopt(curl, CURLOPT_VERBOSE, 1L);
+    curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
     // curl_easy_setopt(curl, CURLOPT_ERRORBUFFER, errbuf);
 
     // std::cout << "Destination endpoint: " << setURL << "\n";
@@ -99,75 +100,75 @@ std::string HttpTransmitter::send(std::string image_path, long timestamp) {
 }
 
  
-static size_t read_callback(char *dest, size_t size, size_t nmemb, void *userp)
-{
-  struct WriteThis *wt = (struct WriteThis *)userp;
-  size_t buffer_size = size*nmemb;
+// static size_t read_callback(char *dest, size_t size, size_t nmemb, void *userp)
+// {
+//   struct WriteThis *wt = (struct WriteThis *)userp;
+//   size_t buffer_size = size*nmemb;
  
-  if(wt->sizeleft) {
-    /* copy as much as possible from the source to the destination */
-    size_t copy_this_much = wt->sizeleft;
-    if(copy_this_much > buffer_size)
-      copy_this_much = buffer_size;
-    memcpy(dest, wt->readptr, copy_this_much);
+//   if(wt->sizeleft) {
+//     /* copy as much as possible from the source to the destination */
+//     size_t copy_this_much = wt->sizeleft;
+//     if(copy_this_much > buffer_size)
+//       copy_this_much = buffer_size;
+//     memcpy(dest, wt->readptr, copy_this_much);
  
-    wt->readptr += copy_this_much;
-    wt->sizeleft -= copy_this_much;
-    return copy_this_much; /* we copied this many bytes */
-  }
+//     wt->readptr += copy_this_much;
+//     wt->sizeleft -= copy_this_much;
+//     return copy_this_much; /* we copied this many bytes */
+//   }
  
-  return 0; /* no more data left to deliver */
-}
+//   return 0; /* no more data left to deliver */
+// }
 
 
 
-std::string HttpTransmitter::send_imen(std::vector<unsigned char> buffer, long timestamp) {
-    CURLcode res;
+// std::string HttpTransmitter::send_imen(std::vector<unsigned char> buffer, long timestamp) {
+//     CURLcode res;
     
 
-    int attempts = 0;
-    struct WriteThis wt;
-    const char* buf = (const char*)(buffer.data());
-    wt.readptr = &buf[0];
-    wt.sizeleft = buffer.size();
-    std::string timestamp_str = std::to_string(timestamp);
+//     int attempts = 0;
+//     struct WriteThis wt;
+//     const char* buf = (const char*)(buffer.data());
+//     wt.readptr = &buf[0];
+//     wt.sizeleft = buffer.size();
+//     std::string timestamp_str = std::to_string(timestamp);
 
-    // std::string endpoint = url + "/" + timestamp_str.c_str();
-    // std::cout << endpoint << "\n";
-    curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L);
+//     // std::string endpoint = url + "/" + timestamp_str.c_str();
+//     // std::cout << endpoint << "\n";
+//     curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L);
 
-    curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
-    /* Now specify we want to POST data */
-    curl_easy_setopt(curl, CURLOPT_POST, 1L);
-    const char *data = "";
-    curl_easy_setopt(curl, CURLOPT_POSTFIELDS, data);
+//     curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
+//     /* Now specify we want to POST data */
+//     curl_easy_setopt(curl, CURLOPT_POST, 1L);
+//     const char *data = "";
+//     curl_easy_setopt(curl, CURLOPT_POSTFIELDS, data);
 
-    // /* we want to use our own read function */
-    // curl_easy_setopt(curl, CURLOPT_READFUNCTION, read_callback);
+//     // /* we want to use our own read function */
+//     // curl_easy_setopt(curl, CURLOPT_READFUNCTION, read_callback);
 
-    // /* pointer to pass to our read function */
-    // curl_easy_setopt(curl, CURLOPT_READDATA, &wt);
+//     // /* pointer to pass to our read function */
+//     // curl_easy_setopt(curl, CURLOPT_READDATA, &wt);
 
-    /* get verbose debug output please */
-    curl_easy_setopt(curl, CURLOPT_VERBOSE, 1L);
+//     /* get verbose debug output please */
+//     curl_easy_setopt(curl, CURLOPT_VERBOSE, 1L);
 
-    /*
-    If you use POST to an HTTP 1.1 server, you can send data without knowing
-    the size before starting the POST if you use chunked encoding. You
-    enable this by adding a header like "Transfer-Encoding: chunked" with
-    CURLOPT_HTTPHEADER. With HTTP 1.0 or without chunked transfer, you must
-    specify the size in the request.
-    */
+//     /*
+//     If you use POST to an HTTP 1.1 server, you can send data without knowing
+//     the size before starting the POST if you use chunked encoding. You
+//     enable this by adding a header like "Transfer-Encoding: chunked" with
+//     CURLOPT_HTTPHEADER. With HTTP 1.0 or without chunked transfer, you must
+//     specify the size in the request.
+//     */
 
-    /* Set the expected POST size. If you want to POST large amounts of data,
-    consider CURLOPT_POSTFIELDSIZE_LARGE */
-    // curl_easy_setopt(curl, CURLOPT_POSTFIELDSIZE, (long)wt.sizeleft);
+//     /* Set the expected POST size. If you want to POST large amounts of data,
+//     consider CURLOPT_POSTFIELDSIZE_LARGE */
+//     // curl_easy_setopt(curl, CURLOPT_POSTFIELDSIZE, (long)wt.sizeleft);
 
-    while ((res = curl_easy_perform(curl)) != CURLE_OK && attempts < MAX_ATTEMPTS) {
-        fprintf(stderr, "Failed to send request, attempt %d of %d: %s\n", attempts + 1, MAX_ATTEMPTS, curl_easy_strerror(res));
-        attempts++;
-        std::this_thread::sleep_for (std::chrono::seconds(1));
-    }
+//     while ((res = curl_easy_perform(curl)) != CURLE_OK && attempts < MAX_ATTEMPTS) {
+//         fprintf(stderr, "Failed to send request, attempt %d of %d: %s\n", attempts + 1, MAX_ATTEMPTS, curl_easy_strerror(res));
+//         attempts++;
+//         std::this_thread::sleep_for (std::chrono::seconds(1));
+//     }
     
-    return ""; // Placeholder response
-}
+//     return ""; // Placeholder response
+// }
