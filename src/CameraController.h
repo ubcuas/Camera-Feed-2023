@@ -65,10 +65,10 @@ public:
     /**
      * @brief Retrieves an image from the camera.
      * @param pImage A pointer to an Arena::IImage pointer to store the retrieved image.
-     * @param timestamp A pointer to a long to store the image timestamp.
+     * @param timestamp A pointer to a 64-bit integer to store the image timestamp.
      * @return A boolean indicating success (true) or failure (false).
      */
-    bool get_image(Arena::IImage **pImage, long *timestamp);
+    bool get_image(Arena::IImage **pImage, int64_t *timestamp);
 
     /**
      * @brief Saves an image to disk.
@@ -76,7 +76,7 @@ public:
      * @param timestamp The UNIX timestamp in milliseconds associated with the image.
      * @return A string containing the file path of the saved image.
      */
-    std::string save_image(Arena::IImage *pImage, long timestamp);
+    std::string save_image(Arena::IImage *pImage, int64_t timestamp);
     
 private:
     Arena::ISystem* pSystem;      /**< Pointer to the system object. */

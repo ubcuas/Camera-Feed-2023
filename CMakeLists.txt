@@ -8,17 +8,14 @@ endif()
 
 
 project(camerafeed)
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 20)
 
-# set(BUILD_LIST core,imgcodecs,highgui)
 
 add_executable(${PROJECT_NAME} 
     ${CMAKE_SOURCE_DIR}/src/main.cpp
     ${CMAKE_SOURCE_DIR}/src/CameraController.cpp
     ${CMAKE_SOURCE_DIR}/src/HttpTransmitter.cpp)
 
-# add_executable(multithread
-#     ${CMAKE_SOURCE_DIR}/src/multithreadtest.cpp)
 
 add_executable(curltest
     ${CMAKE_SOURCE_DIR}/src/curltest.cpp
@@ -44,7 +41,7 @@ target_compile_options(${PROJECT_NAME} PUBLIC
     # "-Wswitch-enum"
     "-Wvla"
     "$<$<CONFIG:DEBUG>:-O0;-g3;-ggdb>"
-    "$<$<CONFIG:RELEASE>:-O2>"
+    "$<$<CONFIG:RELEASE>:-O2>" # I don't know if O2 or O3 is better
     )
 
 target_compile_options(curltest PUBLIC 
@@ -69,6 +66,7 @@ target_compile_options(curltest PUBLIC
     "$<$<CONFIG:RELEASE>:-O2>"
     )
 # install(TARGETS ${PROJECT_NAME} DESTINATION bin)
+set(BUILD_LIST core,imgcodecs,highgui)
 find_package(OpenCV REQUIRED)
 
 include(FetchContent)
@@ -121,14 +119,17 @@ target_link_libraries(${PROJECT_NAME}  PRIVATE
     ${OpenCV_LIBS}
     ${CURL_LIBRARIES}
     CLI11::CLI11
-    # cpr::cpr
+)
+
+target_include_directories(curltest  PRIVATE
+    ${OpenCV_INCLUDE_DIRS}
+    ${CURL_INCLUDE_DIR}
 )
 
 target_link_libraries(curltest PRIVATE
-    CURL::libcurl
-    CLI11::CLI11
     ${OpenCV_LIBS}
-    # cpr::cpr
+    ${CURL_LIBRARIES}
+    CLI11::CLI11
 )
 
 
