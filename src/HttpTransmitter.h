@@ -9,14 +9,13 @@
 
 class HttpTransmitter {
 public:
-    HttpTransmitter(std::string setURL);
+    HttpTransmitter();
     ~HttpTransmitter();
-    std::string send(std::string image_path, long timestamp);
-    std::string send_imen(std::vector<unsigned char> buffer, long timestamp);
+    bool send_imgfile(std::string url, std::string file_path, int64_t timestamp);
+    bool send_imen(std::string url, std::vector<unsigned char> buffer, int64_t timestamp);
 
 
 private:
-    std::string url;
     CURL *curl;
 };
 

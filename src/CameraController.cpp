@@ -177,7 +177,7 @@ void CameraController::stop_stream() {
     pDevice->StopStream();
 }
 
-bool CameraController::get_image(Arena::IImage **pImage, long *timestamp) {
+bool CameraController::get_image(Arena::IImage **pImage, int64_t *timestamp) {
     try {
         if (trigger_state) {
             Arena::ExecuteNode(
@@ -203,7 +203,7 @@ bool CameraController::get_image(Arena::IImage **pImage, long *timestamp) {
     return true;
 }
 
-std::string CameraController::save_image(Arena::IImage *pImage, long timestamp) {
+std::string CameraController::save_image(Arena::IImage *pImage, int64_t timestamp) {
     std::vector<int> compression_params;
     compression_params.push_back(cv::IMWRITE_JPEG_QUALITY);
     compression_params.push_back(100); // Change the quality value (0-100)

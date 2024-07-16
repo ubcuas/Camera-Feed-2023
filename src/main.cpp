@@ -37,18 +37,7 @@ void run(int seconds)
     path_queue.abort();
     std::cout << "Aborting pop\n";
 }
-    // compression_params.push_back(cv::IMWRITE_JPEG_QUALITY);
-    // compression_params.push_back(100); // Change the quality value (0-100)
 
-    // std::string extension = ".jpg";
-    // std::string timestamp_str = std::to_string(timestamp);
-    // std::string filename = timestamp_str + extension;
-
-    // cv::Mat img = cv::Mat((int)pImage->GetHeight(), (int)pImage->GetWidth(), CV_8UC3, (void *)pImage->GetData());
-    // // cv::imwrite(filename, img, compression_params);
-    // std::vector<uchar> buf;
-
-    // cv::imencode(".jpg", img, buf, compression_params);
 void image_producer(CameraController camera_controller) {
     while (!stop_flag) {
         Arena::IImage* pImage;
@@ -60,7 +49,32 @@ void image_producer(CameraController camera_controller) {
     }
 }
 
-void image_consumer(CameraController camera_controller) {
+// void image_saver(CameraController camera_controller) {
+//     while (!stop_flag) {
+//         ImageData data;
+//         try {
+//             data = data_queue.pop();
+//         } catch(const AbortedPopException& e) {
+//             break;
+//         }
+//         Arena::IImage* pImage = data.pImage;
+//         long timestamp = data.timestamp;
+
+//         std::string filename = camera_controller.save_image(pImage, timestamp);
+//         ImagePath path = {filename, timestamp};
+//         path_queue.push(path);
+//         std::cout << "Saved " << filename << "\n";
+//     }
+// }
+
+void image_sender_imen(std::string url) {
+    HttpTransmitter http_transmitter;
+    std::vector<int> compression_params;
+    compression_params.push_back(cv::IMWRITE_JPEG_QUALITY);
+    compression_params.push_back(100); // Change the quality value (0-100)
+
+    std::string extension = ".jpg";
+
     while (!stop_flag) {
         ImageData data;
         try {
@@ -69,30 +83,34 @@ void image_consumer(CameraController camera_controller) {
             break;
         }
         Arena::IImage* pImage = data.pImage;
-        long timestamp = data.timestamp;
+        int64_t timestamp = data.timestamp;
 
-        std::string filename = camera_controller.save_image(pImage, timestamp);
-        ImagePath path = {filename, timestamp};
-        path_queue.push(path);
-        std::cout << "Saved " << filename << "\n";
+        cv::Mat img = cv::Mat((int)pImage->GetHeight(), (int)pImage->GetWidth(), CV_8UC3, const_cast<uint8_t*>(pImage->GetData()));
+        std::vector<uchar> buf;
+        cv::imencode(".jpg", img, buf, compression_params);
+        Arena::ImageFactory::Destroy(pImage);
+
+        (void) http_transmitter.send_imen(url, buf, timestamp);
+        std::cout << "Sent " << timestamp << "\n";
     }
 }
 
-void image_sender(std::string url) {
-    HttpTransmitter http_transmitter(url);
-    while (!stop_flag) {
-        ImagePath image_path;
-        try {
-            image_path = path_queue.pop();
-        } catch(const AbortedPopException& e) {
-            break;
-        }
-        std::string path = image_path.path;
-        long timestamp = image_path.timestamp;
-        (void) http_transmitter.send(path, timestamp);
-        std::cout << "Sent " << path << "\n";
-    }
-}   
+// void image_sender(std::string url) {
+//     HttpTransmitter http_transmitter;
+//     while (!stop_flag) {
+//         ImagePath image_path;
+//         try {
+//             image_path = path_queue.pop();
+//         } catch(const AbortedPopException& e) {
+//             break;
+//         }
+//         std::string path = image_path.path;
+//         long timestamp = image_path.timestamp;
+//         (void) http_transmitter.send_imgfile(url, path, timestamp);
+//         std::cout << "Sent " << path << "\n";
+//     }
+// }
+
 
 int main(int argc, char *argv[]) {
     std::cout << "help me\n";
@@ -130,7 +148,7 @@ int main(int argc, char *argv[]) {
 
 
     const int numProducers = 1;
-    const int numSavers = 1;
+    // const int numSavers = 1;
     const int numSenders = 2;
 
     
@@ -143,17 +161,23 @@ int main(int argc, char *argv[]) {
     }
     std::cout << "CAMERA ONLINE\n";
 
-    for (int i = 0; i < numSavers; i++) {
-        savers.push_back(std::thread(image_consumer, camera_controller));
-    }
-    std::cout << "WRITER ONLINE\n";
+    // for (int i = 0; i < numSavers; i++) {
+    //     savers.push_back(std::thread(image_saver, camera_controller));
+    // }
+    // std::cout << "WRITER ONLINE\n";
+
+    // if (!url.empty()) {
+    //     for (int i = 0; i < numSenders; i++) {
+    //         senders.push_back(std::thread(image_sender, url));
+    //     }
+    //     std::cout << "TRANSMITTER ONLINE\n";
+    // }
 
     if (!url.empty()) {
         for (int i = 0; i < numSenders; i++) {
-            senders.push_back(std::thread(image_sender, url));
+            senders.push_back(std::thread(image_sender_imen, url));
         }
         std::cout << "TRANSMITTER ONLINE\n";
-
     }
     
     std::cout << "ALL SYSTEMS NOMINAL\n";
@@ -162,12 +186,12 @@ int main(int argc, char *argv[]) {
     for (std::thread& producer : producers) {
         producer.join();
     }
-    std::cout << "Producers joined\n";
+    // std::cout << "Producers joined\n";
 
-    for (std::thread& saver : savers) {
-        saver.join();
-    }
-    std::cout << "Savers joined\n";
+    // for (std::thread& saver : savers) {
+    //     saver.join();
+    // }
+    // std::cout << "Savers joined\n";
 
     if (!url.empty()) {
         for (std::thread& sender : senders) {
