@@ -77,6 +77,11 @@ public:
      * @return A string containing the file path of the saved image.
      */
     std::string save_image(Arena::IImage *pImage, int64_t timestamp);
+
+    /**
+     * @brief Prints statistics of stream session.
+     */
+    void get_statistics();
     
 private:
     Arena::ISystem* pSystem;      /**< Pointer to the system object. */

@@ -9,13 +9,20 @@
 #include "HttpTransmitter.h"
 
 
-// void image_sender(std::string url) {
-//     HttpTransmitter http_transmitter(url);
-//     for (int i = 0; i < 1; i++) {
-//         (void) http_transmitter.send("asdf.txt", 1719296810737l);
-//         std::cout << "sent\n";
-//     }
-// }
+void image_sender(std::string url) {
+    HttpTransmitter http_transmitter;
+    while (1) {
+        std::vector<int> compression_params;
+
+        compression_params.push_back(cv::IMWRITE_JPEG_QUALITY);
+        compression_params.push_back(100); // Change the quality value (0-100)
+
+        cv::Mat img = cv::imread("1721280101439.jpg", cv::IMREAD_COLOR);
+        std::vector<uchar> buf;
+        cv::imencode(".jpg", img, buf, compression_params);
+        // http_transmitter.send_imen(url, &buf, 1918183719895l);
+    }
+}
 
 int main(int argc, char *argv[]) {
     // int runtime = 0;
@@ -39,22 +46,24 @@ int main(int argc, char *argv[]) {
     
     curl_global_init(CURL_GLOBAL_ALL);
 
-    std::vector<int> compression_params;
-
-    compression_params.push_back(cv::IMWRITE_JPEG_QUALITY);
-    compression_params.push_back(100); // Change the quality value (0-100)
-
-    cv::Mat img = cv::imread("1719296810737.jpg", cv::IMREAD_COLOR);
-    std::vector<uchar> buf;
-    cv::imencode(".jpg", img, buf, compression_params);
     
 
-    HttpTransmitter http_transmitter;
+    // HttpTransmitter http_transmitter;
     // (void) http_transmitter.send_imgfile(url, filename, 1719296810737l);
-    http_transmitter.send_imen(url, buf, 1918183719895l);
+    // while (1) {
+    //     std::vector<int> compression_params;
+
+    //     compression_params.push_back(cv::IMWRITE_JPEG_QUALITY);
+    //     compression_params.push_back(100); // Change the quality value (0-100)
+
+    //     cv::Mat img = cv::imread("1721280101439.jpg", cv::IMREAD_COLOR);
+    //     std::vector<uchar> buf;
+    //     cv::imencode(".jpg", img, buf, compression_params);
+    //     http_transmitter.send_imen(url, buf, 1918183719895l);
+    // }
     std::cout << "sent\n";
-    
-    // std::vector<std::thread> senders;
+    int numSenders = 1;
+    std::vector<std::thread> senders;
 
     // for (int i = 0; i < numSenders; i++) {
     //     senders.push_back(std::thread(image_sender, url));

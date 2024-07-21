@@ -220,6 +220,16 @@ std::string CameraController::save_image(Arena::IImage *pImage, int64_t timestam
     return filename;
 }
 
+void CameraController::get_statistics() {
+    // int missed_packets = Arena::GetNodeValue(pDevice->GetTLStreamNodeMap(), "StreamMissedPacketCount");
+    // int missed_images = Arena::GetNodeValue(pDevice->GetTLStreamNodeMap(), "StreamMissedImageCount");
+    // int lost_frames = Arena::GetNodeValue(pDevice->GetTLStreamNodeMap(), "StreamLostFrameCount");
+    // int frames = Arena::GetNodeValue(pDevice->GetTLStreamNodeMap(), "StreamStartedFrameCount");
+    // int delivered_frames = Arena::GetNodeValue(pDevice->GetTLStreamNodeMap(), "StreamDeliveredFrameCount");
+    // int fram_count = Arena::GetNodeValue(pDevice->GetTLStreamNodeMap(), "StreamStartedFrameCount");
+    // int fram_count = Arena::GetNodeValue(pDevice->GetTLStreamNodeMap(), "StreamStartedFrameCount");
+}
+
 void CameraController::cleanup() {
     std::cout << "Cleaning up\n";
     pSystem->DestroyDevice(pDevice);

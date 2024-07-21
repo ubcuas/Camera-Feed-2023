@@ -4,3 +4,4 @@
 .devcontainer/
 /build/
 /images/
+/venv/
