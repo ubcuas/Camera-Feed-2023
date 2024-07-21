@@ -30,7 +30,7 @@ struct ImageData {
 };
 
 struct EncodedData {
-    std::shared_ptr<std::vector<uchar>> buf_ptr;
+    std::unique_ptr<std::vector<uchar>> buf_ptr;
     int64_t timestamp;
 };
 
@@ -86,7 +86,7 @@ void image_processor() {
     HttpTransmitter http_transmitter;
     std::vector<int> compression_params;
     compression_params.push_back(cv::IMWRITE_JPEG_QUALITY);
-    compression_params.push_back(100); // Change the quality value (0-100)
+    compression_params.push_back(100); // Change the quality value (0-100), 100 is least compression and cpu usage
 
     std::string extension = ".jpg";
 
@@ -108,9 +108,7 @@ void image_processor() {
 
         cv::imencode(".jpg", img, *buf_ptr, compression_params);
         Arena::ImageFactory::Destroy(pImage);
-
         encoded_queue.push({std::move(buf_ptr), timestamp});
-
     }
 }
 
@@ -126,16 +124,13 @@ void image_sender_imen(std::string url) {
     while (!stop_flag) {
         EncodedData element;
         try {
-            // std::cout << id << " getting image\n";
             element = encoded_queue.pop();
-            // std::cout << id << " got image\n";
         } catch(const AbortedPopException& e) {
             break;
         }
-        std::shared_ptr<std::vector<uchar>> buf_ptr = std::move(element.buf_ptr);
-        int64_t timestamp = element.timestamp;
 
-        http_transmitter.send_imen(url, buf_ptr, timestamp);
+        // Transfers ownership send_imen
+        http_transmitter.send_imen(url, std::move(element.buf_ptr), element.timestamp);
         // (void) std::async(std::launch::async, &HttpTransmitter::send_imen, &http_transmitter, url, &buf, timestamp);
     }
 }
