@@ -6,26 +6,37 @@
 #include <mutex> 
 #include <queue> 
 #include <CLI/CLI.hpp>
+#include <future>
+#include <pthread.h>
+#include <memory>
 #include <opencv2/opencv.hpp>
 
 #include "CameraController.h"
 #include "ArenaApi.h"
 #include "TSQueue.h"
 #include "HttpTransmitter.h"
+#include "CprHTTP.h"
+
 
 
 struct ImagePath {
     std::string path;
-    long timestamp;
+    int64_t timestamp;
 };
 
 struct ImageData {
     Arena::IImage* pImage;
-    long timestamp;
+    int64_t timestamp;
+};
+
+struct EncodedData {
+    std::shared_ptr<std::vector<uchar>> buf_ptr;
+    int64_t timestamp;
 };
 
 TSQueue<ImageData> data_queue;
 TSQueue<ImagePath> path_queue;
+TSQueue<EncodedData> encoded_queue;
 
 std::atomic<bool> stop_flag = ATOMIC_VAR_INIT(false);
 
@@ -35,13 +46,14 @@ void run(int seconds)
     stop_flag = true;
     data_queue.abort();
     path_queue.abort();
+    encoded_queue.abort();
     std::cout << "Aborting pop\n";
 }
 
 void image_producer(CameraController camera_controller) {
     while (!stop_flag) {
         Arena::IImage* pImage;
-        long timestamp;
+        int64_t timestamp;
         bool success = camera_controller.get_image(&pImage, &timestamp);
         if (success) {
             data_queue.push({pImage, timestamp});
@@ -49,25 +61,28 @@ void image_producer(CameraController camera_controller) {
     }
 }
 
-// void image_saver(CameraController camera_controller) {
-//     while (!stop_flag) {
-//         ImageData data;
-//         try {
-//             data = data_queue.pop();
-//         } catch(const AbortedPopException& e) {
-//             break;
-//         }
-//         Arena::IImage* pImage = data.pImage;
-//         long timestamp = data.timestamp;
+void image_saver(CameraController camera_controller) {
+    while (!stop_flag) {
+        ImageData element;
+        try {
+            element = data_queue.pop();
+        } catch(const AbortedPopException& e) {
+            break;
+        }
+        Arena::IImage* pImage = element.pImage;
+        int64_t timestamp = element.timestamp;
 
-//         std::string filename = camera_controller.save_image(pImage, timestamp);
-//         ImagePath path = {filename, timestamp};
-//         path_queue.push(path);
-//         std::cout << "Saved " << filename << "\n";
-//     }
-// }
+        // std::string filename = camera_controller.save_image(pImage, timestamp);
+        std::future<std::string> future = std::async(std::launch::async, &CameraController::save_image, &camera_controller, pImage, timestamp);
+        std::string filename = future.get();
+        ImagePath path = {filename, timestamp};
+        path_queue.push(path);
+        std::cout << "Saved " << filename << "\n";
+    }
+}
 
-void image_sender_imen(std::string url) {
+void image_processor() {
+    // HttpTransmitter http_transmitter;
     HttpTransmitter http_transmitter;
     std::vector<int> compression_params;
     compression_params.push_back(cv::IMWRITE_JPEG_QUALITY);
@@ -76,22 +91,52 @@ void image_sender_imen(std::string url) {
     std::string extension = ".jpg";
 
     while (!stop_flag) {
-        ImageData data;
+        ImageData element;
         try {
-            data = data_queue.pop();
+            // std::cout << id << " getting image\n";
+            element = data_queue.pop();
+            // std::cout << id << " got image\n";
         } catch(const AbortedPopException& e) {
             break;
         }
-        Arena::IImage* pImage = data.pImage;
-        int64_t timestamp = data.timestamp;
+        Arena::IImage* pImage = element.pImage;
+        int64_t timestamp = element.timestamp;
 
         cv::Mat img = cv::Mat((int)pImage->GetHeight(), (int)pImage->GetWidth(), CV_8UC3, const_cast<uint8_t*>(pImage->GetData()));
         std::vector<uchar> buf;
-        cv::imencode(".jpg", img, buf, compression_params);
+        std::unique_ptr<std::vector<uchar>> buf_ptr = std::make_unique<std::vector<uchar>>();
+
+        cv::imencode(".jpg", img, *buf_ptr, compression_params);
         Arena::ImageFactory::Destroy(pImage);
 
-        (void) http_transmitter.send_imen(url, buf, timestamp);
-        std::cout << "Sent " << timestamp << "\n";
+        encoded_queue.push({std::move(buf_ptr), timestamp});
+
+    }
+}
+
+void image_sender_imen(std::string url) {
+    // HttpTransmitter http_transmitter;
+    HttpTransmitter http_transmitter;
+    std::vector<int> compression_params;
+    compression_params.push_back(cv::IMWRITE_JPEG_QUALITY);
+    compression_params.push_back(100); // Change the quality value (0-100)
+
+    std::string extension = ".jpg";
+
+    while (!stop_flag) {
+        EncodedData element;
+        try {
+            // std::cout << id << " getting image\n";
+            element = encoded_queue.pop();
+            // std::cout << id << " got image\n";
+        } catch(const AbortedPopException& e) {
+            break;
+        }
+        std::shared_ptr<std::vector<uchar>> buf_ptr = std::move(element.buf_ptr);
+        int64_t timestamp = element.timestamp;
+
+        http_transmitter.send_imen(url, buf_ptr, timestamp);
+        // (void) std::async(std::launch::async, &HttpTransmitter::send_imen, &http_transmitter, url, &buf, timestamp);
     }
 }
 
@@ -126,11 +171,6 @@ int main(int argc, char *argv[]) {
     app.add_option("-u,--url", url, "Set URL");
 
     CLI11_PARSE(app, argc, argv);
-
-    std::cout << seconds << '\n';
-    std::cout << exposureTime << '\n';
-    std::cout << gain << '\n';
-    std::cout << url << '\n';
     
     CameraController camera_controller;
 
@@ -141,39 +181,43 @@ int main(int argc, char *argv[]) {
     if (gain != 0) {
         camera_controller.set_gain(exposureTime);
     }
-
-    // camera_controller.set_trigger(true);
     
     camera_controller.start_stream();
 
+    const int numProcessors = 1;
+    const int numSenders = 1;
 
-    const int numProducers = 1;
-    // const int numSavers = 1;
-    const int numSenders = 2;
+    std::thread producer = std::thread(image_producer, camera_controller);
+    // cpu_set_t cpuset;
+    // CPU_ZERO(&cpuset);
+    // CPU_SET(0, &cpuset); // Change the core number as needed
 
-    
-    std::vector<std::thread> producers;
-    std::vector<std::thread> savers;
-    std::vector<std::thread> senders;
-    
-    for (int i = 0; i < numProducers; i++) {
-        producers.push_back(std::thread(image_producer, camera_controller));
-    }
+    // int result = pthread_setaffinity_np(producer.native_handle(), sizeof(cpu_set_t), &cpuset);
+    // if (result != 0) {
+    //     std::cerr << "Error setting thread affinity: " << result << std::endl;
+    // } else {
+    //     std::cout << "Successfully set thread affinity to core 0" << std::endl;
+    // }
+
+    // // Set thread priority to maximum
+    // struct sched_param param;
+    // param.sched_priority = sched_get_priority_max(SCHED_FIFO);
+
+    // // Set the scheduling policy and priority
+    // if(pthread_setschedparam(producer.native_handle(), SCHED_FIFO, &param) != 0) {
+    //     std::cerr << "Failed to set thread priority\n";
+    //     return 1;
+    // }
+
     std::cout << "CAMERA ONLINE\n";
+    std::vector<std::thread> processors;
+    for (int i = 0; i < numProcessors; i++) {
+        processors.push_back(std::thread(image_processor));
+    }
 
-    // for (int i = 0; i < numSavers; i++) {
-    //     savers.push_back(std::thread(image_saver, camera_controller));
-    // }
-    // std::cout << "WRITER ONLINE\n";
-
-    // if (!url.empty()) {
-    //     for (int i = 0; i < numSenders; i++) {
-    //         senders.push_back(std::thread(image_sender, url));
-    //     }
-    //     std::cout << "TRANSMITTER ONLINE\n";
-    // }
-
+    std::vector<std::thread> senders;
     if (!url.empty()) {
+        curl_global_init(CURL_GLOBAL_ALL);
         for (int i = 0; i < numSenders; i++) {
             senders.push_back(std::thread(image_sender_imen, url));
         }
@@ -183,21 +227,16 @@ int main(int argc, char *argv[]) {
     std::cout << "ALL SYSTEMS NOMINAL\n";
     run(seconds);
 
-    for (std::thread& producer : producers) {
-        producer.join();
-    }
-    // std::cout << "Producers joined\n";
+    producer.join();
 
-    // for (std::thread& saver : savers) {
-    //     saver.join();
-    // }
-    // std::cout << "Savers joined\n";
+    for (std::thread& processor : processors) {
+        processor.join();
+    }
 
     if (!url.empty()) {
         for (std::thread& sender : senders) {
             sender.join();
         }
-        std::cout << "Senders joined\n";
     }
 
     camera_controller.stop_stream();

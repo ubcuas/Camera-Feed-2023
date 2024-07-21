@@ -14,12 +14,13 @@ set(CMAKE_CXX_STANDARD 20)
 add_executable(${PROJECT_NAME} 
     ${CMAKE_SOURCE_DIR}/src/main.cpp
     ${CMAKE_SOURCE_DIR}/src/CameraController.cpp
-    ${CMAKE_SOURCE_DIR}/src/HttpTransmitter.cpp)
+    ${CMAKE_SOURCE_DIR}/src/HttpTransmitter.cpp
+    ${CMAKE_SOURCE_DIR}/src/CprHTTP.cpp)
 
 
-add_executable(curltest
-    ${CMAKE_SOURCE_DIR}/src/curltest.cpp
-    ${CMAKE_SOURCE_DIR}/src/HttpTransmitter.cpp)
+# add_executable(curltest
+#     ${CMAKE_SOURCE_DIR}/src/curltest.cpp
+#     ${CMAKE_SOURCE_DIR}/src/HttpTransmitter.cpp)
 
 
 target_compile_options(${PROJECT_NAME} PUBLIC 
@@ -44,27 +45,27 @@ target_compile_options(${PROJECT_NAME} PUBLIC
     "$<$<CONFIG:RELEASE>:-O2>" # I don't know if O2 or O3 is better
     )
 
-target_compile_options(curltest PUBLIC 
-    "-Wall" 
-    "-Wextra" 
-    "-Wpedantic" 
-    "-Wcast-align" 
-    "-Wcast-qual" 
-    "-Wdisabled-optimization" 
-    "-Wduplicated-branches"
-    "-Wduplicated-cond"
-    "-Wformat=2"
-    "-Wlogical-op"
-    "-Wmissing-include-dirs"
-    "-Wnull-dereference"
-    "-Woverloaded-virtual"
-    "-Wpointer-arith"
-    "-Wshadow"
-    # "-Wswitch-enum"
-    "-Wvla"
-    "$<$<CONFIG:DEBUG>:-O0;-g3;-ggdb>"
-    "$<$<CONFIG:RELEASE>:-O2>"
-    )
+# target_compile_options(curltest PUBLIC 
+#     "-Wall" 
+#     "-Wextra" 
+#     "-Wpedantic" 
+#     "-Wcast-align" 
+#     "-Wcast-qual" 
+#     "-Wdisabled-optimization" 
+#     "-Wduplicated-branches"
+#     "-Wduplicated-cond"
+#     "-Wformat=2"
+#     "-Wlogical-op"
+#     "-Wmissing-include-dirs"
+#     "-Wnull-dereference"
+#     "-Woverloaded-virtual"
+#     "-Wpointer-arith"
+#     "-Wshadow"
+#     # "-Wswitch-enum"
+#     "-Wvla"
+#     "$<$<CONFIG:DEBUG>:-O0;-g3;-ggdb>"
+#     "$<$<CONFIG:RELEASE>:-O2>"
+#     )
 # install(TARGETS ${PROJECT_NAME} DESTINATION bin)
 set(BUILD_LIST core,imgcodecs,highgui)
 find_package(OpenCV REQUIRED)
@@ -87,12 +88,12 @@ FetchContent_Declare(
 
 FetchContent_MakeAvailable(cli11_proj)
 
-# FetchContent_Declare(
-#     cpr 
-#     GIT_REPOSITORY https://github.com/libcpr/cpr.git
-#     GIT_TAG 1.10.5
-# ) # Replace with your desired git commit from: https://github.com/libcpr/cpr/releases
-# FetchContent_MakeAvailable(cpr)
+FetchContent_Declare(
+    cpr 
+    GIT_REPOSITORY https://github.com/libcpr/cpr.git
+    GIT_TAG 1.10.5
+) # Replace with your desired git commit from: https://github.com/libcpr/cpr/releases
+FetchContent_MakeAvailable(cpr)
 
 find_package(CURL REQUIRED) 
 
@@ -119,18 +120,19 @@ target_link_libraries(${PROJECT_NAME}  PRIVATE
     ${OpenCV_LIBS}
     ${CURL_LIBRARIES}
     CLI11::CLI11
+    cpr::cpr
 )
 
-target_include_directories(curltest  PRIVATE
-    ${OpenCV_INCLUDE_DIRS}
-    ${CURL_INCLUDE_DIR}
-)
+# target_include_directories(curltest  PRIVATE
+#     ${OpenCV_INCLUDE_DIRS}
+#     ${CURL_INCLUDE_DIR}
+# )
 
-target_link_libraries(curltest PRIVATE
-    ${OpenCV_LIBS}
-    ${CURL_LIBRARIES}
-    CLI11::CLI11
-)
+# target_link_libraries(curltest PRIVATE
+#     ${OpenCV_LIBS}
+#     ${CURL_LIBRARIES}
+#     CLI11::CLI11
+# )
 
 
 # sudo apt-get install libssh2-1-dev

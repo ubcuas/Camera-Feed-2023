@@ -5,6 +5,8 @@
 #include <curl/curl.h>
 #include <vector>
 #include <cuchar>
+#include <memory>
+#include <opencv2/opencv.hpp>
 
 
 class HttpTransmitter {
@@ -12,7 +14,7 @@ public:
     HttpTransmitter();
     ~HttpTransmitter();
     bool send_imgfile(std::string url, std::string file_path, int64_t timestamp);
-    bool send_imen(std::string url, std::vector<unsigned char> buffer, int64_t timestamp);
+    bool send_imen(std::string url, std::shared_ptr<std::vector<uchar>> buf_ptr, int64_t timestamp);
 
 
 private:
