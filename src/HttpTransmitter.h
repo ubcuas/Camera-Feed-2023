@@ -14,7 +14,7 @@ public:
     HttpTransmitter();
     ~HttpTransmitter();
     bool send_imgfile(std::string url, std::string file_path, int64_t timestamp);
-    bool send_imen(std::string url, std::shared_ptr<std::vector<uchar>> buf_ptr, int64_t timestamp);
+    bool send_imen(std::string url, std::unique_ptr<std::vector<uchar>> buf_ptr, int64_t timestamp);
 
 
 private:

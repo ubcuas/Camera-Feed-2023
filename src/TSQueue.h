@@ -33,8 +33,8 @@ public:
         // Acquire lock 
         std::unique_lock<std::mutex> lock(m_mutex); 
   
-        // Add item 
-        m_queue.push(item); 
+        // Add item and transfers ownership to internal queue
+        m_queue.push(std::move(item)); 
   
         // Notify one thread that 
         // is waiting 
@@ -55,8 +55,8 @@ public:
         if (abort_flag)
             throw AbortedPopException{};
   
-        // retrieve item 
-        T item = m_queue.front(); 
+        // retrieve item and transfers ownership to here
+        T item = std::move(m_queue.front()); 
         m_queue.pop(); 
   
         // return item 
