@@ -141,9 +141,9 @@ bool HttpTransmitter::send_imen(std::string url, std::unique_ptr<std::vector<uch
         fprintf(stderr, "curl_mime_name() failed, attempt %d of %d: %s\n", attempts + 1, MAX_ATTEMPTS, error);
         attempts++;
     }
-    std::cout << (*buf_ptr).size() << "\n";
+    // std::cout << (*buf_ptr).size() << "\n";
     attempts = 0;
-    while ((res = curl_mime_data(field, reinterpret_cast<const char*>((*buf_ptr).data()), (*buf_ptr).size())) != CURLE_OK && attempts < MAX_ATTEMPTS) {
+    while ((res = curl_mime_data(field, reinterpret_cast<const char*>(buf_ptr->data()), (*buf_ptr).size())) != CURLE_OK && attempts < MAX_ATTEMPTS) {
         fprintf(stderr, "curl_mime_filedata() failed, attempt %d of %d: %s\n", attempts + 1, MAX_ATTEMPTS, error);
         attempts++;
     }
