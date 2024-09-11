@@ -70,13 +70,13 @@ public:
      */
     bool get_image(Arena::IImage **pImage, int64_t *timestamp);
 
-    /**
-     * @brief Saves an image to disk.
-     * @param pImage A pointer to the image to save.
-     * @param timestamp The UNIX timestamp in milliseconds associated with the image.
-     * @return A string containing the file path of the saved image.
-     */
-    std::string save_image(Arena::IImage *pImage, int64_t timestamp);
+    // /**
+    //  * @brief Saves an image to disk.
+    //  * @param pImage A pointer to the image to save.
+    //  * @param timestamp The UNIX timestamp in milliseconds associated with the image.
+    //  * @return A string containing the file path of the saved image.
+    //  */
+    // std::string save_image(Arena::IImage *pImage, int64_t timestamp);
 
     /**
      * @brief Prints statistics of stream session.

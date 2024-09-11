@@ -57,29 +57,30 @@ void image_producer(CameraController camera_controller) {
         bool success = camera_controller.get_image(&pImage, &timestamp);
         if (success) {
             data_queue.push({pImage, timestamp});
+            // std::cout << timestamp << "\n";
         }
     }
 }
 
-void image_saver(CameraController camera_controller) {
-    while (!stop_flag) {
-        ImageData element;
-        try {
-            element = data_queue.pop();
-        } catch(const AbortedPopException& e) {
-            break;
-        }
-        Arena::IImage* pImage = element.pImage;
-        int64_t timestamp = element.timestamp;
+// void image_saver(CameraController camera_controller) {
+//     while (!stop_flag) {
+//         ImageData element;
+//         try {
+//             element = data_queue.pop();
+//         } catch(const AbortedPopException& e) {
+//             break;
+//         }
+//         Arena::IImage* pImage = element.pImage;
+//         int64_t timestamp = element.timestamp;
 
-        // std::string filename = camera_controller.save_image(pImage, timestamp);
-        std::future<std::string> future = std::async(std::launch::async, &CameraController::save_image, &camera_controller, pImage, timestamp);
-        std::string filename = future.get();
-        ImagePath path = {filename, timestamp};
-        path_queue.push(path);
-        std::cout << "Saved " << filename << "\n";
-    }
-}
+//         // std::string filename = camera_controller.save_image(pImage, timestamp);
+//         std::future<std::string> future = std::async(std::launch::async, &CameraController::save_image, &camera_controller, pImage, timestamp);
+//         std::string filename = future.get();
+//         ImagePath path = {filename, timestamp};
+//         path_queue.push(path);
+//         std::cout << "Saved " << filename << "\n";
+//     }
+// }
 
 void image_processor() {
     // HttpTransmitter http_transmitter;
@@ -102,13 +103,19 @@ void image_processor() {
         Arena::IImage* pImage = element.pImage;
         int64_t timestamp = element.timestamp;
 
-        cv::Mat img = cv::Mat((int)pImage->GetHeight(), (int)pImage->GetWidth(), CV_8UC3, const_cast<uint8_t*>(pImage->GetData()));
+        // cv::Mat img = cv::Mat((int)pImage->GetHeight(), (int)pImage->GetWidth(), CV_8UC1, const_cast<uint8_t*>(pImage->GetData()));
+        cv::Mat mSource_Bayer((int)pImage->GetHeight(), (int)pImage->GetWidth(), CV_8UC1, const_cast<uint8_t*>(pImage->GetData()));
+        cv::Mat mSource_Bgr((int)pImage->GetHeight(), (int)pImage->GetWidth(), CV_8UC3);
+        // cvtColor(mSource_Bayer, mSource_Bgr, cv::COLOR_BayerRG2BGR);//Perform demosaicing process
+
         std::vector<uchar> buf;
         std::unique_ptr<std::vector<uchar>> buf_ptr = std::make_unique<std::vector<uchar>>();
 
-        cv::imencode(".jpg", img, *buf_ptr, compression_params);
+        cv::imencode(".jpg", mSource_Bayer, *buf_ptr, compression_params);
         Arena::ImageFactory::Destroy(pImage);
+
         encoded_queue.push({std::move(buf_ptr), timestamp});
+        std::cout << "Processed " << timestamp << "\n";
     }
 }
 
@@ -171,6 +178,8 @@ int main(int argc, char *argv[]) {
 
     if (exposureTime != 0) {
         camera_controller.set_exposuretime(exposureTime);
+        std::cout << "Setting exposure time to " << exposureTime << "\n";
+
     }
 
     if (gain != 0) {

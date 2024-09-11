@@ -62,8 +62,8 @@ void CameraController::set_default() {
     Arena::SetNodeValue<GenICam::gcstring>(pDevice->GetTLStreamNodeMap(), "StreamBufferHandlingMode", "OldestFirst");
     Arena::SetNodeValue<bool>(pDevice->GetTLStreamNodeMap(), "StreamAutoNegotiatePacketSize", true);
     Arena::SetNodeValue<bool>(pDevice->GetTLStreamNodeMap(), "StreamPacketResendEnable", true);
-    Arena::SetNodeValue<int64_t>(pDevice->GetNodeMap(), "DeviceLinkThroughputReserve", 30);  
-    set_pixelformat("BGR8");
+    Arena::SetNodeValue<int64_t>(pDevice->GetNodeMap(), "DeviceLinkThroughputReserve", 10);  
+    // set_pixelformat("BGR8");
 }
 
 void CameraController::writer_config() {
@@ -82,15 +82,14 @@ void CameraController::writer_config() {
 }
 
 void CameraController::set_pixelformat(GenICam::gcstring pixelformat) {
-    std::cout << "Setting pixel format to " << pixelformat << "\n";
+    // std::cout << "Setting pixel format to " << pixelformat << "\n";
     Arena::SetNodeValue<GenICam::gcstring>(pDevice->GetNodeMap(), "PixelFormat", pixelformat);
 }
 
 void CameraController::set_exposuretime(float exposuretime) {
-    std::cout << "Setting auto exposure off\n";
+    // std::cout << "Setting auto exposure off\n";
     Arena::SetNodeValue<GenICam::gcstring>(pDevice->GetNodeMap(), "ExposureAuto", "Off");
 
-    std::cout << "Setting exposure time to" << exposuretime << "\n";
     GenApi::CFloatPtr pExposureTime = pDevice->GetNodeMap()->GetNode("ExposureTime");
 	if (!pExposureTime || !GenApi::IsReadable(pExposureTime) || !GenApi::IsWritable(pExposureTime)) {
 		throw GenICam::GenericException("ExposureTime node not found/readable/writable", __FILE__, __LINE__);
@@ -203,22 +202,22 @@ bool CameraController::get_image(Arena::IImage **pImage, int64_t *timestamp) {
     return true;
 }
 
-std::string CameraController::save_image(Arena::IImage *pImage, int64_t timestamp) {
-    std::vector<int> compression_params;
-    compression_params.push_back(cv::IMWRITE_JPEG_QUALITY);
-    compression_params.push_back(100); // Change the quality value (0-100)
+// std::string CameraController::save_image(Arena::IImage *pImage, int64_t timestamp) {
+//     std::vector<int> compression_params;
+//     compression_params.push_back(cv::IMWRITE_JPEG_QUALITY);
+//     compression_params.push_back(100); // Change the quality value (0-100)
 
-    std::string extension = ".jpg";
-    std::string timestamp_str = std::to_string(timestamp);
-    std::string filename = timestamp_str + extension;
+//     std::string extension = ".jpg";
+//     std::string timestamp_str = std::to_string(timestamp);
+//     std::string filename = timestamp_str + extension;
 
-    cv::Mat img = cv::Mat((int)pImage->GetHeight(), (int)pImage->GetWidth(), CV_8UC3, (void *)pImage->GetData());
-    cv::imwrite(filename, img, compression_params);
+//     cv::Mat img = cv::Mat((int)pImage->GetHeight(), (int)pImage->GetWidth(), CV_8UC3, (void *)pImage->GetData());
+//     cv::imwrite(filename, img, compression_params);
 
-    Arena::ImageFactory::Destroy(pImage);
+//     Arena::ImageFactory::Destroy(pImage);
 
-    return filename;
-}
+//     return filename;
+// }
 
 void CameraController::get_statistics() {
     // int missed_packets = Arena::GetNodeValue(pDevice->GetTLStreamNodeMap(), "StreamMissedPacketCount");
