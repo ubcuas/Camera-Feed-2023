@@ -10,12 +10,21 @@ A C++ program for the operation and integration a LUCID GigE Vision camera.
 
 ## Getting Started
 
+### For Docker way
+
+Ctrl + Shift + P -> Docker: Add Docker Files to Workspace (root) -> C++ -> Yes
+Skip all the other parts
+
 ### Dependencies
 * ArenaSDK (https://thinklucid.com/downloads-hub/)
 ```
 sudo apt update && sudo apt upgrade -y
 sudo apt install cmake libssl-dev nghttp2 libopencv-dev libcurl4-openssl-dev -y
 ```
+
+Now go to the ArenaSDK download page and download the latest version of the SDK. Extract the contents of the folder and put it into the external directory.
+
+Follow the README for Arena SDK for Linux to install the SDK.
 ## Build Instructions
 After installing the prerequisites, run these commands to build the project.
 ```
