@@ -5,73 +5,69 @@
 #include <vector>
 #include <CLI/CLI.hpp>
 #include <opencv2/opencv.hpp>
+#include <opencv2/core/ocl.hpp>
 
 #include "HttpTransmitter.h"
 
 
-void image_sender(std::string url) {
-    HttpTransmitter http_transmitter;
+// void image_sender(std::string url) {
+//     HttpTransmitter http_transmitter;
+//     while (1) {
+//         std::vector<int> compression_params;
+
+//         compression_params.push_back(cv::IMWRITE_JPEG_QUALITY);
+//         compression_params.push_back(100); // Change the quality value (0-100)
+
+//         cv::Mat img = cv::imread("1721280101439.jpg", cv::IMREAD_COLOR);
+//         std::vector<uchar> buf;
+//         cv::imencode(".jpg", img, buf, compression_params);
+//         // http_transmitter.send_imen(url, &buf, 1918183719895l);
+//     }
+// }
+
+void demosaic_cpu() {
+    cv::Mat im = cv::imread("1918183719895.jpg", cv::IMREAD_COLOR);
+    cv::Mat mSource_Bayer;
+
+    // Convert the RGB image to a single-channel grayscale image
+    cv::cvtColor(im, mSource_Bayer, cv::COLOR_BGR2GRAY);
     while (1) {
-        std::vector<int> compression_params;
+        cv::Mat mSource_Bgr;
+        cvtColor(mSource_Bayer, mSource_Bgr, cv::COLOR_BayerRG2BGR);
+        usleep(200000);
+    }
+}
 
-        compression_params.push_back(cv::IMWRITE_JPEG_QUALITY);
-        compression_params.push_back(100); // Change the quality value (0-100)
+void demosaic_gpu() {
+    // Ensure OpenCL is enabled and available
+    if (!cv::ocl::haveOpenCL()) {
+        std::cerr << "OpenCL is not available. Falling back to CPU." << std::endl;
+        return;
+    }
+    
+    // Set OpenCL context
+    cv::ocl::setUseOpenCL(true);
 
-        cv::Mat img = cv::imread("1721280101439.jpg", cv::IMREAD_COLOR);
-        std::vector<uchar> buf;
-        cv::imencode(".jpg", img, buf, compression_params);
-        // http_transmitter.send_imen(url, &buf, 1918183719895l);
+    // Load the image into UMat (which will use GPU memory)
+    cv::UMat im;
+    cv::imread("1918183719895.jpg", cv::IMREAD_COLOR).copyTo(im);
+
+    cv::UMat mSource_Bayer;
+    
+    cv::cvtColor(im, mSource_Bayer, cv::COLOR_BGR2GRAY);
+
+    // Loop to continuously apply demosaic and convert Bayer to BGR
+    while (1) {
+        cv::UMat mSource_Bgr;
+
+        cv::cvtColor(mSource_Bayer, mSource_Bgr, cv::COLOR_BayerRG2BGR);
+
+
+        usleep(200000); // Sleep for 0.2 seconds (200,000 microseconds)
     }
 }
 
 int main(int argc, char *argv[]) {
-    // int runtime = 0;
-    // int exposureTime = 0;
-    // int gain = 0;
-    std::string url;
-    std::string filename;
-
-    CLI::App app{"CLI Example"};
-
-    // app.add_option("-r,--runtime", runtime, "Set runtime")->required();
-    // app.add_option("-e,--exposure", exposureTime, "Set exposure time (ms)")->check(CLI::PositiveNumber);
-    // app.add_option("-g,--gain", gain, "Set gain")->check(CLI::PositiveNumber);
-    app.add_option("-u,--url", url, "Set URL");
-    app.add_option("-f,--filename", filename, "Set file");
-
-
-    CLI11_PARSE(app, argc, argv);
-
-    std::cout << url << '\n';
-    
-    curl_global_init(CURL_GLOBAL_ALL);
-
-    
-
-    // HttpTransmitter http_transmitter;
-    // (void) http_transmitter.send_imgfile(url, filename, 1719296810737l);
-    // while (1) {
-    //     std::vector<int> compression_params;
-
-    //     compression_params.push_back(cv::IMWRITE_JPEG_QUALITY);
-    //     compression_params.push_back(100); // Change the quality value (0-100)
-
-    //     cv::Mat img = cv::imread("1721280101439.jpg", cv::IMREAD_COLOR);
-    //     std::vector<uchar> buf;
-    //     cv::imencode(".jpg", img, buf, compression_params);
-    //     http_transmitter.send_imen(url, buf, 1918183719895l);
-    // }
-    std::cout << "sent\n";
-    int numSenders = 1;
-    std::vector<std::thread> senders;
-
-    // for (int i = 0; i < numSenders; i++) {
-    //     senders.push_back(std::thread(image_sender, url));
-    // }
-
-    // for (std::thread& sender : senders) {
-    //     sender.join();
-    //     std::cout << "Sender joined\n";
-    // }
+    demosaic_gpu();
     return 0;
 }
