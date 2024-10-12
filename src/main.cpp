@@ -34,9 +34,9 @@ struct EncodedData {
     int64_t timestamp;
 };
 
-TSQueue<ImageData> data_queue;
-TSQueue<ImagePath> path_queue;
-TSQueue<EncodedData> encoded_queue;
+static TSQueue<ImageData> data_queue;
+static TSQueue<ImagePath> path_queue;
+static TSQueue<EncodedData> encoded_queue;
 
 std::atomic<bool> stop_flag = ATOMIC_VAR_INIT(false);
 
@@ -109,12 +109,12 @@ void image_processor() {
         // cvtColor(mSource_Bayer, mSource_Bgr, cv::COLOR_BayerRG2BGR);//Perform demosaicing process
 
         std::vector<uchar> buf;
-        std::unique_ptr<std::vector<uchar>> buf_ptr = std::make_unique<std::vector<uchar>>();
+        std::shared_ptr<std::vector<uchar>> buf_ptr = std::make_shared<std::vector<uchar>>();
 
         cv::imencode(".jpg", mSource_Bayer, *buf_ptr, compression_params);
         Arena::ImageFactory::Destroy(pImage);
 
-        encoded_queue.push({std::move(buf_ptr), timestamp});
+        // encoded_queue.push({std::move(buf_ptr), timestamp});
         std::cout << "Processed " << timestamp << "\n";
     }
 }
@@ -160,12 +160,11 @@ void image_sender_imen(std::string url) {
 
 
 int main(int argc, char *argv[]) {
-    std::cout << "help me\n";
     int seconds = 0;
     float exposureTime = 0;
     float gain = 0;
     std::string url = "";
-    CLI::App app{"CLI Example"};
+    CLI::App app{"Camera Feed"};
 
     app.add_option("-s,--seconds", seconds, "Set runtime")->required();
     app.add_option("-e,--exposure", exposureTime, "Set exposure time (ms)")->check(CLI::PositiveNumber);
@@ -189,7 +188,7 @@ int main(int argc, char *argv[]) {
     camera_controller.start_stream();
 
     const int numProcessors = 1;
-    const int numSenders = 1;
+    // const int numSenders = 1;
 
     std::thread producer = std::thread(image_producer, camera_controller);
     // cpu_set_t cpuset;
@@ -219,14 +218,14 @@ int main(int argc, char *argv[]) {
         processors.push_back(std::thread(image_processor));
     }
 
-    std::vector<std::thread> senders;
-    if (!url.empty()) {
-        curl_global_init(CURL_GLOBAL_ALL);
-        for (int i = 0; i < numSenders; i++) {
-            senders.push_back(std::thread(image_sender_imen, url));
-        }
-        std::cout << "TRANSMITTER ONLINE\n";
-    }
+    // std::vector<std::thread> senders;
+    // if (!url.empty()) {
+    //     curl_global_init(CURL_GLOBAL_ALL);
+    //     for (int i = 0; i < numSenders; i++) {
+    //         senders.push_back(std::thread(image_sender_imen, url));
+    //     }
+    //     std::cout << "TRANSMITTER ONLINE\n";
+    // }
     
     std::cout << "ALL SYSTEMS NOMINAL\n";
     run(seconds);
@@ -237,11 +236,11 @@ int main(int argc, char *argv[]) {
         processor.join();
     }
 
-    if (!url.empty()) {
-        for (std::thread& sender : senders) {
-            sender.join();
-        }
-    }
+    // if (!url.empty()) {
+    //     for (std::thread& sender : senders) {
+    //         sender.join();
+    //     }
+    // }
 
     camera_controller.stop_stream();
     camera_controller.cleanup();
