@@ -113,6 +113,7 @@ void image_processor() {
 
         cv::imencode(".jpg", mSource_Bayer, *buf_ptr, compression_params);
         Arena::ImageFactory::Destroy(pImage);
+        //works till here lol
 
         // encoded_queue.push({std::move(buf_ptr), timestamp});
         std::cout << "Processed " << timestamp << "\n";
