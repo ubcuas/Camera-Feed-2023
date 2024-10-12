@@ -23,7 +23,7 @@ add_executable(curltest
     ${CMAKE_SOURCE_DIR}/src/HttpTransmitter.cpp)
 
 
-target_compile_options(${PROJECT_NAME} PUBLIC 
+add_compile_options(
     "-Wall" 
     "-Wextra" 
     "-Wpedantic" 
@@ -43,28 +43,6 @@ target_compile_options(${PROJECT_NAME} PUBLIC
     "-Wvla"
     "$<$<CONFIG:DEBUG>:-O0;-g3;-ggdb>"
     "$<$<CONFIG:RELEASE>:-O2>" # I don't know if O2 or O3 is better
-    )
-
-target_compile_options(curltest PUBLIC 
-    "-Wall" 
-    "-Wextra" 
-    "-Wpedantic" 
-    "-Wcast-align" 
-    "-Wcast-qual" 
-    "-Wdisabled-optimization" 
-    "-Wduplicated-branches"
-    "-Wduplicated-cond"
-    "-Wformat=2"
-    "-Wlogical-op"
-    "-Wmissing-include-dirs"
-    "-Wnull-dereference"
-    "-Woverloaded-virtual"
-    "-Wpointer-arith"
-    "-Wshadow"
-    # "-Wswitch-enum"
-    "-Wvla"
-    "$<$<CONFIG:DEBUG>:-O0;-g3;-ggdb>"
-    "$<$<CONFIG:RELEASE>:-O2>"
     )
 # install(TARGETS ${PROJECT_NAME} DESTINATION bin)
 set(BUILD_LIST core,imgcodecs,highgui)
