@@ -35,7 +35,7 @@ add_compile_options(
     "-Wformat=2"
     "-Wlogical-op"
     "-Wmissing-include-dirs"
-    "-Wnull-dereference"
+    # "-Wnull-dereference" # causes weird
     "-Woverloaded-virtual"
     "-Wpointer-arith"
     "-Wshadow"
