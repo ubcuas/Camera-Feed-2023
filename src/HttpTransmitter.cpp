@@ -1,6 +1,6 @@
 // Copyright 2024 UBC Uncrewed Aircraft Systems
 
-#include "src/HttpTransmitter.hpp"
+#include "HttpTransmitter.hpp"
 
 #include <curl/curl.h>
 #include <string>

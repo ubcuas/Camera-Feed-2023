@@ -1,11 +1,13 @@
 // Copyright 2024 UBC Uncrewed Aircraft Systems
+
+#include "CprHTTP.hpp"
+
 #include <cpr/cpr.h>
 
 #include <string>
 
 #include <iostream>
 #include <vector>
-#include "CprHTTP.h"
 
 bool CprHTTP::send_imen(std::string url, std::vector<unsigned char> *buffer,
                         int64_t timestamp) {
