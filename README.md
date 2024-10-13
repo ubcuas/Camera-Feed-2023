@@ -43,6 +43,12 @@ clang-format -i src/*.cpp src/*.h
 cpplint src/*.cpp src/*.h
 ```
 
+## Static Analysis
+```
+cppcheck src/*.cpp src/*.hpp
+```
+
+
 ### Python ArenaSDK
 
 * Place the ArenaSDK wheel file in `wheel` directory.
