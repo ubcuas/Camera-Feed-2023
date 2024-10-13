@@ -1,7 +1,7 @@
 // Copyright 2024 UBC Uncrewed Aircraft Systems
 
-#ifndef SRC_CAMERACONTROLLER_H_
-#define SRC_CAMERACONTROLLER_H_
+#ifndef SRC_CAMERACONTROLLER_HPP_
+#define SRC_CAMERACONTROLLER_HPP_
 
 #include "ArenaApi.h"
 #include "SaveApi.h"
@@ -115,4 +115,4 @@ class CameraController {
   void set_epoch();
 };
 
-#endif  // SRC_CAMERACONTROLLER_H_
+#endif  // SRC_CAMERACONTROLLER_HPP_

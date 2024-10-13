@@ -1,7 +1,7 @@
 // Copyright 2024 UBC Uncrewed Aircraft Systems
 
-#ifndef SRC_HTTPTRANSMITTER_H_
-#define SRC_HTTPTRANSMITTER_H_
+#ifndef SRC_HTTPTRANSMITTER_HPP_
+#define SRC_HTTPTRANSMITTER_HPP_
 
 #include <curl/curl.h>
 
@@ -24,4 +24,4 @@ class HttpTransmitter {
   CURL *curl;
 };
 
-#endif  // SRC_HTTPTRANSMITTER_H_
+#endif  // SRC_HTTPTRANSMITTER_HPP_
