@@ -3,6 +3,7 @@
 #ifndef SRC_TSQUEUE_H_
 #define SRC_TSQUEUE_H_
 
+#include <utility>
 #include <atomic>
 #include <condition_variable>
 #include <iostream>
