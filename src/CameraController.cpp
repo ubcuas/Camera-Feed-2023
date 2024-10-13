@@ -1,6 +1,6 @@
 // Copyright 2024 UBC Uncrewed Aircraft Systems
 
-#include "CameraController.h"
+#include "src/CameraController.hpp"
 
 #include "ArenaApi.h"
 // #include <stdio.h>
