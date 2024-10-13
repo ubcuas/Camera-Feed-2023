@@ -39,8 +39,8 @@ Use ``-DCMAKE_BUILD_TYPE=Release`` for production.
 ## Linter and Formatter
 ```
 pip install cpplint
-clang-format -i src/*.cpp src/*.h
-cpplint src/*.cpp src/*.h
+clang-format -i src/*.cpp src/*.hpp
+cpplint --filter=-build/include_subdir src/*.cpp src/*.hpp
 ```
 
 ## Static Analysis
