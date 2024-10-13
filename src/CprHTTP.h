@@ -1,5 +1,7 @@
-#ifndef CPRHTTP_H
-#define CPRHTTP_H_H
+// Copyright 2024 UBC Uncrewed Aircraft Systems
+
+#ifndef SRC_CPRHTTP_H_
+#define SRC_CPRHTTP_H_
 
 #include <cpr/cpr.h>
 #include <curl/curl.h>
@@ -14,4 +16,4 @@ class CprHTTP {
                  int64_t timestamp);
 };
 
-#endif
+#endif  // SRC_CPRHTTP_H_

@@ -1,13 +1,16 @@
-#ifndef HTTP_TRANSMITTER_H
-#define HTTP_TRANSMITTER_H
+// Copyright 2024 UBC Uncrewed Aircraft Systems
+
+#ifndef SRC_HTTPTRANSMITTER_H_
+#define SRC_HTTPTRANSMITTER_H_
 
 #include <curl/curl.h>
 
 #include <cuchar>
 #include <memory>
-#include <opencv2/opencv.hpp>
 #include <string>
 #include <vector>
+
+#include <opencv2/opencv.hpp>
 
 class HttpTransmitter {
  public:
@@ -21,4 +24,4 @@ class HttpTransmitter {
   CURL *curl;
 };
 
-#endif
+#endif  // SRC_HTTPTRANSMITTER_H_

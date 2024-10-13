@@ -1,12 +1,15 @@
-#include <curl/curl.h>
-#include <unistd.h>
+// Copyright 2024 UBC Uncrewed Aircraft Systems
 
-#include <CLI/CLI.hpp>
+#include <unistd.h>
+#include <curl/curl.h>
+
 #include <iostream>
-#include <opencv2/core/ocl.hpp>
-#include <opencv2/opencv.hpp>
 #include <thread>
 #include <vector>
+
+#include <CLI/CLI.hpp>
+#include <opencv2/core/ocl.hpp>
+#include <opencv2/opencv.hpp>
 
 #include "HttpTransmitter.h"
 
