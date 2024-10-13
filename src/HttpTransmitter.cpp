@@ -49,7 +49,8 @@ HttpTransmitter::HttpTransmitter() {
 
 HttpTransmitter::~HttpTransmitter() { curl_easy_cleanup(curl); }
 
-bool HttpTransmitter::send_imgfile(std::string url, std::string file_path,
+bool HttpTransmitter::send_imgfile(const std::string &url,
+                                   const std::string &file_path,
                                    int64_t timestamp) {
   CURLcode res;
   char error[CURL_ERROR_SIZE];
@@ -119,7 +120,7 @@ bool HttpTransmitter::send_imgfile(std::string url, std::string file_path,
   return true;
 }
 
-bool HttpTransmitter::send_imen(std::string url,
+bool HttpTransmitter::send_imen(const std::string &url,
                                 std::unique_ptr<std::vector<uchar>> buf_ptr,
                                 int64_t timestamp) {
   CURLcode res;

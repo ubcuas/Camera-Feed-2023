@@ -16,12 +16,14 @@ class HttpTransmitter {
  public:
   HttpTransmitter();
   ~HttpTransmitter();
-  bool send_imgfile(std::string url, std::string file_path, int64_t timestamp);
-  bool send_imen(std::string url, std::unique_ptr<std::vector<uchar>> buf_ptr,
+  bool send_imgfile(const std::string& url, const std::string& file_path,
+                    int64_t timestamp);
+  bool send_imen(const std::string& url,
+                 std::unique_ptr<std::vector<uchar>> buf_ptr,
                  int64_t timestamp);
 
  private:
-  CURL *curl;
+  CURL* curl;
 };
 
 #endif  // SRC_HTTPTRANSMITTER_HPP_

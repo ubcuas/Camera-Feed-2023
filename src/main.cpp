@@ -132,7 +132,7 @@ void image_processor() {
   }
 }
 
-void image_sender_imen(std::string url) {
+void image_sender_imen(const std::string& url) {
   // HttpTransmitter http_transmitter;
   HttpTransmitter http_transmitter;
   std::vector<int> compression_params;
