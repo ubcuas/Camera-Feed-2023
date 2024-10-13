@@ -1,7 +1,7 @@
 // Copyright 2024 UBC Uncrewed Aircraft Systems
 
-#ifndef SRC_TSQUEUE_H_
-#define SRC_TSQUEUE_H_
+#ifndef SRC_TSQUEUE_HPP_
+#define SRC_TSQUEUE_HPP_
 
 #include <utility>
 #include <atomic>
@@ -66,4 +66,4 @@ class TSQueue {
   }
 };
 
-#endif  // SRC_TSQUEUE_H_
+#endif  // SRC_TSQUEUE_HPP_
