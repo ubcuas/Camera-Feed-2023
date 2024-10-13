@@ -19,10 +19,10 @@
 #include <opencv2/opencv.hpp>
 
 #include "ArenaApi.h"
-#include "CameraController.h"
-#include "CprHTTP.h"
-#include "HttpTransmitter.h"
-#include "TSQueue.h"
+#include "src/CameraController.hpp"
+#include "src/CprHTTP.hpp"
+#include "src/HttpTransmitter.hpp"
+#include "src/TSQueue.hpp"
 
 struct ImagePath {
   std::string path;

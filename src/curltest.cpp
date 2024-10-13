@@ -11,7 +11,7 @@
 #include <opencv2/core/ocl.hpp>
 #include <opencv2/opencv.hpp>
 
-#include "HttpTransmitter.h"
+#include "src/HttpTransmitter.hpp"
 
 // void image_sender(std::string url) {
 //     HttpTransmitter http_transmitter;
