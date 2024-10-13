@@ -1,13 +1,17 @@
+// Copyright 2024 UBC Uncrewed Aircraft Systems
+
 #include "HttpTransmitter.h"
 
 #include <curl/curl.h>
-
+#include <string>
+#include <cstdio>
 #include <chrono>
 #include <cstring>
 #include <iostream>
 #include <memory>
-#include <opencv2/opencv.hpp>
 #include <thread>
+
+#include <opencv2/opencv.hpp>
 
 #define MAX_ATTEMPTS 100
 
@@ -37,7 +41,8 @@ HttpTransmitter::HttpTransmitter() {
   curl_easy_setopt(curl, CURLOPT_NOSIGNAL, 1L);
 
   // Support for HTTP2
-  curl_easy_setopt(curl, CURLOPT_HTTP_VERSION, (long)CURL_HTTP_VERSION_2_0);
+  curl_easy_setopt(curl, CURLOPT_HTTP_VERSION,
+                   static_cast<int64_t>(CURL_HTTP_VERSION_2_0));
 
   curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteCallback);
 }
@@ -90,8 +95,8 @@ bool HttpTransmitter::send_imgfile(std::string url, std::string file_path,
     attempts++;
   }
 
-  // TODO Might be unnecessary to include timestamp since, I hope the next
-  // server will be smarter than using the filename
+  // TODO(Richard) Might be unnecessary to include timestamp since, I hope the
+  // next server will be smarter than using the filename
   std::string timestamp_str = std::to_string(timestamp);
   // field = curl_mime_addpart(form);
   // curl_mime_name(field, "timestamp");
@@ -171,8 +176,8 @@ bool HttpTransmitter::send_imen(std::string url,
   //     attempts + 1, MAX_ATTEMPTS, error); attempts++;
   // }
 
-  // TODO Might be unnecessary to include timestamp since, I hope the next
-  // server will be smarter than using the filename field =
+  // TODO(Richard) Might be unnecessary to include timestamp since, I hope the
+  // next server will be smarter than using the filename field =
   // curl_mime_addpart(form); curl_mime_name(field, "timestamp"); std::string
   // timestamp_str = std::to_string(timestamp); curl_mime_data(field,
   // timestamp_str.c_str(), CURL_ZERO_TERMINATED);

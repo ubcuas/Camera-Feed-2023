@@ -1,3 +1,5 @@
+// Copyright 2024 UBC Uncrewed Aircraft Systems
+
 #include "CameraController.h"
 
 #include "ArenaApi.h"
@@ -5,6 +7,8 @@
 #include <chrono>
 #include <fstream>
 #include <iostream>
+#include <vector>
+
 #include <opencv2/opencv.hpp>
 
 #include "SaveApi.h"
@@ -57,21 +61,20 @@ void CameraController::set_epoch() {
 void CameraController::set_default() {
   std::cout << "Setting default configuration\n";
   // Reset to default settings
-  Arena::SetNodeValue<GenICam::gcstring>(
-    pDevice->GetNodeMap(), "UserSetSelector", "Default"
-    );
+  Arena::SetNodeValue<GenICam::gcstring>(pDevice->GetNodeMap(),
+                                         "UserSetSelector", "Default");
   Arena::ExecuteNode(pDevice->GetNodeMap(), "UserSetLoad");
 
   Arena::SetNodeValue<GenICam::gcstring>(
       pDevice->GetTLStreamNodeMap(), "StreamBufferHandlingMode", "OldestFirst");
-  Arena::SetNodeValue<bool>(
-    pDevice->GetTLStreamNodeMap(), "StreamAutoNegotiatePacketSize", true);
+  Arena::SetNodeValue<bool>(pDevice->GetTLStreamNodeMap(),
+                            "StreamAutoNegotiatePacketSize", true);
 
-  Arena::SetNodeValue<bool>(
-    pDevice->GetTLStreamNodeMap(), "StreamPacketResendEnable", true);
+  Arena::SetNodeValue<bool>(pDevice->GetTLStreamNodeMap(),
+                            "StreamPacketResendEnable", true);
 
-  Arena::SetNodeValue<int64_t>(
-    pDevice->GetNodeMap(), "DeviceLinkThroughputReserve", 10);
+  Arena::SetNodeValue<int64_t>(pDevice->GetNodeMap(),
+                               "DeviceLinkThroughputReserve", 10);
 
   // set_pixelformat("BGR8");
 }
@@ -94,14 +97,14 @@ void CameraController::writer_config() {
 
 void CameraController::set_pixelformat(GenICam::gcstring pixelformat) {
   // std::cout << "Setting pixel format to " << pixelformat << "\n";
-  Arena::SetNodeValue<GenICam::gcstring>(
-    pDevice->GetNodeMap(), "PixelFormat", pixelformat);
+  Arena::SetNodeValue<GenICam::gcstring>(pDevice->GetNodeMap(), "PixelFormat",
+                                         pixelformat);
 }
 
 void CameraController::set_exposuretime(float exposuretime) {
   // std::cout << "Setting auto exposure off\n";
-  Arena::SetNodeValue<GenICam::gcstring>(
-    pDevice->GetNodeMap(), "ExposureAuto", "Off");
+  Arena::SetNodeValue<GenICam::gcstring>(pDevice->GetNodeMap(), "ExposureAuto",
+                                         "Off");
 
   GenApi::CFloatPtr pExposureTime =
       pDevice->GetNodeMap()->GetNode("ExposureTime");
@@ -118,8 +121,8 @@ void CameraController::set_gain(float gain) {
   std::cout << "Setting gain to " << gain << "\n";
   GenApi::CFloatPtr pGain = pDevice->GetNodeMap()->GetNode("Gain");
   if (!pGain || !GenApi::IsReadable(pGain) || !GenApi::IsWritable(pGain)) {
-    throw GenICam::GenericException(
-        "Gain node not found/readable/writable", __FILE__, __LINE__);
+    throw GenICam::GenericException("Gain node not found/readable/writable",
+                                    __FILE__, __LINE__);
   }
 
   pGain->SetValue(gain);
@@ -127,8 +130,8 @@ void CameraController::set_gain(float gain) {
 
 void CameraController::set_trigger(bool trigger_on) {
   if (trigger_on) {
-    Arena::SetNodeValue<GenICam::gcstring>(
-        pDevice->GetNodeMap(), "TriggerSelector", "FrameStart");
+    Arena::SetNodeValue<GenICam::gcstring>(pDevice->GetNodeMap(),
+                                           "TriggerSelector", "FrameStart");
 
     // Set trigger mode
     //    Enable trigger mode before setting the source and selector and before
@@ -136,8 +139,8 @@ void CameraController::set_trigger(bool trigger_on) {
     //    the device is streaming.
     std::cout << "Enable trigger mode\n";
 
-    Arena::SetNodeValue<GenICam::gcstring>(
-        pDevice->GetNodeMap(), "TriggerMode", "On");
+    Arena::SetNodeValue<GenICam::gcstring>(pDevice->GetNodeMap(), "TriggerMode",
+                                           "On");
 
     // Set trigger source
     //    Set the trigger source to software in order to trigger images without
@@ -145,21 +148,21 @@ void CameraController::set_trigger(bool trigger_on) {
     //    to trigger.
     std::cout << "Set trigger source to Software\n";
 
-    Arena::SetNodeValue<GenICam::gcstring>(
-        pDevice->GetNodeMap(), "TriggerSource", "Software");
+    Arena::SetNodeValue<GenICam::gcstring>(pDevice->GetNodeMap(),
+                                           "TriggerSource", "Software");
 
     trigger_state = true;
   } else {
-    Arena::SetNodeValue<GenICam::gcstring>(
-        pDevice->GetNodeMap(), "TriggerMode", "Off");
+    Arena::SetNodeValue<GenICam::gcstring>(pDevice->GetNodeMap(), "TriggerMode",
+                                           "Off");
 
     trigger_state = false;
   }
 }
 
 void CameraController::set_acquisitionmode(GenICam::gcstring acq_mode) {
-  Arena::SetNodeValue<GenICam::gcstring>(
-    pDevice->GetNodeMap(), "AcquisitionMode", acq_mode);
+  Arena::SetNodeValue<GenICam::gcstring>(pDevice->GetNodeMap(),
+                                         "AcquisitionMode", acq_mode);
 }
 
 void CameraController::start_stream(int num_buffers) {

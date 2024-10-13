@@ -1,5 +1,7 @@
-#ifndef TSQUEUE_H
-#define TSQUEUE_H
+// Copyright 2024 UBC Uncrewed Aircraft Systems
+
+#ifndef SRC_TSQUEUE_H_
+#define SRC_TSQUEUE_H_
 
 #include <atomic>
 #include <condition_variable>
@@ -63,4 +65,4 @@ class TSQueue {
   }
 };
 
-#endif
+#endif  // SRC_TSQUEUE_H_
