@@ -22,7 +22,8 @@ sudo apt update && sudo apt upgrade -y
 sudo apt install cmake libssl-dev nghttp2 libopencv-dev libcurl4-openssl-dev -y
 ```
 
-Now go to the ArenaSDK download page and download the latest version of the SDK. Extract the contents of the folder and put it into the external directory.
+Now go to the ArenaSDK download page and download the latest version of the SDK.
+Extract the contents of the folder and put it into the external directory.
 
 Follow the README for Arena SDK for Linux to install the SDK.
 ## Build Instructions
@@ -34,6 +35,14 @@ make -j$(nproc)
 ```
 > ***Note:*** Use ``-DCMAKE_BUILD_TYPE=Debug`` for debug information.
 Use ``-DCMAKE_BUILD_TYPE=Release`` for production.
+
+## Linter and Formatter
+```
+pip install cpplint
+clang-format -i src/*.cpp src/*.h
+cpplint src/*.cpp src/*.h
+```
+
 ### Python ArenaSDK
 
 * Place the ArenaSDK wheel file in `wheel` directory.
