@@ -1,0 +1,9 @@
+name: cppcheck
+on: [push, pull_request]
+jobs:
+  cpplint:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v1
+    - run: sudo apt install cppcheck
+    - run: cppcheck src/*.cpp src/*.h
