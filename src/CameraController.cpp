@@ -61,20 +61,20 @@ void CameraController::set_epoch() {
 void CameraController::set_default() {
   std::cout << "Setting default configuration\n";
   // Reset to default settings
-  Arena::SetNodeValue<GenICam::gcstring>(pDevice->GetNodeMap(),
-                                         "UserSetSelector", "Default");
+  Arena::SetNodeValue<GenICam::gcstring>(
+      pDevice->GetNodeMap(), "UserSetSelector", "Default");
   Arena::ExecuteNode(pDevice->GetNodeMap(), "UserSetLoad");
 
   Arena::SetNodeValue<GenICam::gcstring>(
       pDevice->GetTLStreamNodeMap(), "StreamBufferHandlingMode", "OldestFirst");
-  Arena::SetNodeValue<bool>(pDevice->GetTLStreamNodeMap(),
-                            "StreamAutoNegotiatePacketSize", true);
+  Arena::SetNodeValue<bool>(
+      pDevice->GetTLStreamNodeMap(), "StreamAutoNegotiatePacketSize", true);
 
-  Arena::SetNodeValue<bool>(pDevice->GetTLStreamNodeMap(),
-                            "StreamPacketResendEnable", true);
+  Arena::SetNodeValue<bool>(
+      pDevice->GetTLStreamNodeMap(), "StreamPacketResendEnable", true);
 
-  Arena::SetNodeValue<int64_t>(pDevice->GetNodeMap(),
-                               "DeviceLinkThroughputReserve", 10);
+  Arena::SetNodeValue<int64_t>(
+      pDevice->GetNodeMap(), "DeviceLinkThroughputReserve", 10);
 
   // set_pixelformat("BGR8");
 }
@@ -97,14 +97,14 @@ void CameraController::writer_config() {
 
 void CameraController::set_pixelformat(GenICam::gcstring pixelformat) {
   // std::cout << "Setting pixel format to " << pixelformat << "\n";
-  Arena::SetNodeValue<GenICam::gcstring>(pDevice->GetNodeMap(), "PixelFormat",
-                                         pixelformat);
+  Arena::SetNodeValue<GenICam::gcstring>(
+      pDevice->GetNodeMap(), "PixelFormat", pixelformat);
 }
 
 void CameraController::set_exposuretime(float exposuretime) {
   // std::cout << "Setting auto exposure off\n";
-  Arena::SetNodeValue<GenICam::gcstring>(pDevice->GetNodeMap(), "ExposureAuto",
-                                         "Off");
+  Arena::SetNodeValue<GenICam::gcstring>(
+      pDevice->GetNodeMap(), "ExposureAuto", "Off");
 
   GenApi::CFloatPtr pExposureTime =
       pDevice->GetNodeMap()->GetNode("ExposureTime");
@@ -121,8 +121,8 @@ void CameraController::set_gain(float gain) {
   std::cout << "Setting gain to " << gain << "\n";
   GenApi::CFloatPtr pGain = pDevice->GetNodeMap()->GetNode("Gain");
   if (!pGain || !GenApi::IsReadable(pGain) || !GenApi::IsWritable(pGain)) {
-    throw GenICam::GenericException("Gain node not found/readable/writable",
-                                    __FILE__, __LINE__);
+    throw GenICam::GenericException(
+        "Gain node not found/readable/writable", __FILE__, __LINE__);
   }
 
   pGain->SetValue(gain);
@@ -130,8 +130,8 @@ void CameraController::set_gain(float gain) {
 
 void CameraController::set_trigger(bool trigger_on) {
   if (trigger_on) {
-    Arena::SetNodeValue<GenICam::gcstring>(pDevice->GetNodeMap(),
-                                           "TriggerSelector", "FrameStart");
+    Arena::SetNodeValue<GenICam::gcstring>(
+        pDevice->GetNodeMap(), "TriggerSelector", "FrameStart");
 
     // Set trigger mode
     //    Enable trigger mode before setting the source and selector and before
@@ -139,8 +139,8 @@ void CameraController::set_trigger(bool trigger_on) {
     //    the device is streaming.
     std::cout << "Enable trigger mode\n";
 
-    Arena::SetNodeValue<GenICam::gcstring>(pDevice->GetNodeMap(), "TriggerMode",
-                                           "On");
+    Arena::SetNodeValue<GenICam::gcstring>(
+        pDevice->GetNodeMap(), "TriggerMode", "On");
 
     // Set trigger source
     //    Set the trigger source to software in order to trigger images without
@@ -148,21 +148,21 @@ void CameraController::set_trigger(bool trigger_on) {
     //    to trigger.
     std::cout << "Set trigger source to Software\n";
 
-    Arena::SetNodeValue<GenICam::gcstring>(pDevice->GetNodeMap(),
-                                           "TriggerSource", "Software");
+    Arena::SetNodeValue<GenICam::gcstring>(
+        pDevice->GetNodeMap(), "TriggerSource", "Software");
 
     trigger_state = true;
   } else {
-    Arena::SetNodeValue<GenICam::gcstring>(pDevice->GetNodeMap(), "TriggerMode",
-                                           "Off");
+    Arena::SetNodeValue<GenICam::gcstring>(
+        pDevice->GetNodeMap(), "TriggerMode", "Off");
 
     trigger_state = false;
   }
 }
 
 void CameraController::set_acquisitionmode(GenICam::gcstring acq_mode) {
-  Arena::SetNodeValue<GenICam::gcstring>(pDevice->GetNodeMap(),
-                                         "AcquisitionMode", acq_mode);
+  Arena::SetNodeValue<GenICam::gcstring>(
+      pDevice->GetNodeMap(), "AcquisitionMode", acq_mode);
 }
 
 void CameraController::start_stream(int num_buffers) {
@@ -185,25 +185,22 @@ void CameraController::stop_stream() {
   pDevice->StopStream();
 }
 
-bool CameraController::get_image(Arena::IImage **pImage, int64_t *timestamp) {
+bool CameraController::get_image(std::shared_ptr<cv::Mat>& image, int64_t* timestamp) {
   try {
-    if (trigger_state) {
-      Arena::ExecuteNode(pDevice->GetNodeMap(), "TriggerSoftware");
-    }
-    Arena::IImage *pBuffer = pDevice->GetImage(IMAGE_TIMEOUT);
-    *timestamp = epoch + (pBuffer->GetTimestampNs() / 1000000);
+    Arena::IImage* pImage = pDevice->GetImage(IMAGE_TIMEOUT);
+    *timestamp = epoch + (pImage->GetTimestampNs() / 1000000);
 
-    if (pBuffer->IsIncomplete()) {
-      *pImage = Arena::ImageFactory::Copy(pBuffer);
-      pDevice->RequeueBuffer(pBuffer);
+    if (pImage->IsIncomplete()) {
       std::cout << "Image incomplete\n";
-      return true;
-      // return false;
     }
 
-    *pImage = Arena::ImageFactory::Copy(pBuffer);
-    pDevice->RequeueBuffer(pBuffer);
-  } catch (GenICam::TimeoutException &ge) {
+    image = std::make_shared<cv::Mat>(cv::Mat(static_cast<int>(pImage->GetHeight()),
+                            static_cast<int>(pImage->GetWidth()),
+                            CV_8UC1,
+                            const_cast<uint8_t*>(pImage->GetData()))
+                        .clone());
+    pDevice->RequeueBuffer(pImage);
+  } catch (GenICam::TimeoutException& ge) {
     return false;
   }
   return true;
@@ -228,21 +225,21 @@ bool CameraController::get_image(Arena::IImage **pImage, int64_t *timestamp) {
 //     return filename;
 // }
 
-void CameraController::get_statistics() {
-  // int missed_packets = Arena::GetNodeValue(pDevice->GetTLStreamNodeMap(),
-  // "StreamMissedPacketCount"); int missed_images =
-  // Arena::GetNodeValue(pDevice->GetTLStreamNodeMap(),
-  // "StreamMissedImageCount"); int lost_frames =
-  // Arena::GetNodeValue(pDevice->GetTLStreamNodeMap(), "StreamLostFrameCount");
-  // int frames = Arena::GetNodeValue(pDevice->GetTLStreamNodeMap(),
-  // "StreamStartedFrameCount"); int delivered_frames =
-  // Arena::GetNodeValue(pDevice->GetTLStreamNodeMap(),
-  // "StreamDeliveredFrameCount"); int fram_count =
-  // Arena::GetNodeValue(pDevice->GetTLStreamNodeMap(),
-  // "StreamStartedFrameCount"); int fram_count =
-  // Arena::GetNodeValue(pDevice->GetTLStreamNodeMap(),
-  // "StreamStartedFrameCount");
-}
+// void CameraController::get_statistics() {
+//   // int missed_packets = Arena::GetNodeValue(pDevice->GetTLStreamNodeMap(),
+//   // "StreamMissedPacketCount"); int missed_images =
+//   // Arena::GetNodeValue(pDevice->GetTLStreamNodeMap(),
+//   // "StreamMissedImageCount"); int lost_frames =
+//   // Arena::GetNodeValue(pDevice->GetTLStreamNodeMap(), "StreamLostFrameCount");
+//   // int frames = Arena::GetNodeValue(pDevice->GetTLStreamNodeMap(),
+//   // "StreamStartedFrameCount"); int delivered_frames =
+//   // Arena::GetNodeValue(pDevice->GetTLStreamNodeMap(),
+//   // "StreamDeliveredFrameCount"); int fram_count =
+//   // Arena::GetNodeValue(pDevice->GetTLStreamNodeMap(),
+//   // "StreamStartedFrameCount"); int fram_count =
+//   // Arena::GetNodeValue(pDevice->GetTLStreamNodeMap(),
+//   // "StreamStartedFrameCount");
+// }
 
 void CameraController::cleanup() {
   std::cout << "Cleaning up\n";

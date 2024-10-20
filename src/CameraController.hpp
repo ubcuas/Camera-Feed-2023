@@ -27,27 +27,27 @@ class CameraController {
    * @brief Sets the pixel format for the camera.
    * @param pixelformat A string specifying the pixel format.
    */
-  void set_pixelformat(GenICam::gcstring pixelformat);
+  virtual void set_pixelformat(GenICam::gcstring pixelformat);
 
   /**
    * @brief Turns off auto expsure and sets the exposure time for the camera.
    * @param exposuretime A float of range [359.328, 151839.528] specifying the
    * exposure time in microseconds.
    */
-  void set_exposuretime(float exposuretime);
+  virtual void set_exposuretime(float exposuretime);
 
   /**
    * @brief Sets the gain for the camera.
    * @param gain A float of range [0.0, 27.045771199653988] specifying the gain
    * value. Default gain in 0.0
    */
-  void set_gain(float gain);
+  virtual void set_gain(float gain);
 
   /**
    * @brief Enables or disables the manual trigger mode for the camera.
    * @param trigger_on A boolean where true enables and false disables it.
    */
-  void set_trigger(bool trigger_on);
+  virtual void set_trigger(bool trigger_on);
 
   /**
    * @brief Sets the acquisition mode for the camera.
@@ -61,12 +61,12 @@ class CameraController {
    * @param num_buffers An integer specifying the number of buffers to use.
    * Default is 10.
    */
-  void start_stream(int num_buffers = 10);
+  virtual void start_stream(int num_buffers = 10);
 
   /**
    * @brief Stops the image stream from the camera.
    */
-  void stop_stream();
+  virtual void stop_stream();
 
   /**
    * @brief Retrieves an image from the camera.
@@ -76,7 +76,7 @@ class CameraController {
    * timestamp.
    * @return A boolean indicating success (true) or failure (false).
    */
-  bool get_image(Arena::IImage** pImage, int64_t* timestamp);
+  virtual bool get_image(std::shared_ptr<cv::Mat>& image, int64_t* timestamp);
 
   // /**
   //  * @brief Saves an image to disk.
@@ -90,7 +90,7 @@ class CameraController {
   /**
    * @brief Prints statistics of stream session.
    */
-  void get_statistics();
+  // void get_statistics();
 
  private:
   Arena::ISystem* pSystem;    /**< Pointer to the system object. */

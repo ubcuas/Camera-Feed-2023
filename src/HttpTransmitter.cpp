@@ -16,7 +16,9 @@
 #define MAX_ATTEMPTS 100
 
 // Callback function to handle the response
-static size_t WriteCallback(void *contents, size_t size, size_t nmemb,
+static size_t WriteCallback(void *contents,
+                            size_t size,
+                            size_t nmemb,
                             void *userp) {
   // Do nothing with the response
   return size * nmemb;
@@ -28,7 +30,9 @@ HttpTransmitter::HttpTransmitter() {
 
   int attempts = 0;
   while ((curl = curl_easy_init()) == NULL && attempts < MAX_ATTEMPTS) {
-    fprintf(stderr, "curl_easy_init() failed, attempt %d of %d\n", attempts + 1,
+    fprintf(stderr,
+            "curl_easy_init() failed, attempt %d of %d\n",
+            attempts + 1,
             MAX_ATTEMPTS);
     attempts++;
   }
@@ -41,8 +45,8 @@ HttpTransmitter::HttpTransmitter() {
   curl_easy_setopt(curl, CURLOPT_NOSIGNAL, 1L);
 
   // Support for HTTP2
-  curl_easy_setopt(curl, CURLOPT_HTTP_VERSION,
-                   static_cast<int64_t>(CURL_HTTP_VERSION_2_0));
+  curl_easy_setopt(
+      curl, CURLOPT_HTTP_VERSION, static_cast<int64_t>(CURL_HTTP_VERSION_2_0));
 
   curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteCallback);
 }
@@ -62,8 +66,11 @@ bool HttpTransmitter::send_imgfile(const std::string &url,
 
   int attempts = 0;
   while ((form = curl_mime_init(curl)) == NULL && attempts < MAX_ATTEMPTS) {
-    fprintf(stderr, "curl_mime_init() failed, attempt %d of %d: %s\n",
-            attempts + 1, MAX_ATTEMPTS, error);
+    fprintf(stderr,
+            "curl_mime_init() failed, attempt %d of %d: %s\n",
+            attempts + 1,
+            MAX_ATTEMPTS,
+            error);
     attempts++;
   }
 
@@ -75,24 +82,33 @@ bool HttpTransmitter::send_imgfile(const std::string &url,
 
   attempts = 0;
   while ((field = curl_mime_addpart(form)) == NULL && attempts < MAX_ATTEMPTS) {
-    fprintf(stderr, "curl_mime_addpart() failed, attempt %d of %d: %s\n",
-            attempts + 1, MAX_ATTEMPTS, error);
+    fprintf(stderr,
+            "curl_mime_addpart() failed, attempt %d of %d: %s\n",
+            attempts + 1,
+            MAX_ATTEMPTS,
+            error);
     attempts++;
   }
 
   attempts = 0;
   while ((res = curl_mime_name(field, "image")) != CURLE_OK &&
          attempts < MAX_ATTEMPTS) {
-    fprintf(stderr, "curl_mime_name() failed, attempt %d of %d: %s\n",
-            attempts + 1, MAX_ATTEMPTS, error);
+    fprintf(stderr,
+            "curl_mime_name() failed, attempt %d of %d: %s\n",
+            attempts + 1,
+            MAX_ATTEMPTS,
+            error);
     attempts++;
   }
 
   attempts = 0;
   while ((res = curl_mime_filedata(field, file_path.c_str())) != CURLE_OK &&
          attempts < MAX_ATTEMPTS) {
-    fprintf(stderr, "curl_mime_filedata() failed, attempt %d of %d: %s\n",
-            attempts + 1, MAX_ATTEMPTS, error);
+    fprintf(stderr,
+            "curl_mime_filedata() failed, attempt %d of %d: %s\n",
+            attempts + 1,
+            MAX_ATTEMPTS,
+            error);
     attempts++;
   }
 
@@ -106,8 +122,11 @@ bool HttpTransmitter::send_imgfile(const std::string &url,
   attempts = 0;
   while ((res = curl_easy_perform(curl)) != CURLE_OK &&
          attempts < MAX_ATTEMPTS) {
-    fprintf(stderr, "curl_easy_perform() failed, attempt %d of %d: %s\n",
-            attempts + 1, MAX_ATTEMPTS, error);
+    fprintf(stderr,
+            "curl_easy_perform() failed, attempt %d of %d: %s\n",
+            attempts + 1,
+            MAX_ATTEMPTS,
+            error);
     attempts++;
     std::this_thread::sleep_for(std::chrono::seconds(1));
   }
@@ -134,8 +153,11 @@ bool HttpTransmitter::send_imen(const std::string &url,
 
   int attempts = 0;
   while ((form = curl_mime_init(curl)) == NULL && attempts < MAX_ATTEMPTS) {
-    fprintf(stderr, "curl_mime_init() failed, attempt %d of %d: %s\n",
-            attempts + 1, MAX_ATTEMPTS, error);
+    fprintf(stderr,
+            "curl_mime_init() failed, attempt %d of %d: %s\n",
+            attempts + 1,
+            MAX_ATTEMPTS,
+            error);
     attempts++;
   }
 
@@ -147,16 +169,22 @@ bool HttpTransmitter::send_imen(const std::string &url,
 
   attempts = 0;
   while ((field = curl_mime_addpart(form)) == NULL && attempts < MAX_ATTEMPTS) {
-    fprintf(stderr, "curl_mime_addpart() failed, attempt %d of %d: %s\n",
-            attempts + 1, MAX_ATTEMPTS, error);
+    fprintf(stderr,
+            "curl_mime_addpart() failed, attempt %d of %d: %s\n",
+            attempts + 1,
+            MAX_ATTEMPTS,
+            error);
     attempts++;
   }
 
   attempts = 0;
   while ((res = curl_mime_name(field, "image")) != CURLE_OK &&
          attempts < MAX_ATTEMPTS) {
-    fprintf(stderr, "curl_mime_name() failed, attempt %d of %d: %s\n",
-            attempts + 1, MAX_ATTEMPTS, error);
+    fprintf(stderr,
+            "curl_mime_name() failed, attempt %d of %d: %s\n",
+            attempts + 1,
+            MAX_ATTEMPTS,
+            error);
     attempts++;
   }
   // std::cout << (*buf_ptr).size() << "\n";
@@ -165,8 +193,11 @@ bool HttpTransmitter::send_imen(const std::string &url,
                                reinterpret_cast<const char *>(buf_ptr->data()),
                                (*buf_ptr).size())) != CURLE_OK &&
          attempts < MAX_ATTEMPTS) {
-    fprintf(stderr, "curl_mime_filedata() failed, attempt %d of %d: %s\n",
-            attempts + 1, MAX_ATTEMPTS, error);
+    fprintf(stderr,
+            "curl_mime_filedata() failed, attempt %d of %d: %s\n",
+            attempts + 1,
+            MAX_ATTEMPTS,
+            error);
     attempts++;
   }
 
@@ -186,8 +217,11 @@ bool HttpTransmitter::send_imen(const std::string &url,
   attempts = 0;
   while ((res = curl_easy_perform(curl)) != CURLE_OK &&
          attempts < MAX_ATTEMPTS) {
-    fprintf(stderr, "curl_easy_perform() failed, attempt %d of %d: %s\n",
-            attempts + 1, MAX_ATTEMPTS, error);
+    fprintf(stderr,
+            "curl_easy_perform() failed, attempt %d of %d: %s\n",
+            attempts + 1,
+            MAX_ATTEMPTS,
+            error);
     attempts++;
     std::this_thread::sleep_for(std::chrono::seconds(1));
   }

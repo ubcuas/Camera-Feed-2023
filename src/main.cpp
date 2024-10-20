@@ -54,7 +54,7 @@ void run(int seconds) {
   std::cout << "Aborting pop\n";
 }
 
-void image_producer(CameraController camera_controller) {
+void image_producer(CameraController& camera_controller) {
   while (!stop_flag) {
     Arena::IImage* pImage;
     int64_t timestamp;
@@ -112,10 +112,12 @@ void image_processor() {
     // cv::Mat img = cv::Mat((int)pImage->GetHeight(), (int)pImage->GetWidth(),
     // CV_8UC1, const_cast<uint8_t*>(pImage->GetData()));
     cv::Mat mSource_Bayer(static_cast<int>(pImage->GetHeight()),
-                          static_cast<int>(pImage->GetWidth()), CV_8UC1,
+                          static_cast<int>(pImage->GetWidth()),
+                          CV_8UC1,
                           const_cast<uint8_t*>(pImage->GetData()));
     cv::Mat mSource_Bgr(static_cast<int>(pImage->GetHeight()),
-                        static_cast<int>(pImage->GetWidth()), CV_8UC3);
+                        static_cast<int>(pImage->GetWidth()),
+                        CV_8UC3);
     // cvtColor(mSource_Bayer, mSource_Bgr, cv::COLOR_BayerRG2BGR);//Perform
     // demosaicing process
 
@@ -150,8 +152,8 @@ void image_sender_imen(const std::string& url) {
     }
 
     // Transfers ownership send_imen
-    http_transmitter.send_imen(url, std::move(element.buf_ptr),
-                               element.timestamp);
+    http_transmitter.send_imen(
+        url, std::move(element.buf_ptr), element.timestamp);
     // (void) std::async(std::launch::async, &HttpTransmitter::send_imen,
     // &http_transmitter, url, &buf, timestamp);
   }

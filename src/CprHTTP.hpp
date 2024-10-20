@@ -12,7 +12,8 @@
 
 class CprHTTP {
  public:
-  bool send_imen(std::string url, std::vector<unsigned char> *buffer,
+  bool send_imen(std::string url,
+                 std::vector<unsigned char> *buffer,
                  int64_t timestamp);
 };
 

@@ -9,7 +9,8 @@
 #include <iostream>
 #include <vector>
 
-bool CprHTTP::send_imen(std::string url, std::vector<unsigned char> *buffer,
+bool CprHTTP::send_imen(std::string url,
+                        std::vector<unsigned char> *buffer,
                         int64_t timestamp) {
   // Construct the file name
   std::string filename = std::to_string(timestamp) + ".jpg";

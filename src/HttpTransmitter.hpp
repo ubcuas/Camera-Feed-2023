@@ -16,7 +16,8 @@ class HttpTransmitter {
  public:
   HttpTransmitter();
   ~HttpTransmitter();
-  bool send_imgfile(const std::string& url, const std::string& file_path,
+  bool send_imgfile(const std::string& url,
+                    const std::string& file_path,
                     int64_t timestamp);
   bool send_imen(const std::string& url,
                  std::unique_ptr<std::vector<uchar>> buf_ptr,
