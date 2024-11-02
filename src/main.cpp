@@ -19,7 +19,8 @@
 #include <opencv2/opencv.hpp>
 
 #include "ArenaApi.h"
-#include "CameraController.hpp"
+#include "ICamera.hpp"
+#include "ArenaCamera.hpp"
 #include "CprHTTP.hpp"
 #include "HttpTransmitter.hpp"
 #include "TSQueue.hpp"
@@ -29,21 +30,16 @@ struct ImagePath {
   int64_t timestamp;
 };
 
-struct ImageData {
-  Arena::IImage* pImage;
-  int64_t timestamp;
-};
-
 struct EncodedData {
   std::unique_ptr<std::vector<uchar>> buf_ptr;
   int64_t timestamp;
 };
 
-static TSQueue<ImageData> data_queue;
+static TSQueue<std::unique_ptr<ImageData>> data_queue;
 static TSQueue<ImagePath> path_queue;
 static TSQueue<EncodedData> encoded_queue;
 
-std::atomic<bool> stop_flag = ATOMIC_VAR_INIT(false);
+std::atomic<bool> stop_flag(false);
 
 void run(int seconds) {
   std::this_thread::sleep_for(std::chrono::seconds(seconds));
@@ -54,19 +50,17 @@ void run(int seconds) {
   std::cout << "Aborting pop\n";
 }
 
-void image_producer(CameraController& camera_controller) {
+void image_producer(const std::shared_ptr<ICamera>& camera) {
   while (!stop_flag) {
-    Arena::IImage* pImage;
-    int64_t timestamp;
-    bool success = camera_controller.get_image(&pImage, &timestamp);
-    if (success) {
-      data_queue.push({pImage, timestamp});
-      // std::cout << timestamp << "\n";
+    try {
+      std::unique_ptr<ImageData> image_data = camera->get_image();
+      data_queue.push(std::move(image_data));
+    } catch (timeout_exception& te) {
     }
   }
 }
 
-// void image_saver(CameraController camera_controller) {
+// void image_saver(CameraController camera) {
 //     while (!stop_flag) {
 //         ImageData element;
 //         try {
@@ -77,10 +71,10 @@ void image_producer(CameraController& camera_controller) {
 //         Arena::IImage* pImage = element.pImage;
 //         int64_t timestamp = element.timestamp;
 
-//         // std::string filename = camera_controller.save_image(pImage,
+//         // std::string filename = camera.save_image(pImage,
 //         timestamp); std::future<std::string> future =
 //         std::async(std::launch::async, &CameraController::save_image,
-//         &camera_controller, pImage, timestamp); std::string filename =
+//         &camera, pImage, timestamp); std::string filename =
 //         future.get(); ImagePath path = {filename, timestamp};
 //         path_queue.push(path);
 //         std::cout << "Saved " << filename << "\n";
@@ -190,23 +184,23 @@ int main(int argc, char* argv[]) {
 
   CLI11_PARSE(app, argc, argv);
 
-  CameraController camera_controller;
+  std::shared_ptr<ICamera> camera = std::make_shared<ArenaCamera>();
 
   if (exposureTime != 0) {
-    camera_controller.set_exposuretime(exposureTime);
+    camera->set_exposuretime(exposureTime);
     std::cout << "Setting exposure time to " << exposureTime << "\n";
   }
 
   if (gain != 0) {
-    camera_controller.set_gain(exposureTime);
+    camera->set_gain(exposureTime);
   }
 
-  camera_controller.start_stream();
+  camera->start_stream();
 
   const int numProcessors = 1;
   // const int numSenders = 1;
 
-  std::thread producer = std::thread(image_producer, camera_controller);
+  std::thread producer = std::thread(image_producer, camera);
   // cpu_set_t cpuset;
   // CPU_ZERO(&cpuset);
   // CPU_SET(0, &cpuset); // Change the core number as needed
@@ -259,8 +253,7 @@ int main(int argc, char* argv[]) {
   //     }
   // }
 
-  camera_controller.stop_stream();
-  camera_controller.cleanup();
+  camera->stop_stream();
 
   std::cout << "SYSTEM SHUTDOWN\n";
 }
