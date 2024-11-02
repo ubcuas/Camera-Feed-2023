@@ -119,7 +119,6 @@ void image_sender_imen(const std::string& url) {
   // HttpTransmitter http_transmitter;
   HttpTransmitter http_transmitter;
 
-
   while (!stop_flag) {
     std::unique_ptr<EncodedData> element;
     try {

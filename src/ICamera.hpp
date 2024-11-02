@@ -18,7 +18,7 @@ class ICamera {
  public:
   /// @brief Virtual destructor
   virtual ~ICamera() = default;
-  
+
   /**
    * @brief Sets the pixel format for the camera.
    * @param pixelformat A string specifying the pixel format.
@@ -81,23 +81,23 @@ class ICamera {
    */
   // void get_statistics();
 
-//  protected:
-//   /**
-//    * @brief Sets default configurations for the camera.
-//    */
-//   virtual void set_default() = 0;
+  //  protected:
+  //   /**
+  //    * @brief Sets default configurations for the camera.
+  //    */
+  //   virtual void set_default() = 0;
 
-//   /**
-//    * @brief Sets the epoch time.
-//    */
-//   virtual void set_epoch() = 0;
+  //   /**
+  //    * @brief Sets the epoch time.
+  //    */
+  //   virtual void set_epoch() = 0;
 
-//   /**
-//    * @brief Sets the acquisition mode for the camera.
-//    * @param acq_mode A string specifying the acquisition mode [Continuous,
-//    * SingleFrame, MultiFrame]. Continuous is default.
-//    */
-//   virtual void set_acquisitionmode(const std::string& acq_mode) = 0;
+  //   /**
+  //    * @brief Sets the acquisition mode for the camera.
+  //    * @param acq_mode A string specifying the acquisition mode [Continuous,
+  //    * SingleFrame, MultiFrame]. Continuous is default.
+  //    */
+  //   virtual void set_acquisitionmode(const std::string& acq_mode) = 0;
 };
 
 class timeout_exception : public std::runtime_error {
