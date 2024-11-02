@@ -15,7 +15,6 @@
 
 #include "Pipeline.hpp"
 
-
 #define MAX_ATTEMPTS 100
 
 // Callback function to handle the response
@@ -171,7 +170,9 @@ bool HttpTransmitter::send_imen(const std::string &url,
     fprintf(stderr, "curl_mime_name() failed\n");
     return false;
   }
-  res = curl_mime_data(field,reinterpret_cast<const char *>(encoded->buf.data()), encoded->buf.size());
+  res = curl_mime_data(field,
+                       reinterpret_cast<const char *>(encoded->buf.data()),
+                       encoded->buf.size());
   if (res != CURLE_OK) {
     fprintf(stderr, "curl_mime_data() failed\n");
     return false;

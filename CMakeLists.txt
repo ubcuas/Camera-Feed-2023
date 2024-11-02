@@ -46,6 +46,8 @@ add_compile_options(
     "$<$<CONFIG:RELEASE>:-O2>" # I don't know if O2 or O3 is better
     )
 # install(TARGETS ${PROJECT_NAME} DESTINATION bin)
+
+
 set(BUILD_LIST core,imgcodecs,highgui)
 find_package(OpenCV REQUIRED)
 
@@ -99,7 +101,7 @@ target_link_libraries(${PROJECT_NAME}  PRIVATE
     ${OpenCV_LIBS}
     ${CURL_LIBRARIES}
     CLI11::CLI11
-    cpr::cpr
+    # cpr::cpr
 )
 
 target_include_directories(curltest  PRIVATE

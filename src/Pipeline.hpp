@@ -16,4 +16,4 @@ struct EncodedData {
   int64_t timestamp;
 };
 
-#endif // PIPELINE_HPP
+#endif  // PIPELINE_HPP
