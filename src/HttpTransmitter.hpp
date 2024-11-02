@@ -11,6 +11,8 @@
 #include <vector>
 
 #include <opencv2/opencv.hpp>
+#include "Pipeline.hpp"
+
 
 class HttpTransmitter {
  public:
@@ -20,8 +22,7 @@ class HttpTransmitter {
                     const std::string& file_path,
                     int64_t timestamp);
   bool send_imen(const std::string& url,
-                 std::unique_ptr<std::vector<uchar>> buf_ptr,
-                 int64_t timestamp);
+                 std::unique_ptr<EncodedData> encoded);
 
  private:
   CURL* curl;

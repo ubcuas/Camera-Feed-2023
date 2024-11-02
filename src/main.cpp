@@ -24,20 +24,11 @@
 #include "CprHTTP.hpp"
 #include "HttpTransmitter.hpp"
 #include "TSQueue.hpp"
-
-struct ImagePath {
-  std::string path;
-  int64_t timestamp;
-};
-
-struct EncodedData {
-  std::unique_ptr<std::vector<uchar>> buf_ptr;
-  int64_t timestamp;
-};
+#include "Pipeline.hpp"
 
 static TSQueue<std::unique_ptr<ImageData>> data_queue;
 static TSQueue<ImagePath> path_queue;
-static TSQueue<EncodedData> encoded_queue;
+static TSQueue<std::unique_ptr<EncodedData>> encoded_queue;
 
 std::atomic<bool> stop_flag(false);
 
@@ -92,7 +83,7 @@ void image_processor() {
   std::string extension = ".jpg";
 
   while (!stop_flag) {
-    ImageData element;
+    std::unique_ptr<ImageData> element;
     try {
       // std::cout << id << " getting image\n";
       element = data_queue.pop();
@@ -100,45 +91,37 @@ void image_processor() {
     } catch (const AbortedPopException& e) {
       break;
     }
-    Arena::IImage* pImage = element.pImage;
-    int64_t timestamp = element.timestamp;
 
+    cv::Mat mSource = element->image;
     // cv::Mat img = cv::Mat((int)pImage->GetHeight(), (int)pImage->GetWidth(),
     // CV_8UC1, const_cast<uint8_t*>(pImage->GetData()));
-    cv::Mat mSource_Bayer(static_cast<int>(pImage->GetHeight()),
-                          static_cast<int>(pImage->GetWidth()),
-                          CV_8UC1,
-                          const_cast<uint8_t*>(pImage->GetData()));
-    cv::Mat mSource_Bgr(static_cast<int>(pImage->GetHeight()),
-                        static_cast<int>(pImage->GetWidth()),
-                        CV_8UC3);
+    // cv::Mat mSource_Bayer(static_cast<int>(pImage->GetHeight()),
+    //                       static_cast<int>(pImage->GetWidth()),
+    //                       CV_8UC1,
+    //                       const_cast<uint8_t*>(pImage->GetData()));
+    // cv::Mat mSource_Bgr(static_cast<int>(pImage->GetHeight()),
+    //                     static_cast<int>(pImage->GetWidth()),
+    //                     CV_8UC3);
     // cvtColor(mSource_Bayer, mSource_Bgr, cv::COLOR_BayerRG2BGR);//Perform
     // demosaicing process
+    std::unique_ptr<EncodedData> encoded = std::make_unique<EncodedData>();
 
     std::vector<uchar> buf;
-    std::shared_ptr<std::vector<uchar>> buf_ptr =
-        std::make_shared<std::vector<uchar>>();
 
-    cv::imencode(".jpg", mSource_Bayer, *buf_ptr, compression_params);
-    Arena::ImageFactory::Destroy(pImage);
-    // works till here lol
+    cv::imencode(".jpg", mSource, encoded->buf, compression_params);
 
-    // encoded_queue.push({std::move(buf_ptr), timestamp});
-    std::cout << "Processed " << timestamp << "\n";
+    encoded_queue.push(std::move(encoded));
+    std::cout << "Processed " << element->timestamp << "\n";
   }
 }
 
 void image_sender_imen(const std::string& url) {
   // HttpTransmitter http_transmitter;
   HttpTransmitter http_transmitter;
-  std::vector<int> compression_params;
-  compression_params.push_back(cv::IMWRITE_JPEG_QUALITY);
-  compression_params.push_back(100);  // Change the quality value (0-100)
 
-  std::string extension = ".jpg";
 
   while (!stop_flag) {
-    EncodedData element;
+    std::unique_ptr<EncodedData> element;
     try {
       element = encoded_queue.pop();
     } catch (const AbortedPopException& e) {
@@ -146,10 +129,7 @@ void image_sender_imen(const std::string& url) {
     }
 
     // Transfers ownership send_imen
-    http_transmitter.send_imen(
-        url, std::move(element.buf_ptr), element.timestamp);
-    // (void) std::async(std::launch::async, &HttpTransmitter::send_imen,
-    // &http_transmitter, url, &buf, timestamp);
+    http_transmitter.send_imen(url, std::move(element));
   }
 }
 
