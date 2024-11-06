@@ -57,5 +57,5 @@ pip install -r requirements.txt
 ```
 
 ## Authors
-
+  
 * **Richard Han** - [@rrhan0](https://github.com/rrhan0)
