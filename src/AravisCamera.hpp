@@ -3,14 +3,15 @@
 
 //#include "ArenaApi.h"
 #include "ICamera.hpp"
+#include <arv.h>
 
 class AravisCamera : public ICamera {
  private:
-  int64_t timeStamp;           /**< Epoch time for timestamping. */
+             /**< Epoch time for timestamping. */
   //need to find member variables
   ArvCamera* arvCamera;
   GError *error = NULL;
-  ArvSteam *stream;
+  ArvStream *stream;
   ArvBuffer *arvBuffer;
   ArvGc *genicam;
   // bool _trigger_state = false; /**< Trigger state flag. */
@@ -68,7 +69,7 @@ class AravisCamera : public ICamera {
   /**
    * @brief Sets default configurations for the camera.
    */
-  void set_default();
+  //void set_default();
 
   /**
    * @brief Sets the epoch time.

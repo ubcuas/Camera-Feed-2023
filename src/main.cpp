@@ -21,7 +21,6 @@
 #include "ArenaApi.h"
 #include "ICamera.hpp"
 #include "ArenaCamera.hpp"
-#include "CprHTTP.hpp"
 #include "HttpTransmitter.hpp"
 #include "TSQueue.hpp"
 #include "Pipeline.hpp"
@@ -152,6 +151,7 @@ int main(int argc, char* argv[]) {
   int seconds = 0;
   float exposureTime = 0;
   float gain = 0;
+  bool reset = false;
   std::string url = "";
   CLI::App app{"Camera Feed"};
 
@@ -160,6 +160,7 @@ int main(int argc, char* argv[]) {
       ->check(CLI::PositiveNumber);
   app.add_option("-g,--gain", gain, "Set gain")->check(CLI::PositiveNumber);
   app.add_option("-u,--url", url, "Set URL");
+  app.add_flag("--reset",reset,"Reset to default");
 
   CLI11_PARSE(app, argc, argv);
 
@@ -173,6 +174,10 @@ int main(int argc, char* argv[]) {
   if (gain != 0) {
     camera->set_gain(exposureTime);
   }
+
+  // if (reset){
+  //   camera->set_default();
+  // }
 
   camera->start_stream();
 
