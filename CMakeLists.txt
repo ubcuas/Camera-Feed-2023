@@ -15,6 +15,7 @@ add_executable(${PROJECT_NAME}
     ${CMAKE_SOURCE_DIR}/src/main.cpp
     ${CMAKE_SOURCE_DIR}/src/ArenaCamera.cpp
     ${CMAKE_SOURCE_DIR}/src/HttpTransmitter.cpp
+    ${CMAKE_SOURCE_DIR}/src/AravisCamera.cpp
     # ${CMAKE_SOURCE_DIR}/src/CprHTTP.cpp
     ${CMAKE_SOURCE_DIR}/src/Pipeline.cpp)
 
@@ -51,6 +52,10 @@ add_compile_options(
 set(BUILD_LIST core,imgcodecs,highgui)
 find_package(OpenCV REQUIRED)
 
+find_package(PkgConfig REQUIRED)
+set(DEPENDENCIES "gobject-2.0" "glib-2.0" "aravis-0.8")
+pkg_check_modules(DEPS REQUIRED IMPORTED_TARGET ${DEPENDENCIES})
+
 include(FetchContent)
 
 # FetchContent_Declare(
@@ -69,12 +74,12 @@ FetchContent_Declare(
 
 FetchContent_MakeAvailable(cli11_proj)
 
-FetchContent_Declare(
-    cpr 
-    GIT_REPOSITORY https://github.com/libcpr/cpr.git
-    GIT_TAG 1.10.5
-) # Replace with your desired git commit from: https://github.com/libcpr/cpr/releases
-FetchContent_MakeAvailable(cpr)
+# FetchContent_Declare(
+#     cpr 
+#     GIT_REPOSITORY https://github.com/libcpr/cpr.git
+#     GIT_TAG 1.10.5
+# ) # Replace with your desired git commit from: https://github.com/libcpr/cpr/releases
+# FetchContent_MakeAvailable(cpr)
 
 find_package(CURL REQUIRED) 
 
@@ -102,6 +107,7 @@ target_link_libraries(${PROJECT_NAME}  PRIVATE
     ${CURL_LIBRARIES}
     CLI11::CLI11
     # cpr::cpr
+    PkgConfig::DEPS
 )
 
 target_include_directories(curltest  PRIVATE
