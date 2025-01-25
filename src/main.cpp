@@ -21,6 +21,7 @@
 #include "ArenaApi.h"
 #include "ICamera.hpp"
 #include "ArenaCamera.hpp"
+#include "FakeCamera.hpp"
 #include "HttpTransmitter.hpp"
 #include "TSQueue.hpp"
 #include "Pipeline.hpp"
@@ -109,7 +110,7 @@ void image_processor() {
 
     cv::imencode(".jpg", mSource, encoded->buf, compression_params);
 
-    encoded_queue.push(std::move(encoded));
+    // encoded_queue.push(std::move(encoded));
     std::cout << "Processed " << element->timestamp << "\n";
   }
 }
@@ -127,7 +128,7 @@ void image_sender_imen(const std::string& url) {
     }
 
     // Transfers ownership send_imen
-    http_transmitter.send_imen(url, std::move(element));
+    // http_transmitter.send_imen(url, std::move(element));
   }
 }
 
@@ -164,7 +165,7 @@ int main(int argc, char* argv[]) {
 
   CLI11_PARSE(app, argc, argv);
 
-  std::shared_ptr<ICamera> camera = std::make_shared<ArenaCamera>();
+  std::shared_ptr<ICamera> camera = std::make_shared<FakeCamera>();
 
   if (exposureTime != 0) {
     camera->set_exposuretime(exposureTime);

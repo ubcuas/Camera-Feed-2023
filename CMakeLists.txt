@@ -14,6 +14,7 @@ set(CMAKE_CXX_STANDARD 20)
 add_executable(${PROJECT_NAME} 
     ${CMAKE_SOURCE_DIR}/src/main.cpp
     ${CMAKE_SOURCE_DIR}/src/ArenaCamera.cpp
+    ${CMAKE_SOURCE_DIR}/src/FakeCamera.cpp
     ${CMAKE_SOURCE_DIR}/src/HttpTransmitter.cpp
     ${CMAKE_SOURCE_DIR}/src/AravisCamera.cpp
     # ${CMAKE_SOURCE_DIR}/src/CprHTTP.cpp
