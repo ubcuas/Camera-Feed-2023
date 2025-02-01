@@ -65,7 +65,7 @@ void ArenaCamera::set_exposuretime(float exposuretime) {
 }
 
 void ArenaCamera::set_gain(float gain) {
-  std::cout << "Setting gain to " << gain << "\n";
+  // std::cout << "Setting gain to " << gain << "\n";
   GenApi::CFloatPtr pGain = _pDevice->GetNodeMap()->GetNode("Gain");
   if (!pGain || !GenApi::IsReadable(pGain) || !GenApi::IsWritable(pGain)) {
     throw GenICam::GenericException(
@@ -132,7 +132,7 @@ void ArenaCamera::start_stream(int num_buffers) {
 }
 
 void ArenaCamera::stop_stream() {
-  std::cout << "Stopping stream\n";
+  // std::cout << "Stopping stream\n";
   _pDevice->StopStream();
 }
 
