@@ -1,15 +1,15 @@
 #ifndef SRC_ARAVISCAMERA_HPP_
 #define SRC_ARAVISCAMERA_HPP_
 
-//#include "ArenaApi.h"
+// #include "ArenaApi.h"
 #include "ICamera.hpp"
 #include <arv.h>
 
 class AravisCamera : public ICamera {
  private:
-             /**< Epoch time for timestamping. */
-  //need to find member variables
-  ArvCamera* arvCamera;
+  /**< Epoch time for timestamping. */
+  // need to find member variables
+  ArvCamera *arvCamera;
   GError *error = NULL;
   ArvStream *stream;
   ArvBuffer *arvBuffer;
@@ -22,7 +22,7 @@ class AravisCamera : public ICamera {
    * @brief Sets the pixel format for the camera.
    * @param pixelformat A string specifying the pixel format.
    */
-  
+
   void set_pixelformat(const std::string &pixelformat);
   /**
    * @brief Turns off auto expsure and sets the exposure time for the camera.
@@ -69,7 +69,7 @@ class AravisCamera : public ICamera {
   /**
    * @brief Sets default configurations for the camera.
    */
-  //void set_default();
+  // void set_default();
 
   /**
    * @brief Sets the epoch time.

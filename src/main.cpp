@@ -56,25 +56,28 @@ void image_producer(const std::shared_ptr<ICamera>& camera) {
 }
 
 void image_saver() {
-    while (!stop_flag) {
-        std::shared_ptr<EncodedData> element;
-        try {
-            element = save_queue.pop();
-        } catch(const AbortedPopException& e) {
-            break;
-        }
-        std::string filename = "images/" + std::to_string(element->timestamp) + ".jpg";
-
-        std::ofstream outFile(filename);  
-        outFile.write(reinterpret_cast<const char*>(element->buf.data()), element->buf.size());
-        outFile.close();
+  while (!stop_flag) {
+    std::shared_ptr<EncodedData> element;
+    try {
+      element = save_queue.pop();
+    } catch (const AbortedPopException& e) {
+      break;
     }
+    std::string filename =
+        "images/" + std::to_string(element->timestamp) + ".jpg";
+
+    std::ofstream outFile(filename);
+    outFile.write(reinterpret_cast<const char*>(element->buf.data()),
+                  element->buf.size());
+    outFile.close();
+  }
 }
 
 void image_processor(bool write, bool send) {
   // std::vector<int> compression_params;
   // compression_params.push_back(cv::IMWRITE_JPEG_QUALITY);
-  // compression_params.push_back(100);  // Change the quality value (0-100), 100
+  // compression_params.push_back(100);  // Change the quality value (0-100),
+  // 100
   //                                     // is least compression and cpu usage
   std::vector<std::future<void>> save;
 
@@ -90,7 +93,8 @@ void image_processor(bool write, bool send) {
 
     // cvtColor(mSource_Bayer, mSource_Bgr, cv::COLOR_BayerRG2BGR);//Perform
     if (write || send) {
-      std::shared_ptr<EncodedData> encoded_img = std::make_shared<EncodedData>();
+      std::shared_ptr<EncodedData> encoded_img =
+          std::make_shared<EncodedData>();
       encoded_img->timestamp = timestamp;
       cv::imencode(".jpg", mSource, encoded_img->buf);
 
@@ -140,11 +144,11 @@ void image_sender_imen(const std::string& url) {
 bool setup_dir(std::string pathname) {
   if (!std::filesystem::exists(pathname)) {
     if (std::filesystem::create_directory(pathname)) {
-        std::cout << "Directory created: " << pathname << "\n";
-        return true;
+      std::cout << "Directory created: " << pathname << "\n";
+      return true;
     } else {
-        std::cerr << "Failed to create directory: " << pathname << "\n";
-        return false;
+      std::cerr << "Failed to create directory: " << pathname << "\n";
+      return false;
     }
   }
   return true;
@@ -173,7 +177,6 @@ int main(int argc, char* argv[]) {
   // auto reset_opt = app.add_flag("--reset", reset, "Reset camera to default");
 
   CLI11_PARSE(app, argc, argv);
-
 
   if (write) {
     bool dir = setup_dir("images");
@@ -222,7 +225,6 @@ int main(int argc, char* argv[]) {
       savers.push_back(std::thread(image_saver));
     }
     std::cout << "WRITER ONLINE\n";
-
   }
 
   std::vector<std::thread> senders;
