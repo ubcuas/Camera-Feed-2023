@@ -20,7 +20,7 @@ class HttpTransmitter {
   bool send_imgfile(const std::string& url,
                     const std::string& file_path,
                     int64_t timestamp);
-  bool send_imen(const std::string& url, std::unique_ptr<EncodedData> encoded);
+  bool send_imen(const std::string& url, std::shared_ptr<EncodedData> encoded);
 
  private:
   CURL* curl;

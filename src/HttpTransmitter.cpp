@@ -142,7 +142,7 @@ bool HttpTransmitter::send_imgfile(const std::string &url,
 }
 
 bool HttpTransmitter::send_imen(const std::string &url,
-                                std::unique_ptr<EncodedData> encoded) {
+                                std::shared_ptr<EncodedData> encoded) {
   CURLcode res;
   char error[CURL_ERROR_SIZE];
   curl_mime *form = NULL;

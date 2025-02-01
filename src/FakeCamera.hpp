@@ -5,8 +5,8 @@
 
 class FakeCamera : public ICamera {
  private:
-  int64_t _epoch;           /**< Epoch time for timestamping. */
-  // bool _trigger_state = false; /**< Trigger state flag. */
+  int64_t _epoch; /**< Epoch time for timestamping. */
+                  // bool _trigger_state = false; /**< Trigger state flag. */
  public:
   FakeCamera();   // Constructor
   ~FakeCamera();  // Destructor
