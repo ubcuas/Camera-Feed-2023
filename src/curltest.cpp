@@ -47,6 +47,20 @@ void demosaic_gpu() {
     return;
   }
 
+  cv::ocl::Context context;
+  cv::ocl::Platform platform = cv::ocl::Platform::getDefault();
+  
+  // Get the active OpenCL device
+  cv::ocl::Device device = cv::ocl::Device::getDefault();
+  
+  if (device.available()) {
+      std::cout << "Device name: " << device.name() << std::endl;
+      std::cout << "Device type: " << (device.type() == cv::ocl::Device::TYPE_GPU ? "GPU" : "Not GPU") << std::endl;
+      std::cout << "Device memory: " << device.globalMemSize() / 1024 / 1024 << " MB" << std::endl;
+  } else {
+      std::cout << "No OpenCL device available." << std::endl;
+  }
+
   // Set OpenCL context
   cv::ocl::setUseOpenCL(true);
 
