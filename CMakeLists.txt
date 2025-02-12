@@ -52,6 +52,7 @@ add_compile_options(
 
 set(BUILD_LIST core,imgcodecs,highgui)
 find_package(OpenCV REQUIRED)
+set(WITH_OPENCL ON)
 
 find_package(PkgConfig REQUIRED)
 set(DEPENDENCIES "gobject-2.0" "glib-2.0" "aravis-0.8")

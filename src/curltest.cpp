@@ -29,16 +29,16 @@
 //     }
 // }
 
-void demosaic_cpu() {
-  cv::Mat mSource_Bayer = cv::Mat::zeros(3648, 5472, CV_8UC1);
+// void demosaic_cpu() {
+//   cv::Mat mSource_Bayer = cv::Mat::zeros(3648, 5472, CV_8UC1);
 
-  // Convert the RGB image to a single-channel grayscale image
-  while (1) {
-    cv::Mat mSource_Bgr;
-    cvtColor(mSource_Bayer, mSource_Bgr, cv::COLOR_BayerRG2BGR);
-    usleep(200000);
-  }
-}
+//   // Convert the RGB image to a single-channel grayscale image
+//   while (1) {
+//     cv::Mat mSource_Bgr;
+//     cvtColor(mSource_Bayer, mSource_Bgr, cv::COLOR_BayerRG2BGR);
+//     usleep(200000);
+//   }
+// }
 
 void demosaic_gpu() {
   // Ensure OpenCL is enabled and available
@@ -67,6 +67,6 @@ void demosaic_gpu() {
 }
 
 int main(int argc, char *argv[]) {
-  demosaic_cpu();
+  demosaic_gpu();
   return 0;
 }
