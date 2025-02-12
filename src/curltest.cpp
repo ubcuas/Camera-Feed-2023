@@ -75,7 +75,7 @@ void demosaic_gpu() {
     cv::UMat mSource_Bgr;
 
     cv::cvtColor(mSource_Bayer, mSource_Bgr, cv::COLOR_BayerRG2BGR);
-    std::cout << "HAHAHA\n";
+    // std::cout << "HAHAHA\n";
 
   }
 }
