@@ -63,7 +63,6 @@ void demosaic_gpu() {
     cv::cvtColor(mSource_Bayer, mSource_Bgr, cv::COLOR_BayerRG2BGR);
     std::cout << "HAHAHA\n";
 
-    usleep(200000);  // Sleep for 0.2 seconds (200,000 microseconds)
   }
 }
 
