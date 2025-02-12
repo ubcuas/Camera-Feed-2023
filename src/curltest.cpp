@@ -30,7 +30,7 @@
 // }
 
 void demosaic_cpu() {
-  cv::Mat im = cv::imread("1918183719895.jpg", cv::IMREAD_COLOR);
+  cv::Mat im = cv::Mat::zeros(3648, 5472, CV_8UC1);
   cv::Mat mSource_Bayer;
 
   // Convert the RGB image to a single-channel grayscale image
