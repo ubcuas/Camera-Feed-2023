@@ -70,6 +70,6 @@ void demosaic_gpu() {
 }
 
 int main(int argc, char *argv[]) {
-  demosaic_gpu();
+  demosaic_cpu();
   return 0;
 }
