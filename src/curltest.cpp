@@ -30,11 +30,9 @@
 // }
 
 void demosaic_cpu() {
-  cv::Mat im = cv::Mat::zeros(3648, 5472, CV_8UC1);
-  cv::Mat mSource_Bayer;
+  cv::Mat mSource_Bayer = cv::Mat::zeros(3648, 5472, CV_8UC1);
 
   // Convert the RGB image to a single-channel grayscale image
-  cv::cvtColor(im, mSource_Bayer, cv::COLOR_BGR2GRAY);
   while (1) {
     cv::Mat mSource_Bgr;
     cvtColor(mSource_Bayer, mSource_Bgr, cv::COLOR_BayerRG2BGR);
