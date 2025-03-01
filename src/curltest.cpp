@@ -31,10 +31,11 @@
 
 void demosaic_cpu(int iterations) {
   cv::Mat mSource_Bayer = cv::Mat::zeros(3648, 5472, CV_8UC1);
+  cv::Mat mSource_Bgr(3648, 5472, CV_8UC1);
+
   auto start = std::chrono::high_resolution_clock::now();
 
   for (int i = 0; i < iterations; ++i) {
-      cv::Mat mSource_Bgr;
       cv::cvtColor(mSource_Bayer, mSource_Bgr, cv::COLOR_BayerRG2BGR);
   }
 
@@ -52,14 +53,14 @@ void demosaic_gpu(int iterations) {
   }
 
   cv::ocl::setUseOpenCL(true);
-  cv::UMat mSource_Bayer;
+  cv::UMat mSource_Bayer(3648, 5472, CV_8UC1, cv::USAGE_ALLOCATE_DEVICE_MEMORY);
+  cv::UMat mSource_Bgr(3648, 5472, CV_8UC3, cv::USAGE_ALLOCATE_DEVICE_MEMORY);
   cv::Mat bayer = cv::Mat::zeros(3648, 5472, CV_8UC1);
   bayer.copyTo(mSource_Bayer);
 
   auto start = std::chrono::high_resolution_clock::now();
 
   for (int i = 0; i < iterations; ++i) {
-      cv::UMat mSource_Bgr;
       cv::cvtColor(mSource_Bayer, mSource_Bgr, cv::COLOR_BayerRG2BGR);
   }
 
