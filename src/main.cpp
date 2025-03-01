@@ -196,7 +196,7 @@ int main(int argc, char* argv[]) {
   }
 
   if (gain_opt->count() > 0) {
-    camera->set_gain(exposureTime);
+    camera->set_gain(gain);
   }
 
   // if (reset){
