@@ -14,9 +14,9 @@ set(CMAKE_CXX_STANDARD 20)
 add_executable(${PROJECT_NAME} 
     ${CMAKE_SOURCE_DIR}/src/main.cpp
     ${CMAKE_SOURCE_DIR}/src/ArenaCamera.cpp
-    ${CMAKE_SOURCE_DIR}/src/FakeCamera.cpp
+    # ${CMAKE_SOURCE_DIR}/src/FakeCamera.cpp
     ${CMAKE_SOURCE_DIR}/src/HttpTransmitter.cpp
-    ${CMAKE_SOURCE_DIR}/src/AravisCamera.cpp
+    # ${CMAKE_SOURCE_DIR}/src/AravisCamera.cpp
     # ${CMAKE_SOURCE_DIR}/src/CprHTTP.cpp
     ${CMAKE_SOURCE_DIR}/src/Pipeline.cpp)
 
@@ -109,7 +109,7 @@ target_link_libraries(${PROJECT_NAME}  PRIVATE
     ${CURL_LIBRARIES}
     CLI11::CLI11
     # cpr::cpr
-    PkgConfig::DEPS
+    # PkgConfig::DEPS
 )
 
 target_include_directories(curltest  PRIVATE

@@ -75,40 +75,30 @@ void ArenaCamera::set_gain(float gain) {
   pGain->SetValue(gain);
 }
 
-// void ArenaCamera::set_trigger(bool trigger_on) {
-//   if (trigger_on) {
-//     Arena::SetNodeValue<GenICam::gcstring>(
-//         _pDevice->GetNodeMap(), "TriggerSelector", "FrameStart");
+void ArenaCamera::enable_trigger(bool enable) {
+  if (enable) {
+    Arena::SetNodeValue<GenICam::gcstring>(
+      _pDevice->GetNodeMap(), "LineSelector", "Line2");
+    Arena::SetNodeValue<GenICam::gcstring>(
+      _pDevice->GetNodeMap(), "LineMode", "Input");
+    Arena::SetNodeValue<GenICam::gcstring>(
+      _pDevice->GetNodeMap(), "TriggerMode", "On");
 
-//     // Set trigger mode
-//     //    Enable trigger mode before setting the source and selector and
-//     before
-//     //    starting the stream. Trigger mode cannot be turned on and off while
-//     //    the device is streaming.
-//     std::cout << "Enable trigger mode\n";
+    Arena::SetNodeValue<GenICam::gcstring>(
+        _pDevice->GetNodeMap(), "TriggerSelector", "FrameStart");
+    Arena::SetNodeValue<GenICam::gcstring>(
+        _pDevice->GetNodeMap(), "TriggerMode", "On");
+    Arena::SetNodeValue<GenICam::gcstring>(
+        _pDevice->GetNodeMap(), "TriggerSource", "Line2");
 
-//     Arena::SetNodeValue<GenICam::gcstring>(
-//         _pDevice->GetNodeMap(), "TriggerMode", "On");
+    _trigger_state = true;
+  } else {
+    Arena::SetNodeValue<GenICam::gcstring>(
+        _pDevice->GetNodeMap(), "TriggerMode", "Off");
 
-//     // Set trigger source
-//     //    Set the trigger source to software in order to trigger images
-//     without
-//     //    the use of any additional hardware. Lines of the GPIO can also be
-//     used
-//     //    to trigger.
-//     std::cout << "Set trigger source to Software\n";
-
-//     Arena::SetNodeValue<GenICam::gcstring>(
-//         _pDevice->GetNodeMap(), "TriggerSource", "Software");
-
-//     trigger_state = true;
-//   } else {
-//     Arena::SetNodeValue<GenICam::gcstring>(
-//         _pDevice->GetNodeMap(), "TriggerMode", "Off");
-
-//     trigger_state = false;
-//   }
-// }
+    _trigger_state = false;
+  }
+}
 
 // void set_acquisitionmode(std::string acq_mode) {
 //   // GenICam::gcstring a = acq_mode.c_str();

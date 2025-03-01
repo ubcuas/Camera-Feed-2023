@@ -79,7 +79,6 @@ void image_processor(bool write, bool send) {
   // compression_params.push_back(100);  // Change the quality value (0-100),
   // 100
   //                                     // is least compression and cpu usage
-  std::vector<std::future<void>> save;
 
   while (!stop_flag) {
     std::unique_ptr<ImageData> element;
@@ -189,7 +188,7 @@ int main(int argc, char* argv[]) {
     send = true;
   }
 
-  std::shared_ptr<ICamera> camera = std::make_shared<FakeCamera>();
+  std::shared_ptr<ICamera> camera = std::make_shared<ArenaCamera>();
 
   if (exposure_opt->count() > 0) {
     camera->set_exposuretime(exposureTime);

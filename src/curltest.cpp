@@ -29,58 +29,58 @@
 //     }
 // }
 
-// void demosaic_cpu() {
-//   cv::Mat mSource_Bayer = cv::Mat::zeros(3648, 5472, CV_8UC1);
+void demosaic_cpu(int iterations) {
+  cv::Mat mSource_Bayer = cv::Mat::zeros(3648, 5472, CV_8UC1);
+  auto start = std::chrono::high_resolution_clock::now();
 
-//   // Convert the RGB image to a single-channel grayscale image
-//   while (1) {
-//     cv::Mat mSource_Bgr;
-//     cvtColor(mSource_Bayer, mSource_Bgr, cv::COLOR_BayerRG2BGR);
-//     usleep(200000);
-//   }
-// }
+  for (int i = 0; i < iterations; ++i) {
+      cv::Mat mSource_Bgr;
+      cv::cvtColor(mSource_Bayer, mSource_Bgr, cv::COLOR_BayerRG2BGR);
+  }
 
-void demosaic_gpu() {
-  // Ensure OpenCL is enabled and available
+  auto end = std::chrono::high_resolution_clock::now();
+  std::chrono::duration<double> elapsed = end - start;
+  double avg_time = elapsed.count() / iterations;
+  std::cout << "CPU demosaicing time: " << elapsed.count() << " seconds" << std::endl;
+  std::cout << "Average time per iteration: " << avg_time << " seconds" << std::endl;
+}
+
+void demosaic_gpu(int iterations) {
   if (!cv::ocl::haveOpenCL()) {
-    std::cerr << "OpenCL is not available. Falling back to CPU." << std::endl;
-    return;
+      std::cerr << "OpenCL is not available." << std::endl;
+      return;
   }
 
-  cv::ocl::Context context;
-  cv::ocl::Platform platform = cv::ocl::Platform::getDefault();
-  
-  // Get the active OpenCL device
-  cv::ocl::Device device = cv::ocl::Device::getDefault();
-  
-  if (device.available()) {
-      std::cout << "Device name: " << device.name() << std::endl;
-      std::cout << "Device type: " << (device.type() == cv::ocl::Device::TYPE_GPU ? "GPU" : "Not GPU") << std::endl;
-      std::cout << "Device memory: " << device.globalMemSize() / 1024 / 1024 << " MB" << std::endl;
-  } else {
-      std::cout << "No OpenCL device available." << std::endl;
-  }
-
-  // Set OpenCL context
   cv::ocl::setUseOpenCL(true);
-
-  // Load the image into UMat (which will use GPU memory)
   cv::UMat mSource_Bayer;
   cv::Mat bayer = cv::Mat::zeros(3648, 5472, CV_8UC1);
   bayer.copyTo(mSource_Bayer);
 
+  auto start = std::chrono::high_resolution_clock::now();
 
-  // Loop to continuously apply demosaic and convert Bayer to BGR
-  while (1) {
-    cv::UMat mSource_Bgr;
-
-    cv::cvtColor(mSource_Bayer, mSource_Bgr, cv::COLOR_BayerRG2BGR);
-    // std::cout << "HAHAHA\n";
-
+  for (int i = 0; i < iterations; ++i) {
+      cv::UMat mSource_Bgr;
+      cv::cvtColor(mSource_Bayer, mSource_Bgr, cv::COLOR_BayerRG2BGR);
   }
+
+  auto end = std::chrono::high_resolution_clock::now();
+  std::chrono::duration<double> elapsed = end - start;
+  double avg_time = elapsed.count() / iterations;
+  std::cout << "GPU demosaicing time: " << elapsed.count() << " seconds" << std::endl;
+  std::cout << "Average time per iteration: " << avg_time << " seconds" << std::endl;
 }
 
 int main(int argc, char *argv[]) {
-  demosaic_gpu();
+  int iterations = 10; // Default number of iterations
+  CLI::App app{"Demosaic Performance Test"};
+  app.add_option("-i,--iterations", iterations, "Number of iterations for performance test");
+  CLI11_PARSE(app, argc, argv);
+
+  std::cout << "Running CPU demosaicing..." << std::endl;
+  demosaic_cpu(iterations);
+
+  std::cout << "Running GPU demosaicing..." << std::endl;
+  demosaic_gpu(iterations);
+
   return 0;
 }

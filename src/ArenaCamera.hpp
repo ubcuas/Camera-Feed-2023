@@ -9,7 +9,7 @@ class ArenaCamera : public ICamera {
   Arena::ISystem *_pSystem; /**< Pointer to the system object. */
   Arena::IDevice *_pDevice; /**< Pointer to the device object. */
   int64_t _epoch;           /**< Epoch time for timestamping. */
-  // bool _trigger_state = false; /**< Trigger state flag. */
+  bool _trigger_state = false; /**< Trigger state flag. */
  public:
   ArenaCamera();   // Constructor
   ~ArenaCamera();  // Destructor
@@ -37,7 +37,7 @@ class ArenaCamera : public ICamera {
   //  * @brief Enables or disables the manual trigger mode for the camera.
   //  * @param trigger_on A boolean where true enables and false disables it.
   //  */
-  // void set_trigger(bool trigger_on);
+  void enable_trigger(bool trigger_on);
 
   /**
    * @brief Starts the image stream from the camera.
