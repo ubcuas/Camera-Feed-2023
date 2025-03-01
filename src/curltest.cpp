@@ -53,8 +53,8 @@ void demosaic_gpu(int iterations) {
   }
 
   cv::ocl::setUseOpenCL(true);
-  cv::UMat mSource_Bayer(3648, 5472, CV_8UC1, cv::USAGE_ALLOCATE_DEVICE_MEMORY);
-  cv::UMat mSource_Bgr(3648, 5472, CV_8UC3, cv::USAGE_ALLOCATE_DEVICE_MEMORY);
+  cv::UMat mSource_Bayer(3648, 5472, CV_8UC1);
+  cv::UMat mSource_Bgr(3648, 5472, CV_8UC3);
   cv::Mat bayer = cv::Mat::zeros(3648, 5472, CV_8UC1);
   bayer.copyTo(mSource_Bayer);
 
