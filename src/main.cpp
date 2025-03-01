@@ -74,9 +74,9 @@ void image_saver() {
 }
 
 void image_processor(bool write, bool send) {
-  // std::vector<int> compression_params;
-  // compression_params.push_back(cv::IMWRITE_JPEG_QUALITY);
-  // compression_params.push_back(100);  // Change the quality value (0-100),
+  std::vector<int> compression_params;
+  compression_params.push_back(cv::IMWRITE_JPEG_QUALITY);
+  compression_params.push_back(75);  // Change the quality value (0-100),
   // 100
   //                                     // is least compression and cpu usage
 
