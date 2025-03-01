@@ -43,7 +43,7 @@ class ICamera {
   //  * @brief Enables or disables the manual trigger mode for the camera.
   //  * @param trigger_on A boolean where true enables and false disables it.
   //  */
-  // virtual void set_trigger(bool trigger_on) = 0;
+  virtual void enable_trigger(bool trigger_on) = 0;
 
   /**
    * @brief Starts the image stream from the camera.
