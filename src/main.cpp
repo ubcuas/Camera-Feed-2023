@@ -95,7 +95,7 @@ void image_processor(bool write, bool send) {
       std::shared_ptr<EncodedData> encoded_img =
           std::make_shared<EncodedData>();
       encoded_img->timestamp = timestamp;
-      cv::imencode(".jpg", mSource, encoded_img->buf);
+      cv::imencode(".jpg", mSource, encoded_img->buf, compression_params);
 
       if (write) {
         save_queue.push(encoded_img);
