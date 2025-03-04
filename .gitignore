@@ -4,3 +4,6 @@
 .devcontainer/
 /build/
 /images/
+/venv/
+/external/
+.ipynb_checkpoints

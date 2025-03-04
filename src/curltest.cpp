@@ -1,69 +1,87 @@
-#include <iostream>
-#include <curl/curl.h>
+// Copyright 2024 UBC Uncrewed Aircraft Systems
+
 #include <unistd.h>
+#include <curl/curl.h>
+
+#include <iostream>
 #include <thread>
 #include <vector>
+
 #include <CLI/CLI.hpp>
+#include <opencv2/core/ocl.hpp>
 #include <opencv2/opencv.hpp>
 
-#include "HttpTransmitter.h"
-
+// #include "src/HttpTransmitter.hpp"
 
 // void image_sender(std::string url) {
-//     HttpTransmitter http_transmitter(url);
-//     for (int i = 0; i < 1; i++) {
-//         (void) http_transmitter.send("asdf.txt", 1719296810737l);
-//         std::cout << "sent\n";
+//     HttpTransmitter http_transmitter;
+//     while (1) {
+//         std::vector<int> compression_params;
+
+//         compression_params.push_back(cv::IMWRITE_JPEG_QUALITY);
+//         compression_params.push_back(100); // Change the quality value
+//         (0-100)
+
+//         cv::Mat img = cv::imread("1721280101439.jpg", cv::IMREAD_COLOR);
+//         std::vector<uchar> buf;
+//         cv::imencode(".jpg", img, buf, compression_params);
+//         // http_transmitter.send_imen(url, &buf, 1918183719895l);
 //     }
 // }
 
+void demosaic_cpu(int iterations) {
+  cv::Mat mSource_Bayer = cv::Mat::zeros(3648, 5472, CV_8UC1);
+  cv::Mat mSource_Bgr(3648, 5472, CV_8UC1);
+
+  auto start = std::chrono::high_resolution_clock::now();
+
+  for (int i = 0; i < iterations; ++i) {
+      cv::cvtColor(mSource_Bayer, mSource_Bgr, cv::COLOR_BayerRG2BGR);
+  }
+
+  auto end = std::chrono::high_resolution_clock::now();
+  std::chrono::duration<double> elapsed = end - start;
+  double avg_time = elapsed.count() / iterations;
+  std::cout << "CPU demosaicing time: " << elapsed.count() << " seconds" << std::endl;
+  std::cout << "Average time per iteration: " << avg_time << " seconds" << std::endl;
+}
+
+void demosaic_gpu(int iterations) {
+  if (!cv::ocl::haveOpenCL()) {
+      std::cerr << "OpenCL is not available." << std::endl;
+      return;
+  }
+
+  cv::ocl::setUseOpenCL(true);
+  cv::UMat mSource_Bayer(3648, 5472, CV_8UC1, cv::USAGE_ALLOCATE_DEVICE_MEMORY);
+  cv::UMat mSource_Bgr(3648, 5472, CV_8UC3, cv::USAGE_ALLOCATE_DEVICE_MEMORY);
+  cv::Mat bayer = cv::Mat::zeros(3648, 5472, CV_8UC1);
+  bayer.copyTo(mSource_Bayer);
+
+  auto start = std::chrono::high_resolution_clock::now();
+
+  for (int i = 0; i < iterations; ++i) {
+      cv::cvtColor(mSource_Bayer, mSource_Bgr, cv::COLOR_BayerRG2BGR);
+  }
+
+  auto end = std::chrono::high_resolution_clock::now();
+  std::chrono::duration<double> elapsed = end - start;
+  double avg_time = elapsed.count() / iterations;
+  std::cout << "GPU demosaicing time: " << elapsed.count() << " seconds" << std::endl;
+  std::cout << "Average time per iteration: " << avg_time << " seconds" << std::endl;
+}
+
 int main(int argc, char *argv[]) {
-    // int runtime = 0;
-    // int exposureTime = 0;
-    // int gain = 0;
-    std::string url;
-    std::string filename;
+  int iterations = 10; // Default number of iterations
+  CLI::App app{"Demosaic Performance Test"};
+  app.add_option("-i,--iterations", iterations, "Number of iterations for performance test");
+  CLI11_PARSE(app, argc, argv);
 
-    CLI::App app{"CLI Example"};
+  std::cout << "Running CPU demosaicing..." << std::endl;
+  demosaic_cpu(iterations);
 
-    // app.add_option("-r,--runtime", runtime, "Set runtime")->required();
-    // app.add_option("-e,--exposure", exposureTime, "Set exposure time (ms)")->check(CLI::PositiveNumber);
-    // app.add_option("-g,--gain", gain, "Set gain")->check(CLI::PositiveNumber);
-    app.add_option("-u,--url", url, "Set URL");
-    app.add_option("-f,--filename", filename, "Set file");
+  std::cout << "Running GPU demosaicing..." << std::endl;
+  demosaic_gpu(iterations);
 
-
-    CLI11_PARSE(app, argc, argv);
-
-    std::cout << url << '\n';
-    
-    curl_global_init(CURL_GLOBAL_ALL);
-
-    // std::vector<int> compression_params;
-
-    // compression_params.push_back(cv::IMWRITE_JPEG_QUALITY);
-    // compression_params.push_back(100); // Change the quality value (0-100)
-
-    // cv::Mat img = cv::imread("1918183719895.jpg", cv::IMREAD_COLOR);
-    // std::vector<uchar> buf;
-
-    // cv::imencode(".jpg", img, buf, compression_params);
-    
-
-    HttpTransmitter http_transmitter(url);
-    (void) http_transmitter.send(filename, 1719296810737l);
-    // http_transmitter.send_imen(buf, 1918183719895l);
-    std::cout << "sent\n";
-    
-    // std::vector<std::thread> senders;
-
-    // for (int i = 0; i < numSenders; i++) {
-    //     senders.push_back(std::thread(image_sender, url));
-    // }
-
-    // for (std::thread& sender : senders) {
-    //     sender.join();
-    //     std::cout << "Sender joined\n";
-    // }
-    return 0;
+  return 0;
 }
