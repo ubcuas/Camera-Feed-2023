@@ -8,24 +8,25 @@ endif()
 
 
 project(camerafeed)
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 20)
 
-# set(BUILD_LIST core,imgcodecs,highgui)
 
 add_executable(${PROJECT_NAME} 
     ${CMAKE_SOURCE_DIR}/src/main.cpp
-    ${CMAKE_SOURCE_DIR}/src/CameraController.cpp
-    ${CMAKE_SOURCE_DIR}/src/HttpTransmitter.cpp)
+    ${CMAKE_SOURCE_DIR}/src/ArenaCamera.cpp
+    # ${CMAKE_SOURCE_DIR}/src/FakeCamera.cpp
+    ${CMAKE_SOURCE_DIR}/src/HttpTransmitter.cpp
+    # ${CMAKE_SOURCE_DIR}/src/AravisCamera.cpp
+    # ${CMAKE_SOURCE_DIR}/src/CprHTTP.cpp
+    ${CMAKE_SOURCE_DIR}/src/Pipeline.cpp)
 
-# add_executable(multithread
-#     ${CMAKE_SOURCE_DIR}/src/multithreadtest.cpp)
 
 add_executable(curltest
     ${CMAKE_SOURCE_DIR}/src/curltest.cpp
     ${CMAKE_SOURCE_DIR}/src/HttpTransmitter.cpp)
 
 
-target_compile_options(${PROJECT_NAME} PUBLIC 
+add_compile_options(
     "-Wall" 
     "-Wextra" 
     "-Wpedantic" 
@@ -37,39 +38,25 @@ target_compile_options(${PROJECT_NAME} PUBLIC
     "-Wformat=2"
     "-Wlogical-op"
     "-Wmissing-include-dirs"
-    "-Wnull-dereference"
+    # "-Wnull-dereference" # causes weird
     "-Woverloaded-virtual"
     "-Wpointer-arith"
     "-Wshadow"
     # "-Wswitch-enum"
     "-Wvla"
     "$<$<CONFIG:DEBUG>:-O0;-g3;-ggdb>"
-    "$<$<CONFIG:RELEASE>:-O2>"
-    )
-
-target_compile_options(curltest PUBLIC 
-    "-Wall" 
-    "-Wextra" 
-    "-Wpedantic" 
-    "-Wcast-align" 
-    "-Wcast-qual" 
-    "-Wdisabled-optimization" 
-    "-Wduplicated-branches"
-    "-Wduplicated-cond"
-    "-Wformat=2"
-    "-Wlogical-op"
-    "-Wmissing-include-dirs"
-    "-Wnull-dereference"
-    "-Woverloaded-virtual"
-    "-Wpointer-arith"
-    "-Wshadow"
-    # "-Wswitch-enum"
-    "-Wvla"
-    "$<$<CONFIG:DEBUG>:-O0;-g3;-ggdb>"
-    "$<$<CONFIG:RELEASE>:-O2>"
+    "$<$<CONFIG:RELEASE>:-O2>" # I don't know if O2 or O3 is better
     )
 # install(TARGETS ${PROJECT_NAME} DESTINATION bin)
+
+
+set(BUILD_LIST core,imgcodecs,highgui)
 find_package(OpenCV REQUIRED)
+set(WITH_OPENCL ON)
+
+find_package(PkgConfig REQUIRED)
+set(DEPENDENCIES "gobject-2.0" "glib-2.0" "aravis-0.8")
+pkg_check_modules(DEPS REQUIRED IMPORTED_TARGET ${DEPENDENCIES})
 
 include(FetchContent)
 
@@ -122,13 +109,18 @@ target_link_libraries(${PROJECT_NAME}  PRIVATE
     ${CURL_LIBRARIES}
     CLI11::CLI11
     # cpr::cpr
+    # PkgConfig::DEPS
+)
+
+target_include_directories(curltest  PRIVATE
+    ${OpenCV_INCLUDE_DIRS}
+    ${CURL_INCLUDE_DIR}
 )
 
 target_link_libraries(curltest PRIVATE
-    CURL::libcurl
-    CLI11::CLI11
     ${OpenCV_LIBS}
-    # cpr::cpr
+    ${CURL_LIBRARIES}
+    CLI11::CLI11
 )
 
 
