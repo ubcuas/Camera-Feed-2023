@@ -6,9 +6,9 @@
 
 class ArenaCamera : public ICamera {
  private:
-  Arena::ISystem *_pSystem; /**< Pointer to the system object. */
-  Arena::IDevice *_pDevice; /**< Pointer to the device object. */
-  int64_t _epoch;           /**< Epoch time for timestamping. */
+  Arena::ISystem *_pSystem;    /**< Pointer to the system object. */
+  Arena::IDevice *_pDevice;    /**< Pointer to the device object. */
+  int64_t _epoch;              /**< Epoch time for timestamping. */
   bool _trigger_state = false; /**< Trigger state flag. */
  public:
   ArenaCamera();   // Constructor

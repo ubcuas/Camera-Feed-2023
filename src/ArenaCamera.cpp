@@ -78,11 +78,11 @@ void ArenaCamera::set_gain(float gain) {
 void ArenaCamera::enable_trigger(bool enable) {
   if (enable) {
     Arena::SetNodeValue<GenICam::gcstring>(
-      _pDevice->GetNodeMap(), "LineSelector", "Line2");
+        _pDevice->GetNodeMap(), "LineSelector", "Line2");
     Arena::SetNodeValue<GenICam::gcstring>(
-      _pDevice->GetNodeMap(), "LineMode", "Input");
+        _pDevice->GetNodeMap(), "LineMode", "Input");
     Arena::SetNodeValue<GenICam::gcstring>(
-      _pDevice->GetNodeMap(), "TriggerMode", "On");
+        _pDevice->GetNodeMap(), "TriggerMode", "On");
 
     Arena::SetNodeValue<GenICam::gcstring>(
         _pDevice->GetNodeMap(), "TriggerSelector", "FrameStart");
@@ -110,15 +110,15 @@ void ArenaCamera::start_stream(int num_buffers) {
   std::cout << "Starting stream with " << num_buffers << " buffers\n";
   _pDevice->StartStream(num_buffers);
 
-  // if (trigger_state) {
-  //   std::cout << "Wait until trigger is armed\n";
-  //   bool triggerArmed = false;
+  if (_trigger_state) {
+    std::cout << "Wait until trigger is armed\n";
+    bool triggerArmed = false;
 
-  //   do {
-  //     triggerArmed =
-  //         Arena::GetNodeValue<bool>(_pDevice->GetNodeMap(), "TriggerArmed");
-  //   } while (triggerArmed == false);
-  // }
+    do {
+      triggerArmed =
+          Arena::GetNodeValue<bool>(_pDevice->GetNodeMap(), "TriggerArmed");
+    } while (triggerArmed == false);
+  }
 }
 
 void ArenaCamera::stop_stream() {

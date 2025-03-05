@@ -55,31 +55,65 @@ void image_producer(const std::shared_ptr<ICamera>& camera) {
   }
 }
 
-void image_saver() {
-  while (!stop_flag) {
-    std::shared_ptr<EncodedData> element;
-    try {
-      element = save_queue.pop();
-    } catch (const AbortedPopException& e) {
-      break;
-    }
-    std::string filename =
-        "images/" + std::to_string(element->timestamp) + ".jpg";
+// void image_saver() {
+//   while (!stop_flag) {
+//     std::shared_ptr<EncodedData> element;
+//     try {
+//       element = save_queue.pop();
+//     } catch (const AbortedPopException& e) {
+//       break;
+//     }
+//     std::string filename =
+//         "images/" + std::to_string(element->timestamp) + ".jpg";
 
-    std::ofstream outFile(filename);
-    outFile.write(reinterpret_cast<const char*>(element->buf.data()),
-                  element->buf.size());
-    outFile.close();
-  }
-}
+//     std::ofstream outFile(filename);
+//     outFile.write(reinterpret_cast<const char*>(element->buf.data()),
+//                   element->buf.size());
+//     outFile.close();
+//   }
+// }
+
+// void image_processor(bool write, bool send) {
+//   std::vector<int> compression_params;
+//   compression_params.push_back(cv::IMWRITE_JPEG_QUALITY);
+//   compression_params.push_back(75);  // Change the quality value (0-100),
+//   // 100
+//   //                                     // is least compression and cpu
+//   usage
+
+//   while (!stop_flag) {
+//     std::unique_ptr<ImageData> element;
+//     try {
+//       element = data_queue.pop();
+//     } catch (const AbortedPopException& e) {
+//       break;
+//     }
+//     cv::Mat mSource = element->image;
+//     int64_t timestamp = element->timestamp;
+
+//     // cvtColor(mSource_Bayer, mSource_Bgr, cv::COLOR_BayerRG2BGR);//Perform
+//     if (write || send) {
+//       std::shared_ptr<EncodedData> encoded_img =
+//           std::make_shared<EncodedData>();
+//       encoded_img->timestamp = timestamp;
+//       cv::imencode(".jpg", mSource, encoded_img->buf, compression_params);
+
+//       if (write) {
+//         save_queue.push(encoded_img);
+//       }
+
+//       if (send) {
+//         encoded_queue.push(encoded_img);
+//         // std::cout << "Processed " << element->timestamp << "\n";
+//       }
+//     }
+//   }
+// }
 
 void image_processor(bool write, bool send) {
   std::vector<int> compression_params;
   compression_params.push_back(cv::IMWRITE_JPEG_QUALITY);
-  compression_params.push_back(75);  // Change the quality value (0-100),
-  // 100
-  //                                     // is least compression and cpu usage
-
+  compression_params.push_back(75);
   while (!stop_flag) {
     std::unique_ptr<ImageData> element;
     try {
@@ -90,21 +124,10 @@ void image_processor(bool write, bool send) {
     cv::Mat mSource = element->image;
     int64_t timestamp = element->timestamp;
 
-    // cvtColor(mSource_Bayer, mSource_Bgr, cv::COLOR_BayerRG2BGR);//Perform
-    if (write || send) {
-      std::shared_ptr<EncodedData> encoded_img =
-          std::make_shared<EncodedData>();
-      encoded_img->timestamp = timestamp;
-      cv::imencode(".jpg", mSource, encoded_img->buf, compression_params);
-
-      if (write) {
-        save_queue.push(encoded_img);
-      }
-
-      if (send) {
-        encoded_queue.push(encoded_img);
-        // std::cout << "Processed " << element->timestamp << "\n";
-      }
+    if (write) {
+      std::string filename =
+          "images/" + std::to_string(element->timestamp) + ".jpg";
+      cv::imwrite(filename, mSource, compression_params);
     }
   }
 }
@@ -158,20 +181,25 @@ int main(int argc, char* argv[]) {
   float exposureTime = 0;
   float gain = 0;
   // bool reset = false;
+  bool trigger = false;
   bool write = false;
   bool send = false;
   std::string url = "";
   CLI::App app{"Camera Feed"};
 
-  auto runtime_opt =
-      app.add_option("-s,--seconds", seconds, "Set runtime")->required();
-  auto exposure_opt =
-      app.add_option(
-             "-e,--exposure", exposureTime, "Set camera exposure time (ms)")
-          ->check(CLI::PositiveNumber);
-  auto gain_opt = app.add_option("-g,--gain", gain, "Set camera gain")
-                      ->check(CLI::PositiveNumber);
-  auto url_opt = app.add_option("-u,--url", url, "Set URL to send to");
+  auto runtime_opt = app.add_option("-s,--seconds", seconds, "Set runtime");
+  runtime_opt->required();
+
+  auto exposure_opt = app.add_option(
+      "-e,--exposure", exposureTime, "Set camera exposure time (ms)");
+  exposure_opt->check(CLI::PositiveNumber);
+
+  auto gain_opt = app.add_option("-g,--gain", gain, "Set camera gain");
+  gain_opt->check(CLI::PositiveNumber);
+
+  // auto url_opt = app.add_option("-u,--url", url, "Set URL to send to");
+
+  auto trigger_opt = app.add_flag("-t,--trigger", trigger, "Use trigger");
   auto write_opt = app.add_flag("-w,--write", write, "Write images to disk");
   // auto reset_opt = app.add_flag("--reset", reset, "Reset camera to default");
 
@@ -184,9 +212,9 @@ int main(int argc, char* argv[]) {
     }
   }
 
-  if (url_opt->count() > 0) {
-    send = true;
-  }
+  // if (url_opt->count() > 0) {
+  //   send = true;
+  // }
 
   std::shared_ptr<ICamera> camera = std::make_shared<ArenaCamera>();
 
@@ -197,6 +225,10 @@ int main(int argc, char* argv[]) {
 
   if (gain_opt->count() > 0) {
     camera->set_gain(gain);
+  }
+
+  if (trigger) {
+    camera->enable_trigger(true);
   }
 
   // if (reset){
@@ -218,24 +250,24 @@ int main(int argc, char* argv[]) {
   }
   std::cout << "PROCESSOR ONLINE\n";
 
-  std::vector<std::thread> savers;
-  if (write) {
-    for (int i = 0; i < numSavers; i++) {
-      savers.push_back(std::thread(image_saver));
-    }
-    std::cout << "WRITER ONLINE\n";
-  }
+  // std::vector<std::thread> savers;
+  // if (write) {
+  //   for (int i = 0; i < numSavers; i++) {
+  //     savers.push_back(std::thread(image_saver));
+  //   }
+  //   std::cout << "WRITER ONLINE\n";
+  // }
 
-  std::vector<std::thread> senders;
-  if (send) {
-    curl_global_init(CURL_GLOBAL_ALL);
-    for (int i = 0; i < numSenders; i++) {
-      senders.push_back(std::thread(image_sender_imen, url));
-    }
-    std::cout << "TRANSMITTER ONLINE\n";
-  }
+  // std::vector<std::thread> senders;
+  // if (send) {
+  //   curl_global_init(CURL_GLOBAL_ALL);
+  //   for (int i = 0; i < numSenders; i++) {
+  //     senders.push_back(std::thread(image_sender_imen, url));
+  //   }
+  //   std::cout << "TRANSMITTER ONLINE\n";
+  // }
 
-  std::cout << "ALL SYSTEMS NOMINAL\n";
+  // std::cout << "ALL SYSTEMS NOMINAL\n";
   run(seconds);
 
   producer.join();
@@ -243,12 +275,12 @@ int main(int argc, char* argv[]) {
   for (std::thread& processor : processors) {
     processor.join();
   }
-  for (std::thread& saver : savers) {
-    saver.join();
-  }
-  for (std::thread& sender : senders) {
-    sender.join();
-  }
+  // for (std::thread& saver : savers) {
+  //   saver.join();
+  // }
+  // for (std::thread& sender : senders) {
+  //   sender.join();
+  // }
 
   camera->stop_stream();
 
