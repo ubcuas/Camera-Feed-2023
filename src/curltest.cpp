@@ -6,6 +6,7 @@
 #include <iostream>
 #include <thread>
 #include <vector>
+#include <future>
 
 #include <CLI/CLI.hpp>
 #include <opencv2/core/ocl.hpp>
@@ -36,51 +37,100 @@ void demosaic_cpu(int iterations) {
   auto start = std::chrono::high_resolution_clock::now();
 
   for (int i = 0; i < iterations; ++i) {
-      cv::cvtColor(mSource_Bayer, mSource_Bgr, cv::COLOR_BayerRG2BGR);
+    cv::cvtColor(mSource_Bayer, mSource_Bgr, cv::COLOR_BayerRG2BGR);
   }
 
   auto end = std::chrono::high_resolution_clock::now();
   std::chrono::duration<double> elapsed = end - start;
   double avg_time = elapsed.count() / iterations;
-  std::cout << "CPU demosaicing time: " << elapsed.count() << " seconds" << std::endl;
-  std::cout << "Average time per iteration: " << avg_time << " seconds" << std::endl;
+  std::cout << "CPU demosaicing time: " << elapsed.count() << " seconds"
+            << "\n";
+  std::cout << "Average time per iteration: " << avg_time << " seconds"
+            << "\n";
 }
 
 void demosaic_gpu(int iterations) {
   if (!cv::ocl::haveOpenCL()) {
-      std::cerr << "OpenCL is not available." << std::endl;
-      return;
+    std::cerr << "OpenCL is not available." << "\n";
+    return;
   }
 
   cv::ocl::setUseOpenCL(true);
-  cv::UMat mSource_Bayer(3648, 5472, CV_8UC1, cv::USAGE_ALLOCATE_DEVICE_MEMORY);
-  cv::UMat mSource_Bgr(3648, 5472, CV_8UC3, cv::USAGE_ALLOCATE_DEVICE_MEMORY);
-  cv::Mat bayer = cv::Mat::zeros(3648, 5472, CV_8UC1);
-  bayer.copyTo(mSource_Bayer);
+  cv::UMat img_gpu(3648, 5472, CV_8UC1);
+  cv::Mat img = cv::Mat::zeros(3648, 5472, CV_8UC1);
+  img.copyTo(img_gpu);
+  std::vector<std::future<void>> futures;
 
   auto start = std::chrono::high_resolution_clock::now();
 
   for (int i = 0; i < iterations; ++i) {
-      cv::cvtColor(mSource_Bayer, mSource_Bgr, cv::COLOR_BayerRG2BGR);
+    futures.push_back(std::async(std::launch::async, [&img_gpu]() {
+      cv::UMat bgr_img(3648, 5472, CV_8UC1);
+      cv::cvtColor(img_gpu, bgr_img, cv::COLOR_GRAY2BGR);
+    }));
+  }
+
+  for (auto& fut : futures) {
+    fut.get();
   }
 
   auto end = std::chrono::high_resolution_clock::now();
   std::chrono::duration<double> elapsed = end - start;
   double avg_time = elapsed.count() / iterations;
-  std::cout << "GPU demosaicing time: " << elapsed.count() << " seconds" << std::endl;
-  std::cout << "Average time per iteration: " << avg_time << " seconds" << std::endl;
+  std::cout << "GPU demosaic time: " << elapsed.count() << " seconds"
+            << "\n";
+  std::cout << "Average time per iteration: " << avg_time << " seconds"
+            << "\n";
 }
 
-int main(int argc, char *argv[]) {
-  int iterations = 10; // Default number of iterations
+void tophat_gpu(int iterations) {
+  if (!cv::ocl::haveOpenCL()) {
+    std::cerr << "OpenCL is not available." << "\n";
+    return;
+  }
+
+  cv::ocl::setUseOpenCL(true);
+  cv::UMat img_gpu(3648, 5472, CV_8UC1);
+  cv::Mat img = cv::Mat::zeros(3648, 5472, CV_8UC1);
+  img.copyTo(img_gpu);
+  std::vector<std::future<void>> futures;
+  cv::Mat kernel =
+      cv::getStructuringElement(cv::MORPH_ELLIPSE, cv::Size(13, 13));
+
+  auto start = std::chrono::high_resolution_clock::now();
+
+  for (int i = 0; i < iterations; ++i) {
+    futures.push_back(std::async(std::launch::async, [&img_gpu, &kernel]() {
+      cv::UMat whitehat(3648, 5472, CV_8UC1);
+      cv::morphologyEx(img_gpu, whitehat, cv::MORPH_TOPHAT, kernel);
+    }));
+  }
+
+  for (auto& fut : futures) {
+    fut.get();
+  }
+
+  auto end = std::chrono::high_resolution_clock::now();
+  std::chrono::duration<double> elapsed = end - start;
+  double avg_time = elapsed.count() / iterations;
+  std::cout << "GPU tophat time: " << elapsed.count() << " seconds"
+            << "\n";
+  std::cout << "Average time per iteration: " << avg_time << " seconds"
+            << "\n";
+}
+
+int main(int argc, char* argv[]) {
+  int iterations = 10;  // Default number of iterations
   CLI::App app{"Demosaic Performance Test"};
-  app.add_option("-i,--iterations", iterations, "Number of iterations for performance test");
+  app.add_option("-i,--iterations",
+                 iterations,
+                 "Number of iterations for performance test");
   CLI11_PARSE(app, argc, argv);
 
-  std::cout << "Running CPU demosaicing..." << std::endl;
+  std::cout << "Running CPU demosaicing..." << "\n";
   demosaic_cpu(iterations);
 
-  std::cout << "Running GPU demosaicing..." << std::endl;
+  std::cout << "Running GPU demosaicing..." << "\n";
   demosaic_gpu(iterations);
 
   return 0;
