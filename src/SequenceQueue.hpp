@@ -10,17 +10,18 @@
 #include <mutex>
 #include <queue>
 
-struct AbortedPopException {};
+#include "TSQueue.hpp"
 
-// Thread-safe queue
-// https://www.geeksforgeeks.org/implement-thread-safe-queue-in-c/
 template <typename T>
-class TSQueue {
+class SequenceQueue : public TSQueue {
  private:
-  std::queue<T> m_queue;
+  // Underlying queue
+  std::priority_queue<T> p_queue;
 
+  // mutex for thread synchronization
   std::mutex m_mutex;
 
+  // Condition variable for signaling
   std::condition_variable m_cond;
 
   mutable std::atomic<bool> abort_flag = false;
@@ -45,7 +46,7 @@ class TSQueue {
     std::unique_lock<std::mutex> lock(m_mutex);
 
     // wait until queue is not empty
-    m_cond.wait(lock, [this]() { return !m_queue.empty() || abort_flag; });
+    m_cond.wait(lock, []() { return !m_queue.empty() || abort_flag; });
 
     if (abort_flag) throw AbortedPopException{};
 
@@ -57,7 +58,6 @@ class TSQueue {
     return item;
   }
 
-  // Releases blocked threads
   void abort() {
     abort_flag = true;
     m_cond.notify_all();

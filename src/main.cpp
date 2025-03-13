@@ -14,8 +14,6 @@
 #include <thread>
 #include <utility>
 #include <vector>
-#include <sys/types.h>
-#include <sys/stat.h>
 
 #include <CLI/CLI.hpp>
 #include <opencv2/opencv.hpp>
@@ -50,6 +48,7 @@ void image_producer(const std::shared_ptr<ICamera>& camera) {
     try {
       std::unique_ptr<ImageData> image_data = camera->get_image();
       data_queue.push(std::move(image_data));
+      std::cout << "Capture" << "\n";
     } catch (timeout_exception& te) {
     }
   }
@@ -121,6 +120,8 @@ void image_processor(bool write, bool send) {
     } catch (const AbortedPopException& e) {
       break;
     }
+    std::cout << "Process" << "\n";
+
     cv::Mat mSource = element->image;
     int64_t timestamp = element->timestamp;
 
@@ -184,6 +185,8 @@ int main(int argc, char* argv[]) {
   bool trigger = false;
   bool write = false;
   bool send = false;
+  bool fake = false;
+
   std::string url = "";
   CLI::App app{"Camera Feed"};
 
@@ -202,6 +205,7 @@ int main(int argc, char* argv[]) {
   auto trigger_opt = app.add_flag("-t,--trigger", trigger, "Use trigger");
   auto write_opt = app.add_flag("-w,--write", write, "Write images to disk");
   // auto reset_opt = app.add_flag("--reset", reset, "Reset camera to default");
+  auto fake_opt = app.add_flag("-f,--fake", fake, "Use fake camera");
 
   CLI11_PARSE(app, argc, argv);
 
@@ -215,8 +219,12 @@ int main(int argc, char* argv[]) {
   // if (url_opt->count() > 0) {
   //   send = true;
   // }
-
-  std::shared_ptr<ICamera> camera = std::make_shared<ArenaCamera>();
+  std::shared_ptr<ICamera> camera;
+  if (fake) {
+    camera = std::make_shared<FakeCamera>();
+  } else {
+    camera = std::make_shared<ArenaCamera>();
+  }
 
   if (exposure_opt->count() > 0) {
     camera->set_exposuretime(exposureTime);
@@ -225,10 +233,12 @@ int main(int argc, char* argv[]) {
 
   if (gain_opt->count() > 0) {
     camera->set_gain(gain);
+    std::cout << "Setting gain time to " << gain << "\n";
   }
 
   if (trigger) {
     camera->enable_trigger(true);
+    std::cout << "Trigger mode enabled " << gain << "\n";
   }
 
   // if (reset){

@@ -1,5 +1,3 @@
-#!/Users/richardhan/PycharmProjects/Camera-Feed-2023/venv/bin/python3
-
 '''
 example program that dumps a Mavlink log file. The log file is
 assumed to be in the format that qgroundcontrol uses, which consists

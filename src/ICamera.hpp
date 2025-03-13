@@ -3,6 +3,8 @@
 #ifndef ICAMERA_HPP
 #define ICAMERA_HPP
 
+#include <string>
+#include <memory>
 #include <opencv2/opencv.hpp>
 
 struct ImageData {

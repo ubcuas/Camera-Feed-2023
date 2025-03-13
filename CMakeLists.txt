@@ -14,7 +14,6 @@ set(CMAKE_CXX_STANDARD 20)
 add_executable(${PROJECT_NAME} 
     ${CMAKE_SOURCE_DIR}/src/main.cpp
     ${CMAKE_SOURCE_DIR}/src/ArenaCamera.cpp
-    # ${CMAKE_SOURCE_DIR}/src/FakeCamera.cpp
     ${CMAKE_SOURCE_DIR}/src/HttpTransmitter.cpp
     # ${CMAKE_SOURCE_DIR}/src/AravisCamera.cpp
     # ${CMAKE_SOURCE_DIR}/src/CprHTTP.cpp
@@ -58,7 +57,23 @@ find_package(PkgConfig REQUIRED)
 set(DEPENDENCIES "gobject-2.0" "glib-2.0" "aravis-0.8")
 pkg_check_modules(DEPS REQUIRED IMPORTED_TARGET ${DEPENDENCIES})
 
+
 include(FetchContent)
+
+FetchContent_Declare(
+    json 
+    URL https://github.com/nlohmann/json/releases/download/v3.11.3/json.tar.xz
+)
+FetchContent_MakeAvailable(json)
+FetchContent_Declare(
+    asio 
+    GIT_REPOSITORY https://github.com/chriskohlhoff/asio.git
+    GIT_TAG        origin/master
+)
+set(ASIO_CMAKE_ASIO_TAG asio-1-30-2)
+
+FetchContent_MakeAvailable(asio)
+
 
 # FetchContent_Declare(
 #   curl
@@ -73,7 +88,6 @@ FetchContent_Declare(
     GIT_REPOSITORY https://github.com/CLIUtils/CLI11.git
     GIT_TAG v2.4.2
 )
-
 FetchContent_MakeAvailable(cli11_proj)
 
 # FetchContent_Declare(
@@ -89,14 +103,6 @@ list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 find_package(arena_sdk REQUIRED)
 
 
-#FetchContent_Declare(
-#        opencv
-#        GIT_REPOSITORY https://github.com/opencv/opencv.git
-#        GIT_TAG        4.10.0
-#)
-#FetchContent_MakeAvailable(opencv)
-
-
 target_include_directories(${PROJECT_NAME}  PRIVATE
     ${arena_sdk_INCLUDE_DIRS}
     ${OpenCV_INCLUDE_DIRS}
@@ -108,6 +114,7 @@ target_link_libraries(${PROJECT_NAME}  PRIVATE
     ${OpenCV_LIBS}
     ${CURL_LIBRARIES}
     CLI11::CLI11
+    asio
     # cpr::cpr
     # PkgConfig::DEPS
 )
