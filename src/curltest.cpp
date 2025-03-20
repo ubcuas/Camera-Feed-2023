@@ -12,6 +12,8 @@
 #include <opencv2/core/ocl.hpp>
 #include <opencv2/opencv.hpp>
 
+#include "Detector.hpp"
+
 // #include "src/HttpTransmitter.hpp"
 
 // void image_sender(std::string url) {
@@ -83,32 +85,27 @@ void demosaic_gpu(int iterations) {
             << "\n";
 }
 
-void tophat_gpu(int iterations) {
-  if (!cv::ocl::haveOpenCL()) {
-    std::cerr << "OpenCL is not available." << "\n";
-    return;
-  }
 
-  cv::ocl::setUseOpenCL(true);
-  cv::UMat img_gpu(3648, 5472, CV_8UC1);
-  cv::Mat img = cv::Mat::zeros(3648, 5472, CV_8UC1);
+void tophat_gpu(int iterations) {
+  // if (!cv::ocl::haveOpenCL()) {
+  //   std::cerr << "OpenCL is not available." << "\n";
+  //   return;
+  // }
+
+  // cv::ocl::setUseOpenCL(true);
+  cv::UMat img_gpu;
+  cv::Mat img = cv::imread("img.png", cv::IMREAD_GRAYSCALE);
   img.copyTo(img_gpu);
-  std::vector<std::future<void>> futures;
-  cv::Mat kernel =
-      cv::getStructuringElement(cv::MORPH_ELLIPSE, cv::Size(13, 13));
 
   auto start = std::chrono::high_resolution_clock::now();
 
-  for (int i = 0; i < iterations; ++i) {
-    futures.push_back(std::async(std::launch::async, [&img_gpu, &kernel]() {
-      cv::UMat whitehat(3648, 5472, CV_8UC1);
-      cv::morphologyEx(img_gpu, whitehat, cv::MORPH_TOPHAT, kernel);
-    }));
+  auto points = detect_tophat(img_gpu);
+  std::cout << "Points: ";
+  for (const auto& point : points) {
+      std::cout << "(" << point.x << ", " << point.y << ") ";
   }
+  std::cout << "\n";
 
-  for (auto& fut : futures) {
-    fut.get();
-  }
 
   auto end = std::chrono::high_resolution_clock::now();
   std::chrono::duration<double> elapsed = end - start;
@@ -127,11 +124,12 @@ int main(int argc, char* argv[]) {
                  "Number of iterations for performance test");
   CLI11_PARSE(app, argc, argv);
 
-  std::cout << "Running CPU demosaicing..." << "\n";
-  demosaic_cpu(iterations);
+  // std::cout << "Running CPU demosaicing..." << "\n";
+  // demosaic_cpu(iterations);
 
-  std::cout << "Running GPU demosaicing..." << "\n";
-  demosaic_gpu(iterations);
+  // std::cout << "Running GPU demosaicing..." << "\n";
+  // demosaic_gpu(iterations);
 
+  tophat_gpu(iterations);
   return 0;
 }

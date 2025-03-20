@@ -15,6 +15,7 @@ add_executable(${PROJECT_NAME}
     ${CMAKE_SOURCE_DIR}/src/main.cpp
     ${CMAKE_SOURCE_DIR}/src/ArenaCamera.cpp
     ${CMAKE_SOURCE_DIR}/src/HttpTransmitter.cpp
+    ${CMAKE_SOURCE_DIR}/src/Detector.cpp
     # ${CMAKE_SOURCE_DIR}/src/AravisCamera.cpp
     # ${CMAKE_SOURCE_DIR}/src/CprHTTP.cpp
     ${CMAKE_SOURCE_DIR}/src/Pipeline.cpp)
@@ -22,7 +23,9 @@ add_executable(${PROJECT_NAME}
 
 add_executable(curltest
     ${CMAKE_SOURCE_DIR}/src/curltest.cpp
-    ${CMAKE_SOURCE_DIR}/src/HttpTransmitter.cpp)
+    ${CMAKE_SOURCE_DIR}/src/HttpTransmitter.cpp
+    ${CMAKE_SOURCE_DIR}/src/Detector.cpp
+    )
 
 
 add_compile_options(
@@ -53,9 +56,9 @@ set(BUILD_LIST core,imgcodecs,highgui)
 find_package(OpenCV REQUIRED)
 set(WITH_OPENCL ON)
 
-find_package(PkgConfig REQUIRED)
-set(DEPENDENCIES "gobject-2.0" "glib-2.0" "aravis-0.8")
-pkg_check_modules(DEPS REQUIRED IMPORTED_TARGET ${DEPENDENCIES})
+# find_package(PkgConfig REQUIRED)
+# set(DEPENDENCIES "gobject-2.0" "glib-2.0" "aravis-0.8")
+# pkg_check_modules(DEPS REQUIRED IMPORTED_TARGET ${DEPENDENCIES})
 
 
 include(FetchContent)
@@ -65,14 +68,14 @@ FetchContent_Declare(
     URL https://github.com/nlohmann/json/releases/download/v3.11.3/json.tar.xz
 )
 FetchContent_MakeAvailable(json)
-FetchContent_Declare(
-    asio 
-    GIT_REPOSITORY https://github.com/chriskohlhoff/asio.git
-    GIT_TAG        origin/master
-)
-set(ASIO_CMAKE_ASIO_TAG asio-1-30-2)
+# FetchContent_Declare(
+#     asio 
+#     GIT_REPOSITORY https://github.com/chriskohlhoff/asio.git
+#     GIT_TAG        origin/master
+# )
+# set(ASIO_CMAKE_ASIO_TAG asio-1-30-2)
 
-FetchContent_MakeAvailable(asio)
+# FetchContent_MakeAvailable(asio)
 
 
 # FetchContent_Declare(
@@ -114,7 +117,7 @@ target_link_libraries(${PROJECT_NAME}  PRIVATE
     ${OpenCV_LIBS}
     ${CURL_LIBRARIES}
     CLI11::CLI11
-    asio
+    # asio
     # cpr::cpr
     # PkgConfig::DEPS
 )
