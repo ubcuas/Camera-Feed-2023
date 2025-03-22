@@ -61,8 +61,8 @@ void image_producer(const std::shared_ptr<ICamera>& camera) {
 
 void image_saver() {
   std::vector<int> compression_params;
-  compression_params.push_back(cv::IMWRITE_PNG_COMPRESSION);
-  compression_params.push_back(1);
+  compression_params.push_back(cv::IMWRITE_JPEG_QUALITY);
+  compression_params.push_back(100);
   while (!stop_flag) {
     std::shared_ptr<ImageData> element;
     try {
@@ -75,8 +75,9 @@ void image_saver() {
     int64_t timestamp = element->timestamp;
 
     std::string filename =
-        "images/" + std::to_string(element->timestamp) + ".png";
+        "images/" + std::to_string(element->timestamp) + ".jpg";
     cv::imwrite(filename, img, compression_params);
+    std::cout << filename << "\n";
   }
 }
 
@@ -229,7 +230,7 @@ int main(int argc, char* argv[]) {
 
   camera->start_stream();
 
-  const int numProcessors = 2;
+  const int numProcessors = 1;
   const int numSavers = 1;
   const int numSenders = 1;
 
