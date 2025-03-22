@@ -1,16 +1,15 @@
 // Copyright 2024 UBC Uncrewed Aircraft Systems
 
-#include <unistd.h>
 #include <curl/curl.h>
-
-#include <iostream>
-#include <thread>
-#include <vector>
-#include <future>
+#include <unistd.h>
 
 #include <CLI/CLI.hpp>
+#include <future>
+#include <iostream>
 #include <opencv2/core/ocl.hpp>
 #include <opencv2/opencv.hpp>
+#include <thread>
+#include <vector>
 
 #include "Detector.hpp"
 
@@ -85,32 +84,35 @@ void demosaic_gpu(int iterations) {
             << "\n";
 }
 
-
 void tophat_gpu(int iterations) {
-  // if (!cv::ocl::haveOpenCL()) {
-  //   std::cerr << "OpenCL is not available." << "\n";
-  //   return;
-  // }
+  if (!cv::ocl::haveOpenCL()) {
+    std::cerr << "OpenCL is not available." << "\n";
+    return;
+  }
 
-  // cv::ocl::setUseOpenCL(true);
-  cv::UMat img_gpu;
-  cv::Mat img = cv::imread("img.png", cv::IMREAD_GRAYSCALE);
+  cv::ocl::setUseOpenCL(true);
+  cv::UMat img_gpu(3648, 5472, CV_8UC1);
+  cv::Mat img = cv::Mat::zeros(3648, 5472, CV_8UC1);
   img.copyTo(img_gpu);
+  std::vector<std::future<void>> futures;
 
   auto start = std::chrono::high_resolution_clock::now();
 
-  auto points = detect_tophat(img_gpu);
-  std::cout << "Points: ";
-  for (const auto& point : points) {
-      std::cout << "(" << point.x << ", " << point.y << ") ";
+  for (int i = 0; i < iterations; ++i) {
+    futures.push_back(std::async(std::launch::async, [&img_gpu]() {
+      cv::UMat bgr_img(3648, 5472, CV_8UC1);
+      cv::cvtColor(img_gpu, bgr_img, cv::COLOR_GRAY2BGR);
+    }));
   }
-  std::cout << "\n";
 
+  for (auto& fut : futures) {
+    fut.get();
+  }
 
   auto end = std::chrono::high_resolution_clock::now();
   std::chrono::duration<double> elapsed = end - start;
   double avg_time = elapsed.count() / iterations;
-  std::cout << "GPU tophat time: " << elapsed.count() << " seconds"
+  std::cout << "GPU demosaic time: " << elapsed.count() << " seconds"
             << "\n";
   std::cout << "Average time per iteration: " << avg_time << " seconds"
             << "\n";
@@ -119,8 +121,7 @@ void tophat_gpu(int iterations) {
 int main(int argc, char* argv[]) {
   int iterations = 10;  // Default number of iterations
   CLI::App app{"Demosaic Performance Test"};
-  app.add_option("-i,--iterations",
-                 iterations,
+  app.add_option("-i,--iterations", iterations,
                  "Number of iterations for performance test");
   CLI11_PARSE(app, argc, argv);
 

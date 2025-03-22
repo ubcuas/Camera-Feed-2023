@@ -10,6 +10,7 @@
 struct ImageData {
   cv::Mat image;
   int64_t timestamp;
+  int32_t seq;
 };
 
 /**
