@@ -117,6 +117,7 @@ target_link_libraries(${PROJECT_NAME}  PRIVATE
     ${OpenCV_LIBS}
     ${CURL_LIBRARIES}
     CLI11::CLI11
+    nlohmann_json::nlohmann_json
     # asio
     # cpr::cpr
     # PkgConfig::DEPS

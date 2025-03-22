@@ -24,7 +24,7 @@ class FakeCamera : public ICamera {
 
   std::unique_ptr<ImageData> get_image() override {
     std::unique_ptr<ImageData> image_data = std::make_unique<ImageData>();
-    image_data->image = cv::imread("img.png", cv::IMREAD_UNCHANGED);
+    image_data->image = cv::imread("img.png", cv::IMREAD_GRAYSCALE);
   
     std::chrono::system_clock::time_point currentTime =
         std::chrono::system_clock::now();

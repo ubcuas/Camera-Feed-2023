@@ -4,7 +4,6 @@
 #ifndef DETECTOR_H
 #define DETECTOR_H
 
-std::vector<cv::Point2d> detect_tophat(const cv::UMat& image);
-
+std::vector<cv::Point2d> predict_tophat(const cv::UMat& image);
 
 #endif

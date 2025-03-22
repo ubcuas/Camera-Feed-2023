@@ -4,7 +4,6 @@
 #include <unistd.h>
 
 #include <chrono>
-#include <condition_variable>
 #include <future>
 #include <iostream>
 #include <memory>
@@ -17,6 +16,8 @@
 
 #include <CLI/CLI.hpp>
 #include <opencv2/opencv.hpp>
+#include <opencv2/core/ocl.hpp>
+#include <nlohmann/json.hpp>
 
 #include "ArenaApi.h"
 #include "ICamera.hpp"
@@ -25,11 +26,14 @@
 #include "HttpTransmitter.hpp"
 #include "TSQueue.hpp"
 #include "Pipeline.hpp"
+#include "Detector.hpp"
 
-static TSQueue<std::unique_ptr<ImageData>> data_queue;
+using json = nlohmann::json;
+
+static TSQueue<std::shared_ptr<ImageData>> data_queue;
 static TSQueue<ImagePath> path_queue;
 static TSQueue<std::shared_ptr<EncodedData>> encoded_queue;
-static TSQueue<std::shared_ptr<EncodedData>> save_queue;
+static TSQueue<std::shared_ptr<ImageData>> save_queue;
 
 std::atomic<bool> stop_flag(false);
 
@@ -46,91 +50,62 @@ void run(int seconds) {
 void image_producer(const std::shared_ptr<ICamera>& camera) {
   while (!stop_flag) {
     try {
-      std::unique_ptr<ImageData> image_data = camera->get_image();
-      data_queue.push(std::move(image_data));
-      std::cout << "Capture" << "\n";
+      std::shared_ptr<ImageData> image_data = camera->get_image();
+      data_queue.push(image_data);
+      save_queue.push(std::move(image_data));
+
     } catch (timeout_exception& te) {
     }
   }
 }
 
-// void image_saver() {
-//   while (!stop_flag) {
-//     std::shared_ptr<EncodedData> element;
-//     try {
-//       element = save_queue.pop();
-//     } catch (const AbortedPopException& e) {
-//       break;
-//     }
-//     std::string filename =
-//         "images/" + std::to_string(element->timestamp) + ".jpg";
-
-//     std::ofstream outFile(filename);
-//     outFile.write(reinterpret_cast<const char*>(element->buf.data()),
-//                   element->buf.size());
-//     outFile.close();
-//   }
-// }
-
-// void image_processor(bool write, bool send) {
-//   std::vector<int> compression_params;
-//   compression_params.push_back(cv::IMWRITE_JPEG_QUALITY);
-//   compression_params.push_back(75);  // Change the quality value (0-100),
-//   // 100
-//   //                                     // is least compression and cpu
-//   usage
-
-//   while (!stop_flag) {
-//     std::unique_ptr<ImageData> element;
-//     try {
-//       element = data_queue.pop();
-//     } catch (const AbortedPopException& e) {
-//       break;
-//     }
-//     cv::Mat mSource = element->image;
-//     int64_t timestamp = element->timestamp;
-
-//     // cvtColor(mSource_Bayer, mSource_Bgr, cv::COLOR_BayerRG2BGR);//Perform
-//     if (write || send) {
-//       std::shared_ptr<EncodedData> encoded_img =
-//           std::make_shared<EncodedData>();
-//       encoded_img->timestamp = timestamp;
-//       cv::imencode(".jpg", mSource, encoded_img->buf, compression_params);
-
-//       if (write) {
-//         save_queue.push(encoded_img);
-//       }
-
-//       if (send) {
-//         encoded_queue.push(encoded_img);
-//         // std::cout << "Processed " << element->timestamp << "\n";
-//       }
-//     }
-//   }
-// }
-
-void image_processor(bool write, bool send) {
+void image_saver() {
   std::vector<int> compression_params;
-  compression_params.push_back(cv::IMWRITE_JPEG_QUALITY);
-  compression_params.push_back(75);
+  compression_params.push_back(cv::IMWRITE_PNG_COMPRESSION);
+  compression_params.push_back(1);
   while (!stop_flag) {
-    std::unique_ptr<ImageData> element;
+    std::shared_ptr<ImageData> element;
+    try {
+      element = save_queue.pop();
+    } catch (const AbortedPopException& e) {
+      break;
+    }
+
+    cv::Mat img = element->image;
+    int64_t timestamp = element->timestamp;
+
+    std::string filename =
+        "images/" + std::to_string(element->timestamp) + ".png";
+    cv::imwrite(filename, img, compression_params);
+  }
+}
+
+
+void image_processor() {
+  std::ofstream json_file("results.txt", std::ios::app);
+
+  while (!stop_flag) {
+    std::shared_ptr<ImageData> element;
     try {
       element = data_queue.pop();
     } catch (const AbortedPopException& e) {
       break;
     }
-    std::cout << "Process" << "\n";
 
-    cv::Mat mSource = element->image;
+    cv::Mat img = element->image;
     int64_t timestamp = element->timestamp;
 
-    if (write) {
-      std::string filename =
-          "images/" + std::to_string(element->timestamp) + ".jpg";
-      cv::imwrite(filename, mSource, compression_params);
+    cv::UMat img_gpu = img.getUMat(cv::ACCESS_READ);
+
+    std::vector<cv::Point2d> points = predict_tophat(img_gpu);
+    nlohmann::ordered_json j;
+    j["timestamp"] = timestamp;
+    for (const auto& pt : points) {
+        j["points"].push_back({{"x", pt.x}, {"y", pt.y}});
     }
+    json_file << j.dump() << std::endl;
   }
+  json_file.close();
 }
 
 void image_sender_imen(const std::string& url) {
@@ -209,6 +184,13 @@ int main(int argc, char* argv[]) {
 
   CLI11_PARSE(app, argc, argv);
 
+  if (!cv::ocl::haveOpenCL()) {
+    std::cerr << "OpenCL is not available." << "\n";
+  } else {
+    cv::ocl::setUseOpenCL(true);
+  }
+
+
   if (write) {
     bool dir = setup_dir("images");
     if (!dir) {
@@ -247,7 +229,7 @@ int main(int argc, char* argv[]) {
 
   camera->start_stream();
 
-  const int numProcessors = 1;
+  const int numProcessors = 2;
   const int numSavers = 1;
   const int numSenders = 1;
 
@@ -256,17 +238,17 @@ int main(int argc, char* argv[]) {
   std::cout << "CAMERA ONLINE\n";
   std::vector<std::thread> processors;
   for (int i = 0; i < numProcessors; i++) {
-    processors.push_back(std::thread(image_processor, write, send));
+    processors.push_back(std::thread(image_processor));
   }
   std::cout << "PROCESSOR ONLINE\n";
 
-  // std::vector<std::thread> savers;
-  // if (write) {
-  //   for (int i = 0; i < numSavers; i++) {
-  //     savers.push_back(std::thread(image_saver));
-  //   }
-  //   std::cout << "WRITER ONLINE\n";
-  // }
+  std::vector<std::thread> savers;
+  if (write) {
+    for (int i = 0; i < numSavers; i++) {
+      savers.push_back(std::thread(image_saver));
+    }
+    std::cout << "WRITER ONLINE\n";
+  }
 
   // std::vector<std::thread> senders;
   // if (send) {
@@ -285,9 +267,9 @@ int main(int argc, char* argv[]) {
   for (std::thread& processor : processors) {
     processor.join();
   }
-  // for (std::thread& saver : savers) {
-  //   saver.join();
-  // }
+  for (std::thread& saver : savers) {
+    saver.join();
+  }
   // for (std::thread& sender : senders) {
   //   sender.join();
   // }
