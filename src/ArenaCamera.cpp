@@ -77,6 +77,7 @@ void ArenaCamera::set_gain(float gain) {
 
 void ArenaCamera::enable_trigger(bool enable) {
   if (enable) {
+    std::cout << "Trigger on\n";
     Arena::SetNodeValue<GenICam::gcstring>(
         _pDevice->GetNodeMap(), "LineSelector", "Line2");
     Arena::SetNodeValue<GenICam::gcstring>(
@@ -93,12 +94,27 @@ void ArenaCamera::enable_trigger(bool enable) {
 
     _trigger_state = true;
   } else {
+    std::cout << "Trigger off\n";
     Arena::SetNodeValue<GenICam::gcstring>(
         _pDevice->GetNodeMap(), "TriggerMode", "Off");
 
     _trigger_state = false;
   }
 }
+
+void ArenaCamera::sensor_binning() {
+  std::cout << "Sensor binning on\n";
+
+  // Horizontal and vertical resolution halved, 4 pixels become 1
+  Arena::SetNodeValue<GenICam::gcstring>(
+    _pDevice->GetNodeMap(), "BinningSelector", "Sensor");
+  Arena::SetNodeValue<int64_t>(
+    _pDevice->GetNodeMap(), "BinningHorizontal", 2);
+  Arena::SetNodeValue<int64_t>(
+    _pDevice->GetNodeMap(), "BinningVertical", 2);
+}
+
+
 
 void ArenaCamera::start_stream(int num_buffers) {
   std::cout << "Starting stream with " << num_buffers << " buffers\n";

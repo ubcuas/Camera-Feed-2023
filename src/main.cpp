@@ -162,6 +162,7 @@ int main(int argc, char* argv[]) {
   bool write = false;
   bool send = false;
   bool fake = false;
+  bool bin = false;
 
   std::string url = "";
   CLI::App app{"Camera Feed"};
@@ -182,7 +183,7 @@ int main(int argc, char* argv[]) {
   auto write_opt = app.add_flag("-w,--write", write, "Write images to disk");
   // auto reset_opt = app.add_flag("--reset", reset, "Reset camera to default");
   auto fake_opt = app.add_flag("-f,--fake", fake, "Use fake camera");
-
+  auto bin_opt = app.add_flag("-b,--binning", bin, "Enable sensor binning");
   CLI11_PARSE(app, argc, argv);
 
   if (!cv::ocl::haveOpenCL()) {
@@ -222,6 +223,10 @@ int main(int argc, char* argv[]) {
   if (trigger) {
     camera->enable_trigger(true);
     std::cout << "Trigger mode enabled " << gain << "\n";
+  }
+
+  if (bin) {
+    camera->sensor_binning();
   }
 
   // if (reset){
