@@ -29,6 +29,8 @@ class ArenaCamera : public ICamera {
 
   void stop_stream() override;
 
+  void sensor_binning() override;
+
   std::unique_ptr<ImageData> get_image() override;
 
  private:

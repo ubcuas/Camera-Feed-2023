@@ -42,10 +42,10 @@ class ICamera {
    */
   virtual void set_gain(float gain) = 0;
 
-  // /**
-  //  * @brief Enables or disables the manual trigger mode for the camera.
-  //  * @param trigger_on A boolean where true enables and false disables it.
-  //  */
+  /**
+   * @brief Enables or disables the manual trigger mode for the camera.
+   * @param trigger_on A boolean where true enables and false disables it.
+   */
   virtual void enable_trigger(bool trigger_on) = 0;
 
   /**
@@ -59,6 +59,8 @@ class ICamera {
    * @brief Stops the image stream from the camera.
    */
   virtual void stop_stream() = 0;
+
+  virtual void sensor_binning() = 0;
 
   /**
    * @brief Retrieves an image from the camera.
