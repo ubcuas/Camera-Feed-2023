@@ -70,26 +70,26 @@ bool HttpTransmitter::send_imgfile(const std::string &url,
   form = curl_mime_init(curl);
 
   if (form == nullptr) {
-    std::cerr << "curl_mime_init() failed\n";
+    std::cout << "curl_mime_init() failed\n";
     return false;
   }
   
   curl_easy_setopt(curl, CURLOPT_MIMEPOST, form);
   field = curl_mime_addpart(form);
   if (field == nullptr) {
-    std::cerr << "curl_mime_addpart() failed\n";
+    std::cout << "curl_mime_addpart() failed\n";
     return false;
   }
 
   res = curl_mime_name(field, "image");
   if (res != CURLE_OK) {
-    std::cerr << "curl_mime_name() failed\n";
+    std::cout << "curl_mime_name() failed\n";
     return false;
   }
 
   res = curl_mime_filedata(field, file_path.c_str());  
   if (res != CURLE_OK) {
-    std::cerr << "curl_mime_filedata() failed: " << error << "\n";
+    std::cout << "curl_mime_filedata() failed: " << error << "\n";
     return false;
   }
 
@@ -103,7 +103,7 @@ bool HttpTransmitter::send_imgfile(const std::string &url,
   
   res = curl_easy_perform(curl);
   if (res != CURLE_OK) {
-    std::cerr << "curl_easy_perform() failed: " << error << "\n";
+    std::cout << "curl_easy_perform() failed: " << error << "\n";
     return false;
   }
 
@@ -129,26 +129,26 @@ bool HttpTransmitter::send_imen(const std::string &url,
   form = curl_mime_init(curl);
 
   if (form == NULL) {
-    std::cerr << "curl_mime_init() failed\n";
+    std::cout << "curl_mime_init() failed\n";
     return false;
   }
   curl_easy_setopt(curl, CURLOPT_MIMEPOST, form);
   field = curl_mime_addpart(form);
   if (field == NULL) {
-    std::cerr << "curl_mime_addpart() failed\n";
+    std::cout << "curl_mime_addpart() failed\n";
     return false;
   }
 
   res = curl_mime_name(field, "image");
   if (res != CURLE_OK) {
-    std::cerr << "curl_mime_name() failed\n";
+    std::cout << "curl_mime_name() failed\n";
     return false;
   }
   res = curl_mime_data(field,
                        reinterpret_cast<const char *>(encoded->buf.data()),
                        encoded->buf.size());
   if (res != CURLE_OK) {
-    std::cerr << "curl_mime_data() failed\n";
+    std::cout << "curl_mime_data() failed\n";
     return false;
   }
 
