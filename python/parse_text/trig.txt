@@ -1,0 +1,3 @@
+{"meta": {"type": "TRIG", "timestamp": 188.389187}, "data": {"TimeUS": 188389187, "I": 0, "Img": 1, "GPSTime": 0, "GPSWeek": 0, "Lat": 0.0, "Lng": 0.0, "Alt": 0.94, "RelAlt": 0.94, "GPSAlt": 0.0, "R": -1.14, "P": -0.17, "Y": 320.33}}
+{"meta": {"type": "TRIG", "timestamp": 201.809215}, "data": {"TimeUS": 201809215, "I": 0, "Img": 2, "GPSTime": 0, "GPSWeek": 0, "Lat": 0.0, "Lng": 0.0, "Alt": 0.92, "RelAlt": 0.92, "GPSAlt": 0.0, "R": -1.14, "P": -0.16, "Y": 320.23}}
+{"meta": {"type": "TRIG", "timestamp": 219.32915799999998}, "data": {"TimeUS": 219329158, "I": 0, "Img": 3, "GPSTime": 0, "GPSWeek": 0, "Lat": 0.0, "Lng": 0.0, "Alt": 1.3, "RelAlt": 1.3, "GPSAlt": 0.0, "R": -1.11, "P": -0.14, "Y": 320.41}}
