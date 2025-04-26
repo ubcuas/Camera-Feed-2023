@@ -13,6 +13,7 @@ class ArenaCamera : public ICamera {
   Arena::IDevice *_pDevice;    /**< Pointer to the device object. */
   int64_t _epoch;              /**< Epoch time for timestamping. */
   bool _trigger_state = false; /**< Trigger state flag. */
+  int32_t _seq = 1;
  public:
   ArenaCamera();   // Constructor
   ~ArenaCamera();  // Destructor

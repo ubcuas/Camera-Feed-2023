@@ -94,13 +94,13 @@ void image_processor() {
     }
 
     cv::Mat img = element->image;
-    int64_t timestamp = element->timestamp;
 
     cv::UMat img_gpu = img.getUMat(cv::ACCESS_READ);
 
     std::vector<cv::Point2d> points = predict_tophat(img_gpu);
     nlohmann::ordered_json j;
-    j["TimeUS"] = timestamp;
+    j["TimeUS"] = element->timestamp;
+    j["Img"] = element->seq;
     j["Points"] = json::array();
     for (const auto& pt : points) {
         j["points"].push_back({pt.x, pt.y});

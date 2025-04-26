@@ -10,6 +10,7 @@ class FakeCamera : public ICamera {
 private:
   int h_res = 5472;
   int v_res = 3648;
+  int seq = 1;
 public:
   FakeCamera() = default;   // Constructor
   
@@ -33,6 +34,8 @@ public:
   std::unique_ptr<ImageData> get_image() override {
     std::unique_ptr<ImageData> image_data = std::make_unique<ImageData>();
     image_data->image = cv::Mat::zeros(v_res, h_res, CV_8UC1);
+    image_data->seq = seq;
+    seq++;
   
     std::chrono::system_clock::time_point currentTime =
         std::chrono::system_clock::now();
