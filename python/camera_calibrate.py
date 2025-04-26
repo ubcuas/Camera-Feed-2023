@@ -36,4 +36,12 @@ ret, K, dist, rvecs, tvecs = cv2.calibrateCamera(objpoints, imgpoints, gray.shap
 print("Camera matrix (K):\n", K)
 print("Distortion coefficients:\n", dist)
 
-np.savez("calibration_data.npz", K=K, dist=dist, rvecs=rvecs, tvecs=tvecs)
+# np.savez("calibration_data.npz", K=K, dist=dist, rvecs=rvecs, tvecs=tvecs)
+
+mean_error = 0
+for i in range(len(objpoints)):
+    imgpoints2, _ = cv2.projectPoints(objpoints[i], rvecs[i], tvecs[i], K, dist)
+    error = cv2.norm(imgpoints[i], imgpoints2, cv2.NORM_L2) / len(imgpoints2)
+    mean_error += error
+
+print("total error: {}".format(mean_error / len(objpoints)))
