@@ -13,8 +13,7 @@ tmux split-window -h -t "$SESSION_NAME":0
 tmux select-pane -t "$SESSION_NAME":0.0
 tmux split-window -v -t "$SESSION_NAME":0
 
-# Optional: select the first pane again
-tmux select-pane -t "$SESSION_NAME":0.0
+tmux send-keys -t mysession:0.0 "./camerafeed"
 
 # Attach to session
 tmux attach-session -t "$SESSION_NAME"

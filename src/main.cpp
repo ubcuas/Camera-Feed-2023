@@ -100,9 +100,10 @@ void image_processor() {
 
     std::vector<cv::Point2d> points = predict_tophat(img_gpu);
     nlohmann::ordered_json j;
-    j["timestamp"] = timestamp;
+    j["TimeUS"] = timestamp;
+    j["Points"] = json::array();
     for (const auto& pt : points) {
-        j["points"].push_back({{"x", pt.x}, {"y", pt.y}});
+        j["points"].push_back({pt.x, pt.y});
     }
     json_file << j.dump() << std::endl;
   }
