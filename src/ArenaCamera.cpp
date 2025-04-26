@@ -150,6 +150,8 @@ std::unique_ptr<ImageData> ArenaCamera::get_image() {
                                 const_cast<uint8_t*>(pImage->GetData()))
                             .clone();
     image_data->timestamp = _epoch + (pImage->GetTimestampNs() / 1000000);
+    image_data->seq = _seq;
+    _seq++;
     _pDevice->RequeueBuffer(pImage);
     return image_data;
   } catch (GenICam::TimeoutException& ge) {
