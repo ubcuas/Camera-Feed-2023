@@ -27,6 +27,8 @@ public:
     v_res = v_res / 2;
   };
 
+  void output_pulse() override {}
+
   void start_stream(int num_buffers) override {}
 
   void stop_stream() override {}

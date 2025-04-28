@@ -35,7 +35,9 @@ static TSQueue<ImagePath> path_queue;
 static TSQueue<std::shared_ptr<EncodedData>> encoded_queue;
 static TSQueue<std::shared_ptr<ImageData>> save_queue;
 
-std::atomic<bool> stop_flag(false);
+static std::atomic<bool> stop_flag(false);
+
+static bool save_img = false;
 
 void run(int seconds) {
   std::this_thread::sleep_for(std::chrono::seconds(seconds));
@@ -52,7 +54,9 @@ void image_producer(const std::shared_ptr<ICamera>& camera) {
     try {
       std::shared_ptr<ImageData> image_data = camera->get_image();
       data_queue.push(image_data);
-      save_queue.push(std::move(image_data));
+      if (save_img) {
+          save_queue.push(std::move(image_data));
+      }
 
     } catch (timeout_exception& te) {
     }
@@ -103,7 +107,7 @@ void image_processor() {
     j["Img"] = element->seq;
     j["Points"] = json::array();
     for (const auto& pt : points) {
-        j["points"].push_back({pt.x, pt.y});
+        j["Points"].push_back({pt.x, pt.y});
     }
     json_file << j.dump() << std::endl;
   }
@@ -160,8 +164,8 @@ int main(int argc, char* argv[]) {
   float gain = 0;
   // bool reset = false;
   bool trigger = false;
-  bool write = false;
-  bool send = false;
+  bool pulse = false;
+
   bool fake = false;
   bool bin = false;
 
@@ -180,8 +184,9 @@ int main(int argc, char* argv[]) {
 
   // auto url_opt = app.add_option("-u,--url", url, "Set URL to send to");
 
-  auto trigger_opt = app.add_flag("-t,--trigger", trigger, "Use trigger");
-  auto write_opt = app.add_flag("-w,--write", write, "Write images to disk");
+  auto trigger_opt = app.add_flag("-t,--trigger", trigger, "Use trigger line 2");
+  auto pulse_opt = app.add_flag("-p,--pulse", pulse, "Output pulse line 3");
+  auto write_opt = app.add_flag("-w,--write", save_img, "Write images to disk");
   // auto reset_opt = app.add_flag("--reset", reset, "Reset camera to default");
   auto fake_opt = app.add_flag("-f,--fake", fake, "Use fake camera");
   auto bin_opt = app.add_flag("-b,--binning", bin, "Enable sensor binning");
@@ -194,7 +199,7 @@ int main(int argc, char* argv[]) {
   }
 
 
-  if (write) {
+  if (save_img) {
     bool dir = setup_dir("images");
     if (!dir) {
       return 1;
@@ -211,6 +216,21 @@ int main(int argc, char* argv[]) {
     camera = std::make_shared<ArenaCamera>();
   }
 
+  if (trigger) {
+    camera->enable_trigger(true);
+    std::cout << "Trigger mode enabled " << gain << "\n";
+  }
+
+  if (pulse) {
+    camera->output_pulse();
+    std::cout << "Output pulse enabled\n";
+  }
+
+  if (bin) {
+    camera->sensor_binning();
+    std::cout << "sensor binning enabled\n";
+  }
+
   if (exposure_opt->count() > 0) {
     camera->set_exposuretime(exposureTime);
     std::cout << "Setting exposure time to " << exposureTime << "\n";
@@ -219,15 +239,6 @@ int main(int argc, char* argv[]) {
   if (gain_opt->count() > 0) {
     camera->set_gain(gain);
     std::cout << "Setting gain time to " << gain << "\n";
-  }
-
-  if (trigger) {
-    camera->enable_trigger(true);
-    std::cout << "Trigger mode enabled " << gain << "\n";
-  }
-
-  if (bin) {
-    camera->sensor_binning();
   }
 
   // if (reset){
