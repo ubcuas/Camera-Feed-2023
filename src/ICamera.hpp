@@ -62,6 +62,8 @@ class ICamera {
 
   virtual void sensor_binning() = 0;
 
+  virtual void output_pulse() = 0;
+
   /**
    * @brief Retrieves an image from the camera.
    * @param pImage A pointer to an Arena::IImage pointer to store the retrieved
