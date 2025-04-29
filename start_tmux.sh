@@ -13,7 +13,7 @@ tmux split-window -h -t "$SESSION_NAME":0
 tmux select-pane -t "$SESSION_NAME":0.0
 tmux split-window -v -t "$SESSION_NAME":0
 
-tmux send-keys -t mysession:0.0 "./camerafeed"
+tmux send-keys -t mysession:0.0 "./build/camerafeed -s 3000 -b -w -t -p -e 360 -g 27"
 
 # Attach to session
 tmux attach-session -t "$SESSION_NAME"
