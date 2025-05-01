@@ -1,6 +1,6 @@
 #!/bin/bash
 
-SESSION_NAME="mysession"
+SESSION_NAME="cam"
 
 # Start new session and window
 tmux new-session -d -s "$SESSION_NAME" -n "main"
@@ -13,7 +13,11 @@ tmux split-window -h -t "$SESSION_NAME":0
 tmux select-pane -t "$SESSION_NAME":0.0
 tmux split-window -v -t "$SESSION_NAME":0
 
-tmux send-keys -t mysession:0.0 "./build/camerafeed -s 3000 -b -w -t -p -e 360 -g 27"
+tmux send-keys -t "$SESSION_NAME":0.0 "./build/camerafeed -s 3000 -b -w -t -p -e 360 -g 27"
+> tag.txt
+tmux send-keys -t "$SESSION_NAME":0.1 "tail -n +1 -f tag.txt"
+> detect.csv
+tmux send-keys -t "$SESSION_NAME":0.2 "tail -n +1 -f detect.csv"
 
 # Attach to session
 tmux attach-session -t "$SESSION_NAME"

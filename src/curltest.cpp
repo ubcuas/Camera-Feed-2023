@@ -10,8 +10,15 @@
 #include <opencv2/opencv.hpp>
 #include <thread>
 #include <vector>
+#include <filesystem>
+#include <regex>
 
 #include "Detector.hpp"
+#include "ardupilotmega/mavlink.h"
+#include "common/mavlink.h"
+
+
+namespace fs = std::filesystem;
 
 // #include "src/HttpTransmitter.hpp"
 
@@ -110,28 +117,54 @@ void tophat_gpu(int iterations) {
             << "\n";
 }
 
+// int main(int argc, char* argv[]) {
+//   int iterations = 10;  // Default number of iterations
+//   CLI::App app{"Demosaic Performance Test"};
+//   app.add_option("-i,--iterations", iterations,
+//                  "Number of iterations for performance test");
+//   CLI11_PARSE(app, argc, argv);
+//   cv::ocl::Context ctx = cv::ocl::Context::getDefault();
+//   if (!ctx.ptr()) {
+//       std::cerr << "OpenCL is not available" << std::endl;
+//   }
+//   cv::ocl::Device device = cv::ocl::Device::getDefault();
+//   if (!device.compilerAvailable()) {
+//       std::cerr << "OpenCL compiler is not available" << std::endl;
+//   }
+
+//   // std::cout << "Running CPU demosaicing..." << "\n";
+//   // demosaic_cpu(iterations);
+
+//   // std::cout << "Running GPU demosaicing..." << "\n";
+//   // demosaic_gpu(iterations);
+//   tophat_gpu(iterations);
+//   cv::ocl::setUseOpenCL(true);
+//   tophat_gpu(iterations);
+//   return 0;
+// }
 int main(int argc, char* argv[]) {
-  int iterations = 10;  // Default number of iterations
-  CLI::App app{"Demosaic Performance Test"};
-  app.add_option("-i,--iterations", iterations,
-                 "Number of iterations for performance test");
-  CLI11_PARSE(app, argc, argv);
-  cv::ocl::Context ctx = cv::ocl::Context::getDefault();
-  if (!ctx.ptr()) {
-      std::cerr << "OpenCL is not available" << std::endl;
-  }
-  cv::ocl::Device device = cv::ocl::Device::getDefault();
-  if (!device.compilerAvailable()) {
-      std::cerr << "OpenCL compiler is not available" << std::endl;
+  std::string device_prefix = "/dev/serial/by-id/";
+  std::regex pattern("usb-CubePilot_CubeOrange\\+_.*-if00");
+
+  // Search for the matching device
+  std::string matched_device;
+  try {
+    for (const auto& entry : fs::directory_iterator(device_prefix)) {
+        if (std::regex_match(entry.path().filename().string(), pattern)) {
+            matched_device = entry.path();
+            std::cout << "Found " + matched_device << "\n";
+            break;
+        }
+    }
+  } catch (const fs::filesystem_error& e) {
+      std::cout << "No USB devices detected: " << e.what() << "\n";
+      return 1;
   }
 
-  // std::cout << "Running CPU demosaicing..." << "\n";
-  // demosaic_cpu(iterations);
+  if (matched_device.empty()) {
+    std::cout << "No matching device found." << "\n";
+    return 1;
+  }
 
-  // std::cout << "Running GPU demosaicing..." << "\n";
-  // demosaic_gpu(iterations);
-  tophat_gpu(iterations);
-  cv::ocl::setUseOpenCL(true);
-  tophat_gpu(iterations);
   return 0;
 }

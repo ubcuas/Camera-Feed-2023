@@ -87,7 +87,7 @@ void image_saver() {
 
 
 void image_processor() {
-  std::ofstream json_file("results.txt", std::ios::app);
+  std::ofstream json_file("tag.txt", std::ios::app);
 
   while (!stop_flag) {
     std::shared_ptr<ImageData> element;
