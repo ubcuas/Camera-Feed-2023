@@ -1,4 +1,5 @@
 // Copyright 2024 UBC Uncrewed Aircraft Systems
+#include <asio.hpp>
 
 #include <curl/curl.h>
 #include <unistd.h>
@@ -19,7 +20,8 @@
 
 
 namespace fs = std::filesystem;
-
+using asio::serial_port;
+using asio::serial_port_base;
 // #include "src/HttpTransmitter.hpp"
 
 // void image_sender(std::string url) {
@@ -165,6 +167,51 @@ int main(int argc, char* argv[]) {
     std::cout << "No matching device found." << "\n";
     return 1;
   }
+
+  // Create io_context and serial port objects
+  asio::io_context io;
+  serial_port serial(io, matched_device);
+
+  // Set the serial port options (ensure correct settings for ArduPilot)
+  serial.set_option(serial_port_base::baud_rate(115200));  // Example baud rate
+  serial.set_option(serial_port_base::character_size(8));
+  serial.set_option(serial_port_base::stop_bits(serial_port_base::stop_bits::one));
+  serial.set_option(serial_port_base::parity(serial_port_base::parity::none));
+  serial.set_option(serial_port_base::flow_control(serial_port_base::flow_control::none));
+
+
+  std::cout << "Connected to " << matched_device << " at 115200 baud\n";
+  std::cout << "Listening for MAVLink heartbeat messages...\n";
+  
+  mavlink_message_t msg;
+    mavlink_status_t status;
+    
+    // Use a dynamic buffer (vector)
+    std::vector<uint8_t> buffer(2048);
+    
+    while (true) {
+      // Read available bytes into the buffer
+      size_t len = asio::read(serial, asio::buffer(buffer.data(), buffer.size()));
+
+      // Process the received bytes
+      for (size_t i = 0; i < len; ++i) {
+          uint8_t byte = buffer[i];
+          if (mavlink_parse_char(MAVLINK_COMM_0, byte, &msg, &status)) {
+              // Check if it's a heartbeat message
+              if (msg.msgid == MAVLINK_MSG_ID_HEARTBEAT) {
+                  mavlink_heartbeat_t heartbeat;
+                  mavlink_msg_heartbeat_decode(&msg, &heartbeat);
+                  std::cout << "Received Heartbeat!" << std::endl;
+                  std::cout << "Type: " << static_cast<int>(heartbeat.type) << std::endl;
+                  std::cout << "Autopilot: " << static_cast<int>(heartbeat.autopilot) << std::endl;
+                  std::cout << "System Status: " << static_cast<int>(heartbeat.system_status) << std::endl;
+                  return 0; // Exit after receiving the heartbeat
+              }
+          }
+      }
+    }
+
+
 
   return 0;
 }
