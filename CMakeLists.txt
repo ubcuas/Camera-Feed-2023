@@ -27,28 +27,29 @@ add_executable(curltest
     ${CMAKE_SOURCE_DIR}/src/Detector.cpp
     )
 
+add_definitions(-DASIO_STANDALONE)
 
 add_compile_options(
-    "-Wall" 
-    "-Wextra" 
-    "-Wpedantic" 
-    "-Wcast-align" 
-    "-Wcast-qual" 
-    "-Wdisabled-optimization" 
-    "-Wduplicated-branches"
-    "-Wduplicated-cond"
-    "-Wformat=2"
-    "-Wlogical-op"
-    "-Wmissing-include-dirs"
+    -Wall
+    -Wextra
+    -Wpedantic
+    -Wcast-align
+    -Wcast-qual
+    -Wdisabled-optimization
+    -Wduplicated-branches
+    -Wduplicated-cond
+    -Wformat=2
+    -Wlogical-op
+    -Wmissing-include-dirs
     # "-Wnull-dereference" # causes weird
-    "-Woverloaded-virtual"
-    "-Wpointer-arith"
-    "-Wshadow"
+    -Woverloaded-virtual
+    -Wpointer-arith
+    -Wshadow
     # "-Wswitch-enum"
-    "-Wvla"
-    "-Wno-address-of-packed-member" # mavlink warnings
-    "$<$<CONFIG:DEBUG>:-O0;-g3;-ggdb>"
-    "$<$<CONFIG:RELEASE>:-O2>" # I don't know if O2 or O3 is better
+    -Wvla
+    -Wno-address-of-packed-member # mavlink warning still appear even though ignoring this?
+    $<$<CONFIG:DEBUG>:-O0;-g3;-ggdb>
+    $<$<CONFIG:RELEASE>:-O2> # I don't know if O2 or O3 is better
     )
 # install(TARGETS ${PROJECT_NAME} DESTINATION bin)
 
@@ -128,6 +129,7 @@ target_include_directories(curltest  PRIVATE
     ${OpenCV_INCLUDE_DIRS}
     ${CURL_INCLUDE_DIR}
     ${CMAKE_SOURCE_DIR}/external/c_library_v2
+    ${CMAKE_SOURCE_DIR}/external/asio/asio/include
 )
 
 target_link_libraries(curltest PRIVATE
