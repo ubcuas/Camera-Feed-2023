@@ -46,6 +46,7 @@ add_compile_options(
     "-Wshadow"
     # "-Wswitch-enum"
     "-Wvla"
+    "-Wno-address-of-packed-member" # mavlink warnings
     "$<$<CONFIG:DEBUG>:-O0;-g3;-ggdb>"
     "$<$<CONFIG:RELEASE>:-O2>" # I don't know if O2 or O3 is better
     )
