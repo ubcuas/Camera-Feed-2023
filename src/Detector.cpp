@@ -11,7 +11,7 @@ std::vector<cv::Point2d> predict_tophat(const cv::UMat& image) {
   cv::morphologyEx(image, whitehat, cv::MORPH_TOPHAT, kernel);
 
   // Thresholding
-  cv::threshold(whitehat, mask, 150, 255, cv::THRESH_BINARY);
+  cv::threshold(whitehat, mask, 100, 255, cv::THRESH_BINARY);
 
   // Connected Components Analysis
   cv::Mat labels, stats, centroids;

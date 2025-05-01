@@ -126,6 +126,7 @@ target_link_libraries(${PROJECT_NAME}  PRIVATE
 target_include_directories(curltest  PRIVATE
     ${OpenCV_INCLUDE_DIRS}
     ${CURL_INCLUDE_DIR}
+    ${CMAKE_SOURCE_DIR}/external/c_library_v2
 )
 
 target_link_libraries(curltest PRIVATE
