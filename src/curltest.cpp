@@ -144,7 +144,106 @@ void tophat_gpu(int iterations) {
 //   tophat_gpu(iterations);
 //   return 0;
 // }
-int main(int argc, char* argv[]) {
+
+// void handle_heartbeat(const mavlink_message_t* message)
+// {
+//     mavlink_heartbeat_t heartbeat;
+//     mavlink_msg_heartbeat_decode(message, &heartbeat);
+
+//     printf("Got heartbeat from ");
+//     switch (heartbeat.autopilot) {
+//         case MAV_AUTOPILOT_GENERIC:
+//             printf("generic");
+//             break;
+//         case MAV_AUTOPILOT_ARDUPILOTMEGA:
+//             printf("ArduPilot");
+//             break;
+//         case MAV_AUTOPILOT_PX4:
+//             printf("PX4");
+//             break;
+//         default:
+//             printf("other");
+//             break;
+//     }
+//     printf(" autopilot\n");
+// }
+
+// int main(int argc, char* argv[]) {
+//   std::string device_prefix = "/dev/serial/by-id/";
+//   std::regex pattern("usb-CubePilot_CubeOrange\\+_.*-if00");
+
+//   // Search for the matching device
+//   std::string matched_device;
+//   try {
+//     for (const auto& entry : fs::directory_iterator(device_prefix)) {
+//         if (std::regex_match(entry.path().filename().string(), pattern)) {
+//             matched_device = entry.path();
+//             std::cout << "Found " + matched_device << "\n";
+//             break;
+//         }
+//     }
+//   } catch (const fs::filesystem_error& e) {
+//       std::cout << "No USB devices detected: " << e.what() << "\n";
+//       return 1;
+//   }
+
+//   if (matched_device.empty()) {
+//     std::cout << "No matching device found." << "\n";
+//     return 1;
+//   }
+
+//   // Create io_context and serial port objects
+//   asio::io_context io;
+//   serial_port serial(io, matched_device);
+//   // close_serial_port(serial);
+
+//   // // Try reopening the serial port
+//   // serial.open(matched_device);
+
+
+//   // Set the serial port options (ensure correct settings for ArduPilot)
+//   serial.set_option(serial_port_base::baud_rate(115200));  // Example baud rate
+//   serial.set_option(serial_port_base::character_size(8));
+//   serial.set_option(serial_port_base::stop_bits(serial_port_base::stop_bits::one));
+//   serial.set_option(serial_port_base::parity(serial_port_base::parity::none));
+//   serial.set_option(serial_port_base::flow_control(serial_port_base::flow_control::none));
+
+
+//   std::cout << "Connected to " << matched_device << " at 115200 baud\n";
+//   std::cout << "Listening for MAVLink heartbeat messages...\n";
+  
+//   // Use a dynamic buffer (vector)
+//   std::vector<uint8_t> buffer(2048);
+  
+//   while (true) {
+//     // Read available bytes into the buffer
+//     size_t len = asio::read(serial, asio::buffer(buffer.data(), buffer.size()));
+
+//     mavlink_message_t message;
+//     mavlink_status_t status;
+//     for (int i = 0; i < len; i++) {
+//         if (mavlink_parse_char(MAVLINK_COMM_0, buffer[i], &message, &status) == 1) {
+//             switch (message.msgid) {
+//               case MAVLINK_MSG_ID_ATTITUDE:
+//               mavlink_attitude_t attitude;
+//               mavlink_msg_attitude_decode(&message, &attitude);
+          
+//               std::cout << "Roll: " << attitude.roll << " radians" << std::endl;
+//               std::cout << "Pitch: " << attitude.pitch << " radians" << std::endl;
+//               std::cout << "Yaw: " << attitude.yaw << " radians" << std::endl;
+//             }
+//         }
+//     }
+//   }
+
+
+
+//   return 0;
+// }
+
+
+int main() {
+  // Initialize the serial port (adjust parameters as needed)
   std::string device_prefix = "/dev/serial/by-id/";
   std::regex pattern("usb-CubePilot_CubeOrange\\+_.*-if00");
 
@@ -167,51 +266,41 @@ int main(int argc, char* argv[]) {
     std::cout << "No matching device found." << "\n";
     return 1;
   }
-
-  // Create io_context and serial port objects
-  asio::io_context io;
-  serial_port serial(io, matched_device);
-
-  // Set the serial port options (ensure correct settings for ArduPilot)
-  serial.set_option(serial_port_base::baud_rate(115200));  // Example baud rate
-  serial.set_option(serial_port_base::character_size(8));
-  serial.set_option(serial_port_base::stop_bits(serial_port_base::stop_bits::one));
-  serial.set_option(serial_port_base::parity(serial_port_base::parity::none));
-  serial.set_option(serial_port_base::flow_control(serial_port_base::flow_control::none));
-
-
-  std::cout << "Connected to " << matched_device << " at 115200 baud\n";
-  std::cout << "Listening for MAVLink heartbeat messages...\n";
+  asio::io_context io_context;
+  asio::serial_port serial_port(io_context, matched_device);
+  serial_port.set_option(asio::serial_port_base::baud_rate(115200));
+  serial_port.set_option(asio::serial_port_base::character_size(8));
+  serial_port.set_option(asio::serial_port_base::stop_bits(asio::serial_port_base::stop_bits::one));
+  serial_port.set_option(asio::serial_port_base::parity(asio::serial_port_base::parity::none));
   
-  mavlink_message_t msg;
-    mavlink_status_t status;
-    
-    // Use a dynamic buffer (vector)
-    std::vector<uint8_t> buffer(2048);
-    
-    while (true) {
-      // Read available bytes into the buffer
-      size_t len = asio::read(serial, asio::buffer(buffer.data(), buffer.size()));
+  try {
 
-      // Process the received bytes
-      for (size_t i = 0; i < len; ++i) {
-          uint8_t byte = buffer[i];
-          if (mavlink_parse_char(MAVLINK_COMM_0, byte, &msg, &status)) {
-              // Check if it's a heartbeat message
-              if (msg.msgid == MAVLINK_MSG_ID_HEARTBEAT) {
-                  mavlink_heartbeat_t heartbeat;
-                  mavlink_msg_heartbeat_decode(&msg, &heartbeat);
-                  std::cout << "Received Heartbeat!" << std::endl;
-                  std::cout << "Type: " << static_cast<int>(heartbeat.type) << std::endl;
-                  std::cout << "Autopilot: " << static_cast<int>(heartbeat.autopilot) << std::endl;
-                  std::cout << "System Status: " << static_cast<int>(heartbeat.system_status) << std::endl;
-                  return 0; // Exit after receiving the heartbeat
+
+      // MAVLink data buffers
+      std::vector<uint8_t> buffer(2048);
+      mavlink_message_t msg;
+
+      while (true) {
+          // Read from serial port
+          std::size_t n = serial_port.read_some(asio::buffer(buffer));
+          // Process MAVLink message
+          for (std::size_t i = 0; i < n; ++i) {
+              if (mavlink_parse_char(MAVLINK_COMM_0, buffer[i], &msg, NULL)) {
+                  if (msg.msgid == MAVLINK_MSG_ID_HEARTBEAT) {
+                    mavlink_heartbeat_t heartbeat;
+                    mavlink_msg_heartbeat_decode(&msg, &heartbeat);
+                    std::cout << "Received Heartbeat!\n";
+                    std::cout << "Type: " << static_cast<int>(heartbeat.type) << "\n";
+                    std::cout << "Autopilot: " << static_cast<int>(heartbeat.autopilot) << "\n";
+                    std::cout << "System Status: " << static_cast<int>(heartbeat.system_status) << "\n";
+                  }
               }
           }
       }
-    }
 
-
+  } catch (const std::exception &e) {
+      std::cerr << "Error: " << e.what() << std::endl;
+  }
 
   return 0;
 }

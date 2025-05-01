@@ -53,6 +53,7 @@ add_compile_options(
     )
 # install(TARGETS ${PROJECT_NAME} DESTINATION bin)
 
+find_package(MAVSDK REQUIRED)
 
 set(BUILD_LIST core,imgcodecs,highgui)
 find_package(OpenCV REQUIRED)
@@ -120,6 +121,7 @@ target_link_libraries(${PROJECT_NAME}  PRIVATE
     ${CURL_LIBRARIES}
     CLI11::CLI11
     nlohmann_json::nlohmann_json
+    MAVSDK::mavsdk
     # asio
     # cpr::cpr
     # PkgConfig::DEPS
