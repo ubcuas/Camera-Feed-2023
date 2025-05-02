@@ -13,16 +13,228 @@
 #include <vector>
 #include <filesystem>
 #include <regex>
+// #include <mavsdk/mavsdk.h>
+// #include <mavsdk/plugins/mavlink_passthrough/mavlink_passthrough.h>
+#include <chrono>
+
 
 #include "Detector.hpp"
 #include "ardupilotmega/mavlink.h"
-#include "common/mavlink.h"
 
 
 namespace fs = std::filesystem;
-using asio::serial_port;
-using asio::serial_port_base;
+// using namespace mavsdk;
+using namespace std::chrono_literals;
+
+
+// using asio::serial_port;
+// using asio::serial_port_base;
 // #include "src/HttpTransmitter.hpp"
+
+int main() {
+  // Initialize the serial port (adjust parameters as needed)
+  std::string device_prefix = "/dev/serial/by-id/";
+  std::regex pattern("usb-CubePilot_CubeOrange\\+_.*-if00");
+
+  // Search for the matching device
+  std::string matched_device;
+  try {
+    for (const auto& entry : fs::directory_iterator(device_prefix)) {
+        if (std::regex_match(entry.path().filename().string(), pattern)) {
+            matched_device = entry.path();
+            std::cout << "Found " + matched_device << "\n";
+            break;
+        }
+    }
+  } catch (const fs::filesystem_error& e) {
+      std::cout << "No USB devices detected: " << e.what() << "\n";
+      return 1;
+  }
+
+  if (matched_device.empty()) {
+    std::cout << "No matching device found." << "\n";
+    return 1;
+  }
+  asio::io_context io_context;
+  asio::serial_port serial_port(io_context, matched_device);
+  serial_port.set_option(asio::serial_port_base::baud_rate(57600));
+  serial_port.set_option(asio::serial_port_base::character_size(8));
+  serial_port.set_option(asio::serial_port_base::stop_bits(asio::serial_port_base::stop_bits::one));
+  serial_port.set_option(asio::serial_port_base::parity(asio::serial_port_base::parity::none));
+
+  mavlink_message_t command_msg;
+
+  mavlink_command_long_t cmd{
+    0,
+    0,
+    MAV_CMD_IMAGE_START_CAPTURE,
+    0,
+    0,
+    1,
+    100,
+    0,
+    0,
+    0,
+    0
+  };
+
+  mavlink_msg_command_long_encode(0, 0, &command_msg, &cmd);
+
+  // Send over serial
+  uint8_t tx_buf[MAVLINK_MAX_PACKET_LEN];
+  uint16_t len = mavlink_msg_to_send_buffer(tx_buf, &command_msg);
+  asio::write(serial_port, asio::buffer(tx_buf, len));
+  std::cout << "📤 Sent MAV_CMD_DO_DIGICAM_CONTROL\n";
+
+  
+  try {
+      // MAVLink data buffers
+      std::vector<uint8_t> buffer(2048);
+      mavlink_message_t msg;
+
+      while (true) {
+          // Read from serial port
+          std::size_t n = serial_port.read_some(asio::buffer(buffer));
+          // Process MAVLink message
+          for (std::size_t i = 0; i < n; ++i) {
+              if (mavlink_parse_char(MAVLINK_COMM_0, buffer[i], &msg, NULL)) {
+                  if (msg.msgid == MAVLINK_MSG_ID_CAMERA_FEEDBACK) {
+                    mavlink_camera_feedback_t feedback;
+                    mavlink_msg_camera_feedback_decode(&msg, &feedback);
+
+                    std::cout << "📸 CAMERA_FEEDBACK received:\n"
+                              << "  Time: " << feedback.time_usec << "\n"
+                              << "  Lat:  " << feedback.lat / 1e7 << "\n"
+                              << "  Lon:  " << feedback.lng / 1e7 << "\n"
+                              << "  Alt:  " << feedback.alt_msl << " m\n"
+                              << std::endl;
+                  }
+              }
+          }
+      }
+
+  } catch (const std::exception &e) {
+      std::cerr << "Error: " << e.what() << std::endl;
+  }
+
+  return 0;
+}
+
+
+// int main() {
+//   // Initialize the serial port (adjust parameters as needed)
+//   std::string device_prefix = "/dev/serial/by-id/";
+//   std::regex pattern("usb-CubePilot_CubeOrange\\+_.*-if00");
+
+//   // Search for the matching device
+//   std::string matched_device;
+//   try {
+//     for (const auto& entry : fs::directory_iterator(device_prefix)) {
+//         if (std::regex_match(entry.path().filename().string(), pattern)) {
+//             matched_device = entry.path();
+//             std::cout << "Found " + matched_device << "\n";
+//             break;
+//         }
+//     }
+//   } catch (const fs::filesystem_error& e) {
+//       std::cout << "No USB devices detected: " << e.what() << "\n";
+//       return 1;
+//   }
+
+//   if (matched_device.empty()) {
+//     std::cout << "No matching device found." << "\n";
+//     return 1;
+//   }
+
+//   Mavsdk mavsdk{Mavsdk::Configuration{ComponentType::GroundStation}};
+//   ConnectionResult connection_result = mavsdk.add_any_connection("serial://" + matched_device + ":57600");
+//   std::cout << "Waiting to discover system...\n";
+//   auto prom = std::promise<std::shared_ptr<System>>{};
+//   auto fut = prom.get_future();
+
+//   // We wait for new systems to be discovered, once we find one that has a
+//   // camera, we decide to use it.
+//   Mavsdk::NewSystemHandle handle = mavsdk.subscribe_on_new_system([&mavsdk, &prom, &handle]() {
+//       auto system = mavsdk.systems().back();
+
+//       mavsdk.unsubscribe_on_new_system(handle);
+//       prom.set_value(system);
+//   });
+
+//   // We usually receive heartbeats at 1Hz, therefore we should find a
+//   // system after around 3 seconds max, surely.
+//   if (fut.wait_for(3s) == std::future_status::timeout) {
+//       std::cerr << "No system found, exiting.\n";
+//       return 1;
+//   }
+
+//   // Get discovered system now.
+//   auto system = fut.get();
+
+//   MavlinkPassthrough mavlink_passthrough(system);
+
+//   // MavlinkPassthrough::CommandLong command{
+//   //   0,  // target system (usually 1)
+//   //   0, // target component (usually 100 for camera)
+//   //   MAV_CMD_DO_DIGICAM_CONTROL, // command
+//   //   0, // session control (0 = stop, 1 = start)
+//   //   0, // zoom
+//   //   0, // zoom
+//   //   0, // focus
+//   //   1, // shoot (1 = trigger)
+//   //   0, // command id (unused)
+//   //   0  // extra
+//   // };
+//   MavlinkPassthrough::CommandLong command{
+//     0, // target system (broadcast)
+//     0, // target component (broadcast)
+//     MAV_CMD_IMAGE_START_CAPTURE, // command
+//     0, // camera id (broadcast)
+//     1, // interval
+//     100, // n images
+//     0,
+//     0,
+//     0,
+//     0
+//   };
+
+//   mavlink_passthrough.subscribe_message(
+//     MAVLINK_MSG_ID_CAMERA_FEEDBACK,
+//     [](const mavlink_message_t& msg) {
+//         mavlink_camera_feedback_t feedback;
+//         mavlink_msg_camera_feedback_decode(&msg, &feedback);
+
+//         std::cout << "📸 CAMERA_FEEDBACK received:\n"
+//                   << "  Time: " << feedback.time_usec << "\n"
+//                   << "  Lat:  " << feedback.lat / 1e7 << "\n"
+//                   << "  Lon:  " << feedback.lng / 1e7 << "\n"
+//                   << "  Alt:  " << feedback.alt_msl << " m\n"
+//                   << std::endl;
+//     });
+
+// std::cout << "Listening for CAMERA_FEEDBACK messages..." << std::endl;
+
+
+//   MavlinkPassthrough::Result msg_result = mavlink_passthrough.send_command_long(command);
+//   if (msg_result != MavlinkPassthrough::Result::Success) {
+//     std::cerr << "Taking Photo failed: " << msg_result;
+//     return 1;
+//   }
+
+//   std::cout << "MAV_CMD_DO_DIGICAM_CONTROL sent." << std::endl;
+//   mavlink_camera_feedback_t feedback;
+  
+  
+
+// // Keep the program running
+// while (true) {
+//     std::this_thread::sleep_for(std::chrono::seconds(1));
+// }
+
+
+  
+//   return 0;  
+// }
 
 // void image_sender(std::string url) {
 //     HttpTransmitter http_transmitter;
@@ -242,65 +454,65 @@ void tophat_gpu(int iterations) {
 // }
 
 
-int main() {
-  // Initialize the serial port (adjust parameters as needed)
-  std::string device_prefix = "/dev/serial/by-id/";
-  std::regex pattern("usb-CubePilot_CubeOrange\\+_.*-if00");
+// int main() {
+//   // Initialize the serial port (adjust parameters as needed)
+//   std::string device_prefix = "/dev/serial/by-id/";
+//   std::regex pattern("usb-CubePilot_CubeOrange\\+_.*-if00");
 
-  // Search for the matching device
-  std::string matched_device;
-  try {
-    for (const auto& entry : fs::directory_iterator(device_prefix)) {
-        if (std::regex_match(entry.path().filename().string(), pattern)) {
-            matched_device = entry.path();
-            std::cout << "Found " + matched_device << "\n";
-            break;
-        }
-    }
-  } catch (const fs::filesystem_error& e) {
-      std::cout << "No USB devices detected: " << e.what() << "\n";
-      return 1;
-  }
+//   // Search for the matching device
+//   std::string matched_device;
+//   try {
+//     for (const auto& entry : fs::directory_iterator(device_prefix)) {
+//         if (std::regex_match(entry.path().filename().string(), pattern)) {
+//             matched_device = entry.path();
+//             std::cout << "Found " + matched_device << "\n";
+//             break;
+//         }
+//     }
+//   } catch (const fs::filesystem_error& e) {
+//       std::cout << "No USB devices detected: " << e.what() << "\n";
+//       return 1;
+//   }
 
-  if (matched_device.empty()) {
-    std::cout << "No matching device found." << "\n";
-    return 1;
-  }
-  asio::io_context io_context;
-  asio::serial_port serial_port(io_context, matched_device);
-  serial_port.set_option(asio::serial_port_base::baud_rate(115200));
-  serial_port.set_option(asio::serial_port_base::character_size(8));
-  serial_port.set_option(asio::serial_port_base::stop_bits(asio::serial_port_base::stop_bits::one));
-  serial_port.set_option(asio::serial_port_base::parity(asio::serial_port_base::parity::none));
+//   if (matched_device.empty()) {
+//     std::cout << "No matching device found." << "\n";
+//     return 1;
+//   }
+//   asio::io_context io_context;
+//   asio::serial_port serial_port(io_context, matched_device);
+//   serial_port.set_option(asio::serial_port_base::baud_rate(115200));
+//   serial_port.set_option(asio::serial_port_base::character_size(8));
+//   serial_port.set_option(asio::serial_port_base::stop_bits(asio::serial_port_base::stop_bits::one));
+//   serial_port.set_option(asio::serial_port_base::parity(asio::serial_port_base::parity::none));
   
-  try {
+//   try {
 
 
-      // MAVLink data buffers
-      std::vector<uint8_t> buffer(2048);
-      mavlink_message_t msg;
+//       // MAVLink data buffers
+//       std::vector<uint8_t> buffer(2048);
+//       mavlink_message_t msg;
 
-      while (true) {
-          // Read from serial port
-          std::size_t n = serial_port.read_some(asio::buffer(buffer));
-          // Process MAVLink message
-          for (std::size_t i = 0; i < n; ++i) {
-              if (mavlink_parse_char(MAVLINK_COMM_0, buffer[i], &msg, NULL)) {
-                  if (msg.msgid == MAVLINK_MSG_ID_HEARTBEAT) {
-                    mavlink_heartbeat_t heartbeat;
-                    mavlink_msg_heartbeat_decode(&msg, &heartbeat);
-                    std::cout << "Received Heartbeat!\n";
-                    std::cout << "Type: " << static_cast<int>(heartbeat.type) << "\n";
-                    std::cout << "Autopilot: " << static_cast<int>(heartbeat.autopilot) << "\n";
-                    std::cout << "System Status: " << static_cast<int>(heartbeat.system_status) << "\n";
-                  }
-              }
-          }
-      }
+//       while (true) {
+//           // Read from serial port
+//           std::size_t n = serial_port.read_some(asio::buffer(buffer));
+//           // Process MAVLink message
+//           for (std::size_t i = 0; i < n; ++i) {
+//               if (mavlink_parse_char(MAVLINK_COMM_0, buffer[i], &msg, NULL)) {
+//                   if (msg.msgid == MAVLINK_MSG_ID_HEARTBEAT) {
+//                     mavlink_heartbeat_t heartbeat;
+//                     mavlink_msg_heartbeat_decode(&msg, &heartbeat);
+//                     std::cout << "Received Heartbeat!\n";
+//                     std::cout << "Type: " << static_cast<int>(heartbeat.type) << "\n";
+//                     std::cout << "Autopilot: " << static_cast<int>(heartbeat.autopilot) << "\n";
+//                     std::cout << "System Status: " << static_cast<int>(heartbeat.system_status) << "\n";
+//                   }
+//               }
+//           }
+//       }
 
-  } catch (const std::exception &e) {
-      std::cerr << "Error: " << e.what() << std::endl;
-  }
+//   } catch (const std::exception &e) {
+//       std::cerr << "Error: " << e.what() << std::endl;
+//   }
 
-  return 0;
-}
+//   return 0;
+// }

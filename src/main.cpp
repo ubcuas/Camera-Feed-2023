@@ -158,95 +158,16 @@ bool setup_dir(std::string pathname) {
   return true;
 }
 
-int main(int argc, char* argv[]) {
-  int seconds = 0;
-  float exposureTime = 0;
-  float gain = 0;
-  // bool reset = false;
-  bool trigger = false;
-  bool pulse = false;
-
-  bool fake = false;
-  bool bin = false;
-
-  std::string url = "";
-  CLI::App app{"Camera Feed"};
-
-  auto runtime_opt = app.add_option("-s,--seconds", seconds, "Set runtime");
-  runtime_opt->required();
-
-  auto exposure_opt = app.add_option(
-      "-e,--exposure", exposureTime, "Set camera exposure time (ms)");
-  exposure_opt->check(CLI::PositiveNumber);
-
-  auto gain_opt = app.add_option("-g,--gain", gain, "Set camera gain");
-  gain_opt->check(CLI::PositiveNumber);
-
-  // auto url_opt = app.add_option("-u,--url", url, "Set URL to send to");
-
-  auto trigger_opt = app.add_flag("-t,--trigger", trigger, "Use trigger line 2");
-  auto pulse_opt = app.add_flag("-p,--pulse", pulse, "Output pulse line 3");
-  auto write_opt = app.add_flag("-w,--write", save_img, "Write images to disk");
-  // auto reset_opt = app.add_flag("--reset", reset, "Reset camera to default");
-  auto fake_opt = app.add_flag("-f,--fake", fake, "Use fake camera");
-  auto bin_opt = app.add_flag("-b,--binning", bin, "Enable sensor binning");
-  CLI11_PARSE(app, argc, argv);
-
+void checkOpenCL() {
   if (!cv::ocl::haveOpenCL()) {
-    std::cerr << "OpenCL is not available." << "\n";
+    std::cout << "OpenCL is not available." << "\n";
   } else {
+    std::cout << "Using OpenCL" << "\n";
     cv::ocl::setUseOpenCL(true);
   }
+}
 
-
-  if (save_img) {
-    bool dir = setup_dir("images");
-    if (!dir) {
-      return 1;
-    }
-  }
-
-  // if (url_opt->count() > 0) {
-  //   send = true;
-  // }
-  std::shared_ptr<ICamera> camera;
-  if (fake) {
-    camera = std::make_shared<FakeCamera>();
-  } else {
-    camera = std::make_shared<ArenaCamera>();
-  }
-
-  if (trigger) {
-    camera->enable_trigger(true);
-    std::cout << "Trigger mode enabled " << gain << "\n";
-  }
-
-  if (pulse) {
-    camera->output_pulse();
-    std::cout << "Output pulse enabled\n";
-  }
-
-  if (bin) {
-    camera->sensor_binning();
-    std::cout << "sensor binning enabled\n";
-  }
-
-  if (exposure_opt->count() > 0) {
-    camera->set_exposuretime(exposureTime);
-    std::cout << "Setting exposure time to " << exposureTime << "\n";
-  }
-
-  if (gain_opt->count() > 0) {
-    camera->set_gain(gain);
-    std::cout << "Setting gain time to " << gain << "\n";
-  }
-
-  // if (reset){
-  //   camera->set_default();
-  // }
-
-  camera->start_stream();
-
+void start_pipeline(std::shared_ptr<ICamera>& camera, int seconds) {
   const int numProcessors = 1;
   const int numSavers = 1;
   const int numSenders = 1;
@@ -291,7 +212,90 @@ int main(int argc, char* argv[]) {
   // for (std::thread& sender : senders) {
   //   sender.join();
   // }
+}
 
+int main(int argc, char* argv[]) {
+  int seconds = 0;
+  float exposureTime = 0;
+  float gain = 0;
+  // bool reset = false;
+  bool trigger = false;
+  bool pulse = false;
+
+  bool fake = false;
+  bool bin = false;
+  bool mavlink = false;
+
+  std::string url = "";
+  CLI::App app{"Camera Feed"};
+
+  auto runtime_opt = app.add_option("-s,--seconds", seconds, "Set runtime");
+  runtime_opt->required();
+
+  auto exposure_opt = app.add_option(
+      "-e,--exposure", exposureTime, "Set camera exposure time (ms)");
+  exposure_opt->check(CLI::PositiveNumber);
+
+  auto gain_opt = app.add_option("-g,--gain", gain, "Set camera gain");
+  gain_opt->check(CLI::PositiveNumber);
+
+  // auto url_opt = app.add_option("-u,--url", url, "Set URL to send to");
+
+  auto trigger_opt = app.add_flag("-t,--trigger", trigger, "Use trigger line 2");
+  auto pulse_opt = app.add_flag("-p,--pulse", pulse, "Output pulse line 3");
+  auto write_opt = app.add_flag("-w,--write", save_img, "Write images to disk");
+  // auto reset_opt = app.add_flag("--reset", reset, "Reset camera to default");
+  auto fake_opt = app.add_flag("-f,--fake", fake, "Use fake camera");
+  auto bin_opt = app.add_flag("-b,--binning", bin, "Enable sensor binning");
+  auto mavlink_opt = app.add_flag("-m,--mavlink", bin, "Enable mavlink");
+
+  CLI11_PARSE(app, argc, argv);
+
+  if (save_img) {
+    bool dir = setup_dir("images");
+    if (!dir) {
+      return 1;
+    }
+  }
+
+  // if (url_opt->count() > 0) {
+  //   send = true;
+  // }
+  std::shared_ptr<ICamera> camera;
+  if (fake) {
+    camera = std::make_shared<FakeCamera>();
+  } else {
+    camera = std::make_shared<ArenaCamera>();
+  }
+  if (trigger) {
+    camera->enable_trigger(true);
+    std::cout << "Trigger mode enabled " << gain << "\n";
+  }
+  if (pulse) {
+    camera->output_pulse();
+    std::cout << "Output pulse enabled\n";
+  }
+  // This goes before exposure because it decreases min exposure time
+  if (bin) {
+    camera->sensor_binning();
+    std::cout << "sensor binning enabled\n";
+  }
+  if (exposure_opt->count() > 0) {
+    camera->set_exposuretime(exposureTime);
+    std::cout << "Setting exposure time to " << exposureTime << "\n";
+  }
+  if (gain_opt->count() > 0) {
+    camera->set_gain(gain);
+    std::cout << "Setting gain time to " << gain << "\n";
+  }
+  // if (reset){
+  //   camera->set_default();
+  // }
+
+  checkOpenCL();
+
+  camera->start_stream();
+  start_pipeline(camera, seconds);
   camera->stop_stream();
 
   std::cout << "SYSTEM SHUTDOWN\n";
