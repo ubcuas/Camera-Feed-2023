@@ -21,14 +21,13 @@
 #include "Detector.hpp"
 #include "ardupilotmega/mavlink.h"
 
-
 namespace fs = std::filesystem;
 // using namespace mavsdk;
 using namespace std::chrono_literals;
 
 
-// using asio::serial_port;
-// using asio::serial_port_base;
+using asio::serial_port;
+using asio::serial_port_base;
 // #include "src/HttpTransmitter.hpp"
 
 int main() {
@@ -62,37 +61,83 @@ int main() {
   serial_port.set_option(asio::serial_port_base::stop_bits(asio::serial_port_base::stop_bits::one));
   serial_port.set_option(asio::serial_port_base::parity(asio::serial_port_base::parity::none));
 
-  mavlink_message_t command_msg;
+  try {
+    // MAVLink data buffers
+    std::vector<uint8_t> buffer(2048);
+    mavlink_message_t msg;
+    auto start_time = std::chrono::steady_clock::now();
+    
 
-  mavlink_command_long_t cmd{
-    0,
-    0,
-    MAV_CMD_IMAGE_START_CAPTURE,
-    0,
-    0,
-    1,
-    100,
-    0,
-    0,
-    0,
-    0
-  };
+    while (true) {
+        auto now = std::chrono::steady_clock::now();
+        auto elapsed = std::chrono::duration_cast<std::chrono::seconds>(now - start_time);
+        if (elapsed.count() >= 1) {
+            break; // Exit after 1 second
+        }
+        // Read from serial port
+        std::size_t n = serial_port.read_some(asio::buffer(buffer));
+        // Process MAVLink message
+        for (std::size_t i = 0; i < n; ++i) {
+            if (mavlink_parse_char(MAVLINK_COMM_0, buffer[i], &msg, NULL)) {
+                if (msg.msgid == MAVLINK_MSG_ID_CAMERA_FEEDBACK) {
+                  mavlink_camera_feedback_t feedback;
+                  mavlink_msg_camera_feedback_decode(&msg, &feedback);
 
-  mavlink_msg_command_long_encode(0, 0, &command_msg, &cmd);
+                  std::cout << "📸 CAMERA_FEEDBACK purged:\n"
+                            << "  Time: " << feedback.time_usec << "\n"
+                            << "  Lat:  " << feedback.lat / 1e7 << "\n"
+                            << "  Lon:  " << feedback.lng / 1e7 << "\n"
+                            << "  Alt:  " << feedback.alt_msl << " m\n"
+                            << "  id:  " << feedback.img_idx << " m\n"
+                             << "  n:  " << feedback.completed_captures << " m\n"
+                            << std::endl;
+                }
+            }
+        }
+    }
 
-  // Send over serial
-  uint8_t tx_buf[MAVLINK_MAX_PACKET_LEN];
-  uint16_t len = mavlink_msg_to_send_buffer(tx_buf, &command_msg);
-  asio::write(serial_port, asio::buffer(tx_buf, len));
-  std::cout << "📤 Sent MAV_CMD_DO_DIGICAM_CONTROL\n";
+} catch (const std::exception &e) {
+    std::cerr << "Error: " << e.what() << std::endl;
+}
+
+
+  mavlink_message_t msg;
+  uint8_t buf[MAVLINK_MAX_PACKET_LEN];
+
+  // Define the MAV_CMD_DO_DIGICAM_CONTROL command
+  uint8_t camera_id = 0;  // Example camera ID
+  uint8_t control_flags = 1; // 1 for take photo, 0 for other actions
+  float exposure_mode = 0;  // Placeholder for exposure mode
+  float trigger_mode = 1;   // Trigger camera
+
+  // Set the MAVLink message (MAV_CMD_DO_DIGICAM_CONTROL)
+  // mavlink_msg_command_long_pack(101, 101, &msg, 0, 0, MAV_CMD_DO_DIGICAM_CONTROL, 0, 
+  //                               0, 0, 0, 0, 1, 0, 0);
+  // mavlink_msg_command_long_pack(101, 101, &msg, 0, 0, MAV_CMD_IMAGE_START_CAPTURE, 0, 
+  //   0, 0.2, 9000, 0, 0, 0, 0);
+  // Serialize the message into buffer
+  uint16_t len = mavlink_msg_to_send_buffer(buf, &msg);
+
+  // Send the message over serial port
+  asio::write(serial_port, asio::buffer(buf, len));
+
+  std::cout << "Sent MAV_CMD_DO_DIGICAM_CONTROL message" << "\n";
+
 
   
   try {
       // MAVLink data buffers
       std::vector<uint8_t> buffer(2048);
       mavlink_message_t msg;
+      auto start_time = std::chrono::steady_clock::now();
+      
 
       while (true) {
+          auto now = std::chrono::steady_clock::now();
+          auto elapsed = std::chrono::duration_cast<std::chrono::seconds>(now - start_time);
+          if (elapsed.count() >= 3) {
+              break; // Exit after 1 second
+          }
           // Read from serial port
           std::size_t n = serial_port.read_some(asio::buffer(buffer));
           // Process MAVLink message
@@ -102,13 +147,21 @@ int main() {
                     mavlink_camera_feedback_t feedback;
                     mavlink_msg_camera_feedback_decode(&msg, &feedback);
 
-                    std::cout << "📸 CAMERA_FEEDBACK received:\n"
+                    std::cout << " CAMERA_FEEDBACK received:\n"
                               << "  Time: " << feedback.time_usec << "\n"
                               << "  Lat:  " << feedback.lat / 1e7 << "\n"
                               << "  Lon:  " << feedback.lng / 1e7 << "\n"
                               << "  Alt:  " << feedback.alt_msl << " m\n"
+                              << "  id:  " << feedback.img_idx << " m\n"
+                               << "  n:  " << feedback.completed_captures << " m\n"
                               << std::endl;
-                  }
+                  } else if (msg.msgid == MAVLINK_MSG_ID_COMMAND_ACK) {
+                    mavlink_command_ack_t ack;
+                    mavlink_msg_command_ack_decode(&msg, &ack);
+                    std::cout << "✅ COMMAND_ACK received:\n"
+                              << "  Command: " << ack.command << "\n"
+                              << "  Result:  " << (int)ack.result << "\n\n";
+                }
               }
           }
       }
@@ -198,21 +251,21 @@ int main() {
 //     0
 //   };
 
-//   mavlink_passthrough.subscribe_message(
-//     MAVLINK_MSG_ID_CAMERA_FEEDBACK,
-//     [](const mavlink_message_t& msg) {
-//         mavlink_camera_feedback_t feedback;
-//         mavlink_msg_camera_feedback_decode(&msg, &feedback);
+// //   mavlink_passthrough.subscribe_message(
+// //     MAVLINK_MSG_ID_CAMERA_FEEDBACK,
+// //     [](const mavlink_message_t& msg) {
+// //         mavlink_camera_feedback_t feedback;
+// //         mavlink_msg_camera_feedback_decode(&msg, &feedback);
 
-//         std::cout << "📸 CAMERA_FEEDBACK received:\n"
-//                   << "  Time: " << feedback.time_usec << "\n"
-//                   << "  Lat:  " << feedback.lat / 1e7 << "\n"
-//                   << "  Lon:  " << feedback.lng / 1e7 << "\n"
-//                   << "  Alt:  " << feedback.alt_msl << " m\n"
-//                   << std::endl;
-//     });
+// //         std::cout << "📸 CAMERA_FEEDBACK received:\n"
+// //                   << "  Time: " << feedback.time_usec << "\n"
+// //                   << "  Lat:  " << feedback.lat / 1e7 << "\n"
+// //                   << "  Lon:  " << feedback.lng / 1e7 << "\n"
+// //                   << "  Alt:  " << feedback.alt_msl << " m\n"
+// //                   << std::endl;
+// //     });
 
-// std::cout << "Listening for CAMERA_FEEDBACK messages..." << std::endl;
+// // std::cout << "Listening for CAMERA_FEEDBACK messages..." << std::endl;
 
 
 //   MavlinkPassthrough::Result msg_result = mavlink_passthrough.send_command_long(command);
@@ -221,15 +274,15 @@ int main() {
 //     return 1;
 //   }
 
-//   std::cout << "MAV_CMD_DO_DIGICAM_CONTROL sent." << std::endl;
-//   mavlink_camera_feedback_t feedback;
+// //   std::cout << "MAV_CMD_DO_DIGICAM_CONTROL sent." << std::endl;
+// //   mavlink_camera_feedback_t feedback;
   
   
 
-// // Keep the program running
-// while (true) {
-//     std::this_thread::sleep_for(std::chrono::seconds(1));
-// }
+// // // Keep the program running
+// // while (true) {
+// //     std::this_thread::sleep_for(std::chrono::seconds(1));
+// // }
 
 
   
