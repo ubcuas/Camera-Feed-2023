@@ -138,6 +138,7 @@ target_link_libraries(curltest PRIVATE
     ${OpenCV_LIBS}
     ${CURL_LIBRARIES}
     CLI11::CLI11
+    MAVSDK::mavsdk
 )
 
 
