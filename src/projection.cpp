@@ -1,4 +1,6 @@
 #include <opencv2/core.hpp>
+#include <opencv2/calib3d.hpp>  // contains cv::undistortPoints
+
 #include <cmath>
 #include <GeographicLib/Geodesic.hpp>
 
@@ -8,8 +10,8 @@
 using namespace GeographicLib;
 
 // Initialize constants
-const double f_x = 2500.0, f_y = 2500.0;
-const double c_x = 0.0, c_y = 0.0;
+const double f_x = 2482.29888, f_y = 2485.09241;
+const double c_x = 1358.69991, c_y = 904.861872;
 const int img_w = 2736, img_h = 1824;
 
 const double center_x = img_w / 2;
@@ -20,7 +22,8 @@ const cv::Mat intrinsic_matrix = (cv::Mat_<double>(3, 3) <<
     0.0, f_y, c_y,
     0.0, 0.0, 1.0
 );
-
+cv::Mat distCoeffs = (cv::Mat_<double>(1, 5) << 
+    -0.0528353529, -0.0938327045, -0.000127634646, -0.00201700049, 0.464714290);
 /**
  * Computes a rotation matrix from roll, pitch, and yaw angles in degrees
  * 
@@ -66,11 +69,20 @@ cv::Point2d computeOffset(
     double pixel_x,
     double pixel_y
 ) {
-    double x = pixel_x - center_x;
-    double y = center_y - pixel_y;
+    double x = pixel_x;
+    double y = img_h - pixel_y; // or flipped_y;
 
-    cv::Mat pixel_hom = (cv::Mat_<double>(3, 1) << x, y, 1.0);
+    // Prepare distorted point
+    std::vector<cv::Point2d> distorted = { cv::Point2d(x, y) };
+    std::vector<cv::Point2d> undistorted;
 
+    // Use global or passed-in intrinsic and distortion coefficients
+    cv::undistortPoints(distorted, undistorted, intrinsic_matrix, distCoeffs, cv::noArray(), intrinsic_matrix);
+
+    // Convert to homogeneous coordinates
+    cv::Mat pixel_hom = (cv::Mat_<double>(3, 1) << undistorted[0].x, undistorted[0].y, 1.0);
+
+    // Compute world vector
     cv::Mat inv_intrinsic = intrinsic_matrix.inv();
     cv::Mat world_vec = extrinsic.t() * inv_intrinsic * pixel_hom;
 

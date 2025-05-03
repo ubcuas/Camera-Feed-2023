@@ -1,5 +1,7 @@
 import argparse
 import json
+
+import cv2
 import numpy as np
 from typing import List, Dict, Tuple
 from geographiclib.geodesic import Geodesic
@@ -7,8 +9,11 @@ import matplotlib.pyplot as plt
 import plotly.express as px
 import pandas as pd
 
-f_x, f_y = 2500, 2500       # focal length in pixels
-c_x, c_y = 0, 0             # optical center in pixels
+# f_x, f_y = 2500, 2500       # focal length in pixels
+# c_x, c_y = 0, 0             # optical center in pixels
+# img_w, img_h = 2736, 1824   # image resolution
+f_x, f_y = 2482.29888, 2485.09241       # focal length in pixels
+c_x, c_y = 1358.69991, 904.861872           # optical center in pixels
 img_w, img_h = 2736, 1824   # image resolution
 
 center_x, center_y = img_w // 2, img_h // 2
@@ -19,7 +24,7 @@ intrinsic = np.array([
     [0,  f_y, c_y],
     [0,    0,   1]]
 )
-
+dist = np.array([[-5.28353529e-02, -9.38327045e-02, -1.27634646e-04, -2.01700049e-03, 4.64714290e-01]])
 geod = Geodesic.WGS84
 
 tol = 200000
@@ -48,28 +53,44 @@ tol = 200000
 #             detect_list.append(json_obj)
 #     return detect_list
 
-def load_trig_log(filename):
+# def load_log(file_path: str) -> List[Dict]:
+#     log = []
+#     with open(file_path, "r") as file:
+#         for line in file:
+#             json_obj = json.loads(line.strip())
+#             log.append(json_obj)
+#     return log
+
+def load_log(file_path: str) -> List[Dict]:
     return [
-        # {"TimeUS": 1000, "I": 0, "Img": 1, "GPSTime": 0, "GPSWeek": 0, "Lat": 49.259629434902564, "Lng": -123.24856966776673, "Alt": 100.0, "RelAlt": 100.0, "GPSAlt": 100.0, "R": 10.0, "P": 10.0, "Y": 10.0},
-        {"TimeUS": 1000, "I": 0, "Img": 1, "GPSTime": 0, "GPSWeek": 0, "Lat": 49.259629434902564, "Lng": -123.24856966776673, "Alt": 100.0, "RelAlt": 100.0, "GPSAlt": 100.0, "R": -10.0, "P": -10.0, "Y": -10.0}
+        {"TimeUS": 1746269284621072, "Img": 2, "Points": [[0, 0], [img_w, img_h], [img_w, 0], [0, img_h]], "Epoch": 1746268941974857, "Delta_t": -932,
+         "Feedback": {"time_usec": 342647147, "img_idx": 1393, "lat": 49.259629434902564, "lng": -123.24856966776673, "alt_msl": 0,
+                      "alt_rel": 100.0, "roll": 10.0, "pitch": 10.0,
+                      "yaw": 10.0, "completed_captures": 64}}
 
-        # {"Timestamp": 1100, "Latitude": 37.7750, "Longitude": -122.4195, "Alt": 60, "Roll": 0, "Pitch": 0, "Yaw": 45},
-        # {"Timestamp": 1200, "Latitude": 37.7751, "Longitude": -122.4196, "Alt": 70, "Roll": 2, "Pitch": 2, "Yaw": 2},
-        # {"Timestamp": 1300, "Latitude": 37.7752, "Longitude": -122.4197, "Alt": 80, "Roll": 3, "Pitch": 3, "Yaw": 3},
-        # {"Timestamp": 1400, "Latitude": 37.7753, "Longitude": -122.4198, "Alt": 90, "Roll": 4, "Pitch": 4, "Yaw": 4},
     ]
-
-
-def load_detect_log(filename):
-    return [
-        # {"Img": 1, "TimeUS": 2000, "Points": [[0, 0], [img_w, img_h], [img_w, 0], [0, img_h]]},
-        {"Img": 1, "TimeUS": 2000, "Points": [[0, 0], [img_w, img_h], [img_w, 0], [0, img_h]]},
-
-        # {"Timestamp": 2100, "Points": [[0, 0], [img_w, img_h], [img_w, 0], [0, img_h]]},
-        # {"Timestamp": 2200, "Points": [[0, 0], [img_w, img_h], [img_w, 0], [0, img_h]]},
-        # {"Timestamp": 2300, "Points": [[0, 0], [img_w, img_h], [img_w, 0], [0, img_h]]},
-        # {"Timestamp": 2400, "Points": [[0, 0], [img_w, img_h], [img_w, 0], [0, img_h]]},
-    ]
+# def load_trig_log(filename):
+#     return [
+#         # {"TimeUS": 1000, "I": 0, "Img": 1, "GPSTime": 0, "GPSWeek": 0, "Lat": 49.259629434902564, "Lng": -123.24856966776673, "Alt": 100.0, "RelAlt": 100.0, "GPSAlt": 100.0, "R": 10.0, "P": 10.0, "Y": 10.0},
+#         {"TimeUS": 1000, "I": 0, "Img": 1, "GPSTime": 0, "GPSWeek": 0, "Lat": 49.259629434902564, "Lng": -123.24856966776673, "Alt": 100.0, "RelAlt": 100.0, "GPSAlt": 100.0, "R": -10.0, "P": -10.0, "Y": -10.0}
+#
+#         # {"Timestamp": 1100, "Latitude": 37.7750, "Longitude": -122.4195, "Alt": 60, "Roll": 0, "Pitch": 0, "Yaw": 45},
+#         # {"Timestamp": 1200, "Latitude": 37.7751, "Longitude": -122.4196, "Alt": 70, "Roll": 2, "Pitch": 2, "Yaw": 2},
+#         # {"Timestamp": 1300, "Latitude": 37.7752, "Longitude": -122.4197, "Alt": 80, "Roll": 3, "Pitch": 3, "Yaw": 3},
+#         # {"Timestamp": 1400, "Latitude": 37.7753, "Longitude": -122.4198, "Alt": 90, "Roll": 4, "Pitch": 4, "Yaw": 4},
+#     ]
+#
+#
+# def load_detect_log(filename):
+#     return [
+#         # {"Img": 1, "TimeUS": 2000, "Points": [[0, 0], [img_w, img_h], [img_w, 0], [0, img_h]]},
+#         {"Img": 1, "TimeUS": 2000, "Points": [[0, 0], [img_w, img_h], [img_w, 0], [0, img_h]]},
+#
+#         # {"Timestamp": 2100, "Points": [[0, 0], [img_w, img_h], [img_w, 0], [0, img_h]]},
+#         # {"Timestamp": 2200, "Points": [[0, 0], [img_w, img_h], [img_w, 0], [0, img_h]]},
+#         # {"Timestamp": 2300, "Points": [[0, 0], [img_w, img_h], [img_w, 0], [0, img_h]]},
+#         # {"Timestamp": 2400, "Points": [[0, 0], [img_w, img_h], [img_w, 0], [0, img_h]]},
+#     ]
 
 
 def compute_extrinsic(roll_deg: float, pitch_deg: float, yaw_deg: float) -> np.ndarray:
@@ -105,9 +126,14 @@ def compute_extrinsic(roll_deg: float, pitch_deg: float, yaw_deg: float) -> np.n
 
 
 def compute_offset(alt: float, extrinsic: np.ndarray, pixel_x: int, pixel_y: int) -> Tuple[float, float]:
-    pixel_x = pixel_x - center_x
-    pixel_y = center_y - pixel_y
-    pixel_hom = np.array([pixel_x, pixel_y, 1], dtype=float)
+    # pixel_x = pixel_x - center_x
+    # pixel_y = center_y - pixel_y
+    pixel_y = img_h - pixel_y
+    distorted = np.array([[[pixel_x, pixel_y]]], dtype=np.float32)
+    undistorted = cv2.undistortPoints(distorted, intrinsic, dist, P=intrinsic)
+    undistorted_pixel = undistorted[0][0]  # (x, y) in pixel coordinates
+
+    pixel_hom = np.array([undistorted_pixel[0], undistorted_pixel[1], 1.0], dtype=float)
     world_vec = extrinsic.T @ np.linalg.inv(intrinsic) @ pixel_hom
 
     # if abs(dir_world[2]) < 1e-12:
@@ -136,7 +162,7 @@ def plot_gps(coords, ground_truth=None):
         coords,
         lat="Lat",
         lon="Lng",
-        hover_data=["tID", "dID", "Lat", "Lng", "RelAlt"],
+        hover_data=["ID", "Lat", "Lng", "RelAlt"],
         color="RelAlt",
         color_continuous_scale=color_scale,  # Gradient color
         zoom=14
@@ -216,73 +242,36 @@ def plot_gps(coords, ground_truth=None):
 
 def main():
     parser = argparse.ArgumentParser(description="Process log files.")
-    parser.add_argument('-t', '--trig_path', type=str, default='parse_text/trig.txt', help='Path to trig log file')
-    parser.add_argument('-d', '--detect_path', type=str, default='parse_text/detect.txt', help='Path to detect log file')
+    parser.add_argument('-l', '--log_path', type=str, help='Path to log file')
 
     args = parser.parse_args()
 
-    trig_list = load_trig_log(args.trig_path)
-    detect_list = load_detect_log(args.detect_path)
-
-    # Initialize storage for points to plot
+    logs = load_log(args.log_path)
     coords = []
 
-    epoch = detect_list[0]["TimeUS"] - trig_list[0]["TimeUS"]
-    diffs = []
-    trig_idx, detect_idx = 0, 0
+    for l in logs:
+        drone_lat = l.get("Feedback").get("lat") / 1e7
+        drone_lng = l.get("Feedback").get("lng") / 1e7
+        alt = l.get("Feedback").get("alt_rel")
+        roll = l.get("Feedback").get("roll")
+        pitch = l.get("Feedback").get("pitch")
+        yaw = l.get("Feedback").get("yaw")
+        points = l.get("Points")
+        id = l.get("Img")
+        for p in points:
+            # TODO add limiter
+            detect_lat, detect_lng = cam2Geoposition(pitch, roll, yaw, alt, p[0], p[1], drone_lat, drone_lng)
 
-    while trig_idx < len(trig_list) and detect_idx < len(detect_list):
-        trig_log = trig_list[trig_idx]
-        detect_log = detect_list[detect_idx]
-        # TODO: get statistics
-        diff = detect_log["TimeUS"] - trig_log["TimeUS"] - epoch
-        diffs.append(diff)
-        if diff < -tol:
-            print("Outside tol: " + diff)
-            detect_idx += 1
-        elif diff > tol:
-            print("Outside tol: " + diff)
-            trig_idx += 1
-        else:
-            drone_lat = trig_log.get("Lat")
-            drone_lng = trig_log.get("Lng")
-            alt = trig_log.get("RelAlt")
-            roll = trig_log.get("R")
-            pitch = trig_log.get("P")
-            yaw = trig_log.get("Y")
-            trig_img = trig_log.get("Img")
-            detect_img = detect_log.get("Img")
-            points = detect_log.get("Points")
+            # Store the values for plotting
+            # TODO: get id for image and log
+            coords.append([id, detect_lat, detect_lng, alt])
 
-            for p in points:
-                # TODO add limiter
-                detect_lat, detect_lng = cam2Geoposition(pitch, roll, yaw, alt, p[0], p[1], drone_lat, drone_lng)
-
-                # Store the values for plotting
-                # TODO: get id for image and log
-                coords.append([trig_img, detect_img, detect_lat, detect_lng, alt])
-
-            detect_idx += 1
-            trig_idx += 1
-    coords = pd.DataFrame(coords, columns=["tID", "dID", "Lat", "Lng", "RelAlt"])
+    coords = pd.DataFrame(coords, columns=["ID", "Lat", "Lng", "RelAlt"])
     # ground_truth = pd.DataFrame([[49.259629434902564, -123.24856966776673]], columns=["Lat", "Lng"])
     # plot_gps(coords, ground_truth)
     coords.to_csv('detections.csv')
     print("Saved to detections.csv")
     plot_gps(coords)
-    diff_data = np.array(diffs)
-    mean = np.mean(diff_data)
-    median = np.median(diff_data)
-    std_dev = np.std(diff_data)
-    minimum = np.min(diff_data)
-    maximum = np.max(diff_data)
-
-    print("Timestamp differences")
-    print(f"Mean: {mean}")
-    print(f"Median: {median}")
-    print(f"Std Dev: {std_dev}")
-    print(f"Min: {minimum}")
-    print(f"Max: {maximum}")
 
 
 def cam2Geoposition(pitch, roll, yaw, alt, pixel_x, pixel_y, drone_lat, drone_lng):
