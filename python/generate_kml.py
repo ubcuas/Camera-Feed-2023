@@ -22,7 +22,7 @@ output_kml is default the date+time of file generation
 
 '''
 
-def generate_kml(source_csv, output_kml=str(time.strftime("output-%Y-%m-%d-%H:%M:%S"))):
+def generate_kml(source_csv, output_kml=str(time.strftime("output-%Y-%m-%d-%H-%M-%S"))):
     
     try:
         with open(source_csv, 'r') as csv_file:
