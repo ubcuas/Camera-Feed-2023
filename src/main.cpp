@@ -282,6 +282,7 @@ void image_tagger(uint64_t sync_epoch, int64_t id_diff) {
     sync_epoch = detect.timestamp - feedback.time_usec;
   }
   json_file.close();
+  csv_file.close();
 }
 
 void image_sender_imen(const std::string& url) {
