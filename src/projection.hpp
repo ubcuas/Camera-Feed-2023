@@ -21,4 +21,17 @@ cv::Point2d computeOffset(
   double pixel_y
 );
 
+std::pair<double, double> computeGeoposition(double lat, double lng, double x, double y);
+
+std::pair<double, double> cam2Geoposition(
+  double roll_deg,
+  double pitch_deg,
+  double yaw_deg,
+  double altitude,
+  double pixel_x,
+  double pixel_y,
+  double lat,
+  double lng
+);
+
 #endif // PROJECTION_HPP
