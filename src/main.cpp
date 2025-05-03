@@ -15,11 +15,13 @@
 #include <vector>
 #include <condition_variable>
 #include <csignal>
+#include <regex>
 
 #include <CLI/CLI.hpp>
 #include <opencv2/opencv.hpp>
 #include <opencv2/core/ocl.hpp>
 #include <nlohmann/json.hpp>
+#include <asio.hpp>
 
 
 #include "ArenaApi.h"
@@ -30,6 +32,18 @@
 #include "TSQueue.hpp"
 #include "Pipeline.hpp"
 #include "Detector.hpp"
+
+#include "ardupilotmega/mavlink.h"
+
+#define IMAGE_TIMEOUT 100
+
+namespace fs = std::filesystem;
+// using namespace mavsdk;
+using namespace std::chrono_literals;
+
+
+using asio::serial_port;
+using asio::serial_port_base;
 
 using json = nlohmann::json;
 
@@ -71,7 +85,7 @@ void run(int seconds) {
 void image_producer(const std::shared_ptr<ICamera>& camera) {
   while (!stop_flag) {
     try {
-      std::shared_ptr<ImageData> image_data = camera->get_image();
+      std::shared_ptr<ImageData> image_data = camera->get_image(IMAGE_TIMEOUT);
       data_queue.push(image_data);
       if (save_img) {
           save_queue.push(std::move(image_data));
@@ -177,6 +191,93 @@ bool setup_dir(std::string pathname) {
   return true;
 }
 
+std::shared_ptr<asio::serial_port> connect(asio::io_context& io_context) {
+  std::string device_prefix = "/dev/serial/by-id/";
+  std::regex pattern("usb-CubePilot_CubeOrange\\+_.*-if00");
+
+  std::string matched_device;
+  try {
+      for (const auto& entry : fs::directory_iterator(device_prefix)) {
+          if (std::regex_match(entry.path().filename().string(), pattern)) {
+              matched_device = entry.path();
+              std::cout << "Found " << matched_device << "\n";
+              break;
+          }
+      }
+  } catch (const fs::filesystem_error& e) {
+      std::cout << "No USB devices detected: " << e.what() << "\n";
+      return nullptr;
+  }
+
+  if (matched_device.empty()) {
+      std::cout << "No matching device found." << "\n";
+      return nullptr;
+  }
+
+  try {
+      auto serial_port = std::make_shared<asio::serial_port>(io_context, matched_device);
+      serial_port->set_option(asio::serial_port_base::baud_rate(57600));
+      serial_port->set_option(asio::serial_port_base::character_size(8));
+      serial_port->set_option(asio::serial_port_base::stop_bits(asio::serial_port_base::stop_bits::one));
+      serial_port->set_option(asio::serial_port_base::parity(asio::serial_port_base::parity::none));
+      return serial_port;
+  } catch (const std::exception& e) {
+      std::cout << "Failed to open serial port: " << e.what() << "\n";
+      return nullptr;
+  }
+}
+
+
+
+std::vector<mavlink_camera_feedback_t> synchronize(std::shared_ptr<asio::serial_port> serial_port) {
+  
+  mavlink_message_t msg;
+  uint8_t buf[MAVLINK_MAX_PACKET_LEN];
+
+
+  // Set the MAVLink message (MAV_CMD_DO_DIGICAM_CONTROL)
+  mavlink_msg_command_long_pack(101, 101, &msg, 0, 0, MAV_CMD_DO_DIGICAM_CONTROL, 0, 
+                                0, 0, 0, 0, 1, 0, 0);
+  // mavlink_msg_command_long_pack(101, 101, &msg, 0, 0, MAV_CMD_IMAGE_START_CAPTURE, 0, 
+  //   0, 0.2, 9000, 0, 0, 0, 0);
+  // Serialize the message into buffer
+  uint16_t len = mavlink_msg_to_send_buffer(buf, &msg);
+
+  // Send the message over serial port
+  asio::write(*serial_port, asio::buffer(buf, len));
+
+  std::cout << "Sent MAV_CMD_DO_DIGICAM_CONTROL message" << "\n";
+
+  std::vector<mavlink_camera_feedback_t> feedbacks;
+
+  std::vector<uint8_t> buffer(2048);
+  auto start_time = std::chrono::steady_clock::now();
+  
+
+  while (true) {
+    auto now = std::chrono::steady_clock::now();
+    auto elapsed = std::chrono::duration_cast<std::chrono::seconds>(now - start_time);
+    if (elapsed.count() >= 1) {
+        break; // Exit after 1 second
+    }
+    // Read from serial port
+    std::size_t n = serial_port->read_some(asio::buffer(buffer));
+    // Process MAVLink message
+    for (std::size_t i = 0; i < n; i++) {
+        if (mavlink_parse_char(MAVLINK_COMM_0, buffer[i], &msg, NULL)) {
+            if (msg.msgid == MAVLINK_MSG_ID_CAMERA_FEEDBACK) {
+              mavlink_camera_feedback_t feedback;
+              mavlink_msg_camera_feedback_decode(&msg, &feedback);
+
+              feedbacks.push_back(feedback);
+            }
+        }
+    }
+  }
+  return feedbacks;
+}
+
+
 int main(int argc, char* argv[]) {
   std::signal(SIGINT, signalHandler);
 
@@ -230,6 +331,14 @@ int main(int argc, char* argv[]) {
   // if (url_opt->count() > 0) {
   //   send = true;
   // }
+  asio::io_context io_context;
+
+  std::shared_ptr<asio::serial_port> serial_port = connect(io_context);
+  if (!serial_port) {
+    std::cout << "No serial connection, exiting\n";
+    return 1;
+  }
+  
   std::shared_ptr<ICamera> camera;
   if (fake) {
     camera = std::make_shared<FakeCamera>();
@@ -258,57 +367,102 @@ int main(int argc, char* argv[]) {
     camera->set_gain(gain);
     std::cout << "Setting gain time to " << gain << "\n";
   }
-
   // if (reset){
   //   camera->set_default();
   // }
-
+  
   camera->start_stream();
+  // std::vector<mavlink_camera_feedback_t> feedback = synchr
+  std::this_thread::sleep_for(std::chrono::seconds(1));
 
-  const int numProcessors = 1;
-  const int numSavers = 1;
-  const int numSenders = 1;
-
-  std::thread producer = std::thread(image_producer, camera);
-
-  std::cout << "CAMERA ONLINE\n";
-  std::vector<std::thread> processors;
-  for (int i = 0; i < numProcessors; i++) {
-    processors.push_back(std::thread(image_processor));
+  std::vector<mavlink_camera_feedback_t> feedbacks;
+  std::unique_ptr<ImageData> image_data;
+  mavlink_camera_feedback_t feedback_msg;
+  bool sync = false;
+  int attempts = 0;
+  while (!sync && attempts < 3) {
+      std::cout << "Trying to synchronize...\n";
+      std::this_thread::sleep_for(std::chrono::seconds(1));
+      feedbacks = synchronize(serial_port);
+      
+      if (feedbacks.size() == 0) {
+          std::cout << "No feedback detected\n";
+      } else if (feedbacks.size() > 1) {
+          std::cout << "Extra feedback detected, getting last\n";
+          sync = true; 
+      } else {  // feedbacks.size() == 1
+          std::cout << "Feedback detected\n";
+          sync = true;
+      }
+      
+      try {
+          image_data = camera->get_image(1000);
+      } catch (timeout_exception& te) {
+          sync = false;
+          feedbacks.clear();
+      }
+      
+      attempts++;  // Added increment
   }
-  std::cout << "PROCESSOR ONLINE\n";
+  
+  if (attempts >= 3 && !sync) {
+      std::cout << "Failed to synchronize, exiting\n";
+      camera->stop_stream();
+      return 1;
+  }
+  
+  uint64_t sync_epoch = 0;
+  if (sync && image_data && !feedbacks.empty()) {  // Added validation
+      feedback_msg = feedbacks.back();
+      sync_epoch = image_data->timestamp - feedback_msg.time_usec;
+      std::cout << "Successfully synchronized with epoch: " << sync_epoch << "\n";
+  }
+  if (seconds != 0) {
+    const int numProcessors = 1;
+    const int numSavers = 1;
+    const int numSenders = 1;
 
-  std::vector<std::thread> savers;
-  if (write) {
-    for (int i = 0; i < numSavers; i++) {
-      savers.push_back(std::thread(image_saver));
+    std::thread producer = std::thread(image_producer, camera);
+
+    std::cout << "CAMERA ONLINE\n";
+    std::vector<std::thread> processors;
+    for (int i = 0; i < numProcessors; i++) {
+      processors.push_back(std::thread(image_processor));
     }
-    std::cout << "WRITER ONLINE\n";
+    std::cout << "PROCESSOR ONLINE\n";
+
+    std::vector<std::thread> savers;
+    if (write) {
+      for (int i = 0; i < numSavers; i++) {
+        savers.push_back(std::thread(image_saver));
+      }
+      std::cout << "WRITER ONLINE\n";
+    }
+
+    // std::vector<std::thread> senders;
+    // if (send) {
+    //   curl_global_init(CURL_GLOBAL_ALL);
+    //   for (int i = 0; i < numSenders; i++) {
+    //     senders.push_back(std::thread(image_sender_imen, url));
+    //   }
+    //   std::cout << "TRANSMITTER ONLINE\n";
+    // }
+
+    // std::cout << "ALL SYSTEMS NOMINAL\n";
+    run(seconds);
+
+    producer.join();
+
+    for (std::thread& processor : processors) {
+      processor.join();
+    }
+    for (std::thread& saver : savers) {
+      saver.join();
+    }
+    // for (std::thread& sender : senders) {
+    //   sender.join();
+    // }
   }
-
-  // std::vector<std::thread> senders;
-  // if (send) {
-  //   curl_global_init(CURL_GLOBAL_ALL);
-  //   for (int i = 0; i < numSenders; i++) {
-  //     senders.push_back(std::thread(image_sender_imen, url));
-  //   }
-  //   std::cout << "TRANSMITTER ONLINE\n";
-  // }
-
-  // std::cout << "ALL SYSTEMS NOMINAL\n";
-  run(seconds);
-
-  producer.join();
-
-  for (std::thread& processor : processors) {
-    processor.join();
-  }
-  for (std::thread& saver : savers) {
-    saver.join();
-  }
-  // for (std::thread& sender : senders) {
-  //   sender.join();
-  // }
 
   camera->stop_stream();
 

@@ -1,8 +1,8 @@
 #ifndef SRC_ARENACAMERA_HPP_
 #define SRC_ARENACAMERA_HPP_
 
-#include <string>
 #include <memory>
+#include <string>
 
 #include "ArenaApi.h"
 #include "ICamera.hpp"
@@ -14,6 +14,7 @@ class ArenaCamera : public ICamera {
   int64_t _epoch;              /**< Epoch time for timestamping. */
   bool _trigger_state = false; /**< Trigger state flag. */
   int32_t _seq = 1;
+
  public:
   ArenaCamera();   // Constructor
   ~ArenaCamera();  // Destructor
@@ -34,8 +35,7 @@ class ArenaCamera : public ICamera {
 
   void output_pulse() override;
 
-
-  std::unique_ptr<ImageData> get_image() override;
+  std::unique_ptr<ImageData> get_image(int timeout) override;
 
  private:
   /**

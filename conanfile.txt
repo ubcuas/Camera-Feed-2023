@@ -1,0 +1,7 @@
+[requires]
+zlib/1.2.11
+geographiclib/2.4
+
+[generators]
+CMakeDeps
+CMakeToolchain
