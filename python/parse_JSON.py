@@ -53,22 +53,22 @@ tol = 200000
 #             detect_list.append(json_obj)
 #     return detect_list
 
-# def load_log(file_path: str) -> List[Dict]:
-#     log = []
-#     with open(file_path, "r") as file:
-#         for line in file:
-#             json_obj = json.loads(line.strip())
-#             log.append(json_obj)
-#     return log
-
 def load_log(file_path: str) -> List[Dict]:
-    return [
-        {"TimeUS": 1746269284621072, "Img": 2, "Points": [[0, 0], [img_w, img_h], [img_w, 0], [0, img_h]], "Epoch": 1746268941974857, "Delta_t": -932,
-         "Feedback": {"time_usec": 342647147, "img_idx": 1393, "lat": 49.259629434902564, "lng": -123.24856966776673, "alt_msl": 0,
-                      "alt_rel": 100.0, "roll": 10.0, "pitch": 10.0,
-                      "yaw": 10.0, "completed_captures": 64}}
+    log = []
+    with open(file_path, "r") as file:
+        for line in file:
+            json_obj = json.loads(line.strip())
+            log.append(json_obj)
+    return log
 
-    ]
+# def load_log(file_path: str) -> List[Dict]:
+#     return [
+#         {"TimeUS": 1746269284621072, "Img": 2, "Points": [[0, 0], [img_w, img_h], [img_w, 0], [0, img_h]], "Epoch": 1746268941974857, "Delta_t": -932,
+#          "Feedback": {"time_usec": 342647147, "img_idx": 1393, "lat": 49.259629434902564, "lng": -123.24856966776673, "alt_msl": 0,
+#                       "alt_rel": 100.0, "roll": 10.0, "pitch": 10.0,
+#                       "yaw": 10.0, "completed_captures": 64}}
+#
+#     ]
 # def load_trig_log(filename):
 #     return [
 #         # {"TimeUS": 1000, "I": 0, "Img": 1, "GPSTime": 0, "GPSWeek": 0, "Lat": 49.259629434902564, "Lng": -123.24856966776673, "Alt": 100.0, "RelAlt": 100.0, "GPSAlt": 100.0, "R": 10.0, "P": 10.0, "Y": 10.0},
