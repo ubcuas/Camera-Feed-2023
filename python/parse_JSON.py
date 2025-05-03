@@ -25,47 +25,51 @@ geod = Geodesic.WGS84
 tol = 200000
 
 
-def load_trig_log(file_path: str) -> List[Dict]:
-    """
-    Loads the JSON lines from the given file and returns a Pandas DataFrame
-    with columns: Image_ID, Latitude, Longitude, Altitude, Roll, Pitch, Yaw, Timestamp.
-    """
-    trig_list = []
-    with open(file_path, "r") as file:
-        for line in file:
-            json_obj = json.loads(line.strip())
-            data = json_obj["data"]
-
-            trig_list.append(data)
-    return trig_list
-
-
-def load_detect_log(file_path: str) -> List[Dict]:
-    detect_list = []
-    with open(file_path, "r") as file:
-        for line in file:
-            json_obj = json.loads(line.strip())
-            detect_list.append(json_obj)
-    return detect_list
-
-# def load_trig_log(filename):
-#     return [
-#         {"TimeUS": 1000, "I": 0, "Img": 1, "GPSTime": 0, "GPSWeek": 0, "Lat": 49.259629434902564, "Lng": -123.24856966776673, "Alt": 100.0, "RelAlt": 100.0, "GPSAlt": 100.0, "R": 10.0, "P": 10.0, "Y": 10.0}
-#         # {"Timestamp": 1100, "Latitude": 37.7750, "Longitude": -122.4195, "Alt": 60, "Roll": 0, "Pitch": 0, "Yaw": 45},
-#         # {"Timestamp": 1200, "Latitude": 37.7751, "Longitude": -122.4196, "Alt": 70, "Roll": 2, "Pitch": 2, "Yaw": 2},
-#         # {"Timestamp": 1300, "Latitude": 37.7752, "Longitude": -122.4197, "Alt": 80, "Roll": 3, "Pitch": 3, "Yaw": 3},
-#         # {"Timestamp": 1400, "Latitude": 37.7753, "Longitude": -122.4198, "Alt": 90, "Roll": 4, "Pitch": 4, "Yaw": 4},
-#     ]
+# def load_trig_log(file_path: str) -> List[Dict]:
+#     """
+#     Loads the JSON lines from the given file and returns a Pandas DataFrame
+#     with columns: Image_ID, Latitude, Longitude, Altitude, Roll, Pitch, Yaw, Timestamp.
+#     """
+#     trig_list = []
+#     with open(file_path, "r") as file:
+#         for line in file:
+#             json_obj = json.loads(line.strip())
+#             data = json_obj["data"]
+#
+#             trig_list.append(data)
+#     return trig_list
 #
 #
-# def load_detect_log(filename):
-#     return [
-#         {"Img": 1, "TimeUS": 2000, "Points": [[0, 0], [img_w, img_h], [img_w, 0], [0, img_h]]},
-#         # {"Timestamp": 2100, "Points": [[0, 0], [img_w, img_h], [img_w, 0], [0, img_h]]},
-#         # {"Timestamp": 2200, "Points": [[0, 0], [img_w, img_h], [img_w, 0], [0, img_h]]},
-#         # {"Timestamp": 2300, "Points": [[0, 0], [img_w, img_h], [img_w, 0], [0, img_h]]},
-#         # {"Timestamp": 2400, "Points": [[0, 0], [img_w, img_h], [img_w, 0], [0, img_h]]},
-#     ]
+# def load_detect_log(file_path: str) -> List[Dict]:
+#     detect_list = []
+#     with open(file_path, "r") as file:
+#         for line in file:
+#             json_obj = json.loads(line.strip())
+#             detect_list.append(json_obj)
+#     return detect_list
+
+def load_trig_log(filename):
+    return [
+        # {"TimeUS": 1000, "I": 0, "Img": 1, "GPSTime": 0, "GPSWeek": 0, "Lat": 49.259629434902564, "Lng": -123.24856966776673, "Alt": 100.0, "RelAlt": 100.0, "GPSAlt": 100.0, "R": 10.0, "P": 10.0, "Y": 10.0},
+        {"TimeUS": 1000, "I": 0, "Img": 1, "GPSTime": 0, "GPSWeek": 0, "Lat": 49.259629434902564, "Lng": -123.24856966776673, "Alt": 100.0, "RelAlt": 100.0, "GPSAlt": 100.0, "R": -10.0, "P": -10.0, "Y": -10.0}
+
+        # {"Timestamp": 1100, "Latitude": 37.7750, "Longitude": -122.4195, "Alt": 60, "Roll": 0, "Pitch": 0, "Yaw": 45},
+        # {"Timestamp": 1200, "Latitude": 37.7751, "Longitude": -122.4196, "Alt": 70, "Roll": 2, "Pitch": 2, "Yaw": 2},
+        # {"Timestamp": 1300, "Latitude": 37.7752, "Longitude": -122.4197, "Alt": 80, "Roll": 3, "Pitch": 3, "Yaw": 3},
+        # {"Timestamp": 1400, "Latitude": 37.7753, "Longitude": -122.4198, "Alt": 90, "Roll": 4, "Pitch": 4, "Yaw": 4},
+    ]
+
+
+def load_detect_log(filename):
+    return [
+        # {"Img": 1, "TimeUS": 2000, "Points": [[0, 0], [img_w, img_h], [img_w, 0], [0, img_h]]},
+        {"Img": 1, "TimeUS": 2000, "Points": [[0, 0], [img_w, img_h], [img_w, 0], [0, img_h]]},
+
+        # {"Timestamp": 2100, "Points": [[0, 0], [img_w, img_h], [img_w, 0], [0, img_h]]},
+        # {"Timestamp": 2200, "Points": [[0, 0], [img_w, img_h], [img_w, 0], [0, img_h]]},
+        # {"Timestamp": 2300, "Points": [[0, 0], [img_w, img_h], [img_w, 0], [0, img_h]]},
+        # {"Timestamp": 2400, "Points": [[0, 0], [img_w, img_h], [img_w, 0], [0, img_h]]},
+    ]
 
 
 def compute_extrinsic(roll_deg: float, pitch_deg: float, yaw_deg: float) -> np.ndarray:
@@ -101,8 +105,8 @@ def compute_extrinsic(roll_deg: float, pitch_deg: float, yaw_deg: float) -> np.n
 
 
 def compute_offset(alt: float, extrinsic: np.ndarray, pixel_x: int, pixel_y: int) -> Tuple[float, float]:
-    pixel_x -= center_x
-    pixel_y -= center_y
+    pixel_x = pixel_x - center_x
+    pixel_y = center_y - pixel_y
     pixel_hom = np.array([pixel_x, pixel_y, 1], dtype=float)
     world_vec = extrinsic.T @ np.linalg.inv(intrinsic) @ pixel_hom
 
@@ -132,7 +136,7 @@ def plot_gps(coords, ground_truth=None):
         coords,
         lat="Lat",
         lon="Lng",
-        hover_data=["tID", "dID" "Lat", "Lng", "RelAlt"],
+        hover_data=["tID", "dID", "Lat", "Lng", "RelAlt"],
         color="RelAlt",
         color_continuous_scale=color_scale,  # Gradient color
         zoom=14
@@ -249,12 +253,10 @@ def main():
             trig_img = trig_log.get("Img")
             detect_img = detect_log.get("Img")
             points = detect_log.get("Points")
-            extrinsic = compute_extrinsic(roll, pitch, yaw)
 
             for p in points:
                 # TODO add limiter
-                x, y = compute_offset(alt, extrinsic, p[0], p[1])
-                detect_lat, detect_lng = compute_geoposition(drone_lat, drone_lng, x, y)
+                detect_lat, detect_lng = cam2Geoposition(pitch, roll, yaw, alt, p[0], p[1], drone_lat, drone_lng)
 
                 # Store the values for plotting
                 # TODO: get id for image and log
@@ -281,6 +283,13 @@ def main():
     print(f"Std Dev: {std_dev}")
     print(f"Min: {minimum}")
     print(f"Max: {maximum}")
+
+
+def cam2Geoposition(pitch, roll, yaw, alt, pixel_x, pixel_y, drone_lat, drone_lng):
+    extrinsic = compute_extrinsic(roll, pitch, yaw)
+    x, y = compute_offset(alt, extrinsic, pixel_x, pixel_y)
+    detect_lat, detect_lng = compute_geoposition(drone_lat, drone_lng, x, y)
+    return detect_lat, detect_lng
 
 
 if __name__ == '__main__':

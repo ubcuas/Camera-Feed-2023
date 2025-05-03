@@ -16,4 +16,10 @@ struct EncodedData {
   int64_t timestamp;
 };
 
+struct DetectData {
+  std::vector<cv::Point2d> points;
+  int64_t timestamp;
+  int32_t seq;
+};
+
 #endif  // PIPELINE_HPP

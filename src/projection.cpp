@@ -1,7 +1,11 @@
 #include <opencv2/core.hpp>
 #include <cmath>
+#include <GeographicLib/Geodesic.hpp>
+
 
 #include "projection.hpp"
+
+using namespace GeographicLib;
 
 // Initialize constants
 const double f_x = 2500.0, f_y = 2500.0;
@@ -62,8 +66,8 @@ cv::Point2d computeOffset(
     double pixel_x,
     double pixel_y
 ) {
-  double x = pixel_x - center_x;
-  double y = pixel_y - center_y;
+    double x = pixel_x - center_x;
+    double y = center_y - pixel_y;
 
     cv::Mat pixel_hom = (cv::Mat_<double>(3, 1) << x, y, 1.0);
 
@@ -74,4 +78,26 @@ cv::Point2d computeOffset(
     cv::Mat offset = world_vec * scale;
 
     return cv::Point2d(offset.at<double>(0, 0), offset.at<double>(1, 0));
+}
+
+std::pair<double, double> computeGeoposition(double lat, double lng, double x, double y) {
+    // don't use this near equator or prime meridian
+    const Geodesic& geod = Geodesic::WGS84();
+
+    double lat_x, lng_x, lat_xy, lng_xy;
+
+    // Move east (90 degrees) by x meters
+    geod.Direct(lat, lng, 90.0, x, lat_x, lng_x);
+
+    // Move north (0 degrees) by y meters
+    geod.Direct(lat_x, lng_x, 0.0, y, lat_xy, lng_xy);
+
+    return {lat_xy, lng_xy};
+}
+
+std::pair<double, double> cam2Geoposition(double roll_deg, double pitch_deg, double yaw_deg, double altitude, double pixel_x, double pixel_y, double lat, double lng) {
+    cv::Mat R = compute_extrinsic(roll_deg, pitch_deg, yaw_deg);
+    cv::Point2d offset = computeOffset(altitude, R, pixel_x, pixel_y);
+    std::pair<double, double> coords = computeGeoposition(lat, lng, offset.x, offset.y);
+    return coords;
 }
