@@ -33,10 +33,10 @@ using asio::serial_port_base;
 // #include "src/HttpTransmitter.hpp"
 
 int main() {
-  double roll_deg = 10.0;
-  double pitch_deg = 10.0;
-  double yaw_deg = 10.0;
-  double altitude = 100.0;
+  double roll_deg = 0.17000000178813934;
+  double pitch_deg = 2.25;
+  double yaw_deg = 285.8800048828125;
+  double altitude = 0.0;
   double lat = 49.259629434902564;
   double lng = -123.24856966776673;
   std::cout << std::fixed << std::setprecision(15);
@@ -52,6 +52,26 @@ int main() {
 
   std::pair<double, double> bl = cam2Geoposition(roll_deg, pitch_deg, yaw_deg, altitude, 0, 1824, lat, lng);
   std::cout << bl.first << "," << bl.second << std::endl;
+  // double roll_deg = 10.0;
+  // double pitch_deg = 10.0;
+  // double yaw_deg = 10.0;
+  // double altitude = 100.0;
+  // double lat = 49.259629434902564;
+  // double lng = -123.24856966776673;
+  // std::cout << std::fixed << std::setprecision(15);
+
+  // std::pair<double, double> ul = cam2Geoposition(roll_deg, pitch_deg, yaw_deg, altitude, 0, 0, lat, lng);
+  // std::cout << ul.first << "," << ul.second << std::endl;
+
+  // std::pair<double, double> br = cam2Geoposition(roll_deg, pitch_deg, yaw_deg, altitude, 2736, 1824, lat, lng);
+  // std::cout << br.first << "," << br.second << std::endl;
+
+  // std::pair<double, double> ur = cam2Geoposition(roll_deg, pitch_deg, yaw_deg, altitude, 2736, 0, lat, lng);
+  // std::cout << ur.first << "," << ur.second << std::endl;
+
+  // std::pair<double, double> bl = cam2Geoposition(roll_deg, pitch_deg, yaw_deg, altitude, 0, 1824, lat, lng);
+  // std::cout << bl.first << "," << bl.second << std::endl;
+
 
 
 }

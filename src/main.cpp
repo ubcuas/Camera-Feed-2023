@@ -274,7 +274,7 @@ void image_tagger(uint64_t sync_epoch, int64_t id_diff) {
           static_cast<double>(feedback.lat) / 1e7,  // Convert to degrees
           static_cast<double>(feedback.lng) / 1e7   // Convert to degrees
       );
-      csv_file << geo.first << "," << geo.second << "\n";
+      csv_file << geo.first << "," << geo.second  << std::endl;
   }
     
     
