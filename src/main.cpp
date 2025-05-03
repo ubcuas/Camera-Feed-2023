@@ -203,33 +203,30 @@ void image_tagger(uint64_t sync_epoch, int64_t id_diff) {
     } catch (const AbortedPopException& e) {
       break;
     }
-    while (detect.seq - feedback.img_idx - id_diff != 0) {
-      while (detect.seq - feedback.img_idx - id_diff < 0) {
-        try {
-          detect = detect_queue.pop();
-        } catch (const AbortedPopException& e) {
-          break;
-        }
+    // Synchronize detect and feedback
+    while (!stop_flag) {
+      int64_t diff = detect.seq - feedback.img_idx - id_diff;
+
+      if (diff == 0) {
+          break; // Synchronized
+      } else if (diff < 0) {
+          std::cout << "detect is behind -> get next detect\n";
+          try {
+              detect = detect_queue.pop();
+          } catch (const AbortedPopException&) {
+              break;
+          }
+      } else {
+           std::cout << "feedback is behind -> get next feedback\n";
+          try {
+              feedback = feedback_queue.pop();
+          } catch (const AbortedPopException&) {
+              break;
+          }
       }
-      if (stop_flag) {
-        break;
-      }
-      
-      while (detect.seq - feedback.img_idx - id_diff > 0) {
-        try {
-          feedback = feedback_queue.pop();
-        } catch (const AbortedPopException& e) {
-          break;
-        }
-      }
-      if (stop_flag) {
-        break;
-      }
-    }
-    
-    if (stop_flag) {
-      break;
-    }
+  }
+
+  if (stop_flag) break;
 
 
     // std::cout << "time_usec=" << feedback.time_usec << " target_system=" << static_cast<int>(feedback.target_system)
@@ -274,8 +271,8 @@ void image_tagger(uint64_t sync_epoch, int64_t id_diff) {
           feedback.alt_rel,
           pt.x,
           pt.y,
-          feedback.lat / 1e7,  // Convert to degrees
-          feedback.lng / 1e7   // Convert to degrees
+          static_cast<double>(feedback.lat) / 1e7,  // Convert to degrees
+          static_cast<double>(feedback.lng) / 1e7   // Convert to degrees
       );
       csv_file << geo.first << "," << geo.second << "\n";
   }
@@ -549,7 +546,7 @@ int main(int argc, char* argv[]) {
       
       attempts++;  // Added increment
   }
-  
+
   if (attempts >= 3 && !sync) {
       std::cout << "Failed to synchronize, exiting\n";
       camera->stop_stream();
