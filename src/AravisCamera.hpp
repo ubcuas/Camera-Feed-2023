@@ -2,8 +2,9 @@
 #define SRC_ARAVISCAMERA_HPP_
 
 // #include "ArenaApi.h"
-#include "ICamera.hpp"
 #include <arv.h>
+
+#include "ICamera.hpp"
 
 class AravisCamera : public ICamera {
  private:
@@ -63,7 +64,7 @@ class AravisCamera : public ICamera {
    * timestamp.
    * @return A boolean indicating success (true) or failure (false).
    */
-  std::unique_ptr<ImageData> get_image();
+  std::unique_ptr<ImageData> get_image(int timeout);
 
  private:
   /**

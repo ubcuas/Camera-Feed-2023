@@ -18,13 +18,15 @@ add_executable(${PROJECT_NAME}
     ${CMAKE_SOURCE_DIR}/src/Detector.cpp
     # ${CMAKE_SOURCE_DIR}/src/AravisCamera.cpp
     # ${CMAKE_SOURCE_DIR}/src/CprHTTP.cpp
-    ${CMAKE_SOURCE_DIR}/src/Pipeline.cpp)
+    ${CMAKE_SOURCE_DIR}/src/Pipeline.cpp
+    ${CMAKE_SOURCE_DIR}/src/projection.cpp)
 
 
 add_executable(curltest
     ${CMAKE_SOURCE_DIR}/src/curltest.cpp
     ${CMAKE_SOURCE_DIR}/src/HttpTransmitter.cpp
     ${CMAKE_SOURCE_DIR}/src/Detector.cpp
+    ${CMAKE_SOURCE_DIR}/src/projection.cpp
     )
 
 add_definitions(-DASIO_STANDALONE)
@@ -53,7 +55,14 @@ add_compile_options(
     )
 # install(TARGETS ${PROJECT_NAME} DESTINATION bin)
 
+# Set the CMake prefix path
+set(CMAKE_PREFIX_PATH "${CMAKE_SOURCE_DIR}/build/")
+
+# Set the toolchain file path
+set(CMAKE_TOOLCHAIN_FILE "${CMAKE_SOURCE_DIR}/build/conan_toolchain.cmake")
+
 find_package(MAVSDK REQUIRED)
+find_package(geographiclib REQUIRED)
 
 set(BUILD_LIST core,imgcodecs,highgui)
 find_package(OpenCV REQUIRED)
@@ -113,6 +122,8 @@ target_include_directories(${PROJECT_NAME}  PRIVATE
     ${arena_sdk_INCLUDE_DIRS}
     ${OpenCV_INCLUDE_DIRS}
     ${CURL_INCLUDE_DIR}
+    ${CMAKE_SOURCE_DIR}/external/asio/asio/include
+    ${CMAKE_SOURCE_DIR}/external/c_library_v2
 )
 
 target_link_libraries(${PROJECT_NAME}  PRIVATE
@@ -121,7 +132,8 @@ target_link_libraries(${PROJECT_NAME}  PRIVATE
     ${CURL_LIBRARIES}
     CLI11::CLI11
     nlohmann_json::nlohmann_json
-    MAVSDK::mavsdk
+    GeographicLib::GeographicLib
+
     # asio
     # cpr::cpr
     # PkgConfig::DEPS
@@ -138,7 +150,7 @@ target_link_libraries(curltest PRIVATE
     ${OpenCV_LIBS}
     ${CURL_LIBRARIES}
     CLI11::CLI11
-    MAVSDK::mavsdk
+    GeographicLib::GeographicLib
 )
 
 

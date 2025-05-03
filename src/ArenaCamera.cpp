@@ -150,9 +150,9 @@ void ArenaCamera::stop_stream() {
   _pDevice->StopStream();
 }
 
-std::unique_ptr<ImageData> ArenaCamera::get_image() {
+std::unique_ptr<ImageData> ArenaCamera::get_image(int timeout) {
   try {
-    Arena::IImage* pImage = _pDevice->GetImage(IMAGE_TIMEOUT);
+    Arena::IImage* pImage = _pDevice->GetImage(timeout);
 
     if (pImage->IsIncomplete()) {
       std::cout << "Image incomplete\n";

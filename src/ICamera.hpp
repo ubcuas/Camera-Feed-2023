@@ -3,9 +3,9 @@
 #ifndef ICAMERA_HPP
 #define ICAMERA_HPP
 
-#include <string>
 #include <memory>
 #include <opencv2/opencv.hpp>
+#include <string>
 
 struct ImageData {
   cv::Mat image;
@@ -72,7 +72,7 @@ class ICamera {
    * timestamp.
    * @return A boolean indicating success (true) or failure (false).
    */
-  virtual std::unique_ptr<ImageData> get_image() = 0;
+  virtual std::unique_ptr<ImageData> get_image(int timeout) = 0;
 
   // /**
   //  * @brief Saves an image to disk.
