@@ -33,9 +33,9 @@ using asio::serial_port_base;
 // #include "src/HttpTransmitter.hpp"
 
 int main() {
-  double roll_deg = -10.0;
-  double pitch_deg = -10.0;
-  double yaw_deg = -10.0;
+  double roll_deg = 10.0;
+  double pitch_deg = 10.0;
+  double yaw_deg = 10.0;
   double altitude = 100.0;
   double lat = 49.259629434902564;
   double lng = -123.24856966776673;

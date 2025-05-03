@@ -32,6 +32,8 @@
 #include "TSQueue.hpp"
 #include "Pipeline.hpp"
 #include "Detector.hpp"
+#include "projection.hpp"
+
 
 #include "ardupilotmega/mavlink.h"
 
@@ -184,6 +186,7 @@ void feedback_reader(std::shared_ptr<asio::serial_port> serial_port) {
 
 void image_tagger(uint64_t sync_epoch, int64_t id_diff) {
   std::ofstream json_file("tag.txt", std::ios::app);
+  std::ofstream csv_file("detect.csv", std::ios::app); // Open CSV file in append mode
 
   while (!stop_flag) {
     DetectData detect;
@@ -261,6 +264,22 @@ void image_tagger(uint64_t sync_epoch, int64_t id_diff) {
       {"yaw", static_cast<float>(feedback.yaw)},
       {"completed_captures", static_cast<uint16_t>(feedback.completed_captures)}
     };
+
+    // Call cam2Geoposition for each detection point
+    for (const auto& pt : detect.points) {
+      std::pair<double, double> geo = cam2Geoposition(
+          feedback.roll,
+          feedback.pitch,
+          feedback.yaw,
+          feedback.alt_rel,
+          pt.x,
+          pt.y,
+          feedback.lat / 1e7,  // Convert to degrees
+          feedback.lng / 1e7   // Convert to degrees
+      );
+      csv_file << geo.first << "," << geo.second << "\n";
+  }
+    
     
     json_file << j.dump() << std::endl;
     sync_epoch = detect.timestamp - feedback.time_usec;

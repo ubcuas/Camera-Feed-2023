@@ -22,7 +22,7 @@ tmux split-window -h -t "$SESSION_NAME":0
 tmux select-pane -t "$SESSION_NAME":0.0
 tmux split-window -v -t "$SESSION_NAME":0
 
-tmux send-keys -t "$SESSION_NAME":0.0 "./build/camerafeed -s 3600 -m -b -w -t -p -e 360 -g 27"
+tmux send-keys -t "$SESSION_NAME":0.0 "./build/camerafeed -s 3600 -b -w -t -p -e 360 -g 27"
 touch tag.txt
 tmux send-keys -t "$SESSION_NAME":0.1 "tail -n +1 -f tag.txt"
 touch detect.csv
