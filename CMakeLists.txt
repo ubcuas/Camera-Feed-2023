@@ -61,7 +61,7 @@ set(CMAKE_PREFIX_PATH "${CMAKE_SOURCE_DIR}/build/")
 # Set the toolchain file path
 set(CMAKE_TOOLCHAIN_FILE "${CMAKE_SOURCE_DIR}/build/conan_toolchain.cmake")
 
-find_package(MAVSDK REQUIRED)
+# find_package(MAVSDK REQUIRED)
 find_package(geographiclib REQUIRED)
 
 set(BUILD_LIST core,imgcodecs,highgui)
