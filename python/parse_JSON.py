@@ -1,13 +1,18 @@
 import argparse
+import heapq
 import json
 
 import cv2
 import numpy as np
 from typing import List, Dict, Tuple
-from geographiclib.geodesic import Geodesic
-import matplotlib.pyplot as plt
 import plotly.express as px
 import pandas as pd
+from sklearn.cluster import DBSCAN
+from geopy.distance import great_circle
+from shapely.geometry import MultiPoint
+import random
+from geographiclib.geodesic import Geodesic
+
 
 # f_x, f_y = 2500, 2500       # focal length in pixels
 # c_x, c_y = 0, 0             # optical center in pixels
@@ -27,31 +32,6 @@ intrinsic = np.array([
 dist = np.array([[-5.28353529e-02, -9.38327045e-02, -1.27634646e-04, -2.01700049e-03, 4.64714290e-01]])
 geod = Geodesic.WGS84
 
-tol = 200000
-
-
-# def load_trig_log(file_path: str) -> List[Dict]:
-#     """
-#     Loads the JSON lines from the given file and returns a Pandas DataFrame
-#     with columns: Image_ID, Latitude, Longitude, Altitude, Roll, Pitch, Yaw, Timestamp.
-#     """
-#     trig_list = []
-#     with open(file_path, "r") as file:
-#         for line in file:
-#             json_obj = json.loads(line.strip())
-#             data = json_obj["data"]
-#
-#             trig_list.append(data)
-#     return trig_list
-#
-#
-# def load_detect_log(file_path: str) -> List[Dict]:
-#     detect_list = []
-#     with open(file_path, "r") as file:
-#         for line in file:
-#             json_obj = json.loads(line.strip())
-#             detect_list.append(json_obj)
-#     return detect_list
 
 def load_log(file_path: str) -> List[Dict]:
     log = []
@@ -64,32 +44,10 @@ def load_log(file_path: str) -> List[Dict]:
 # def load_log(file_path: str) -> List[Dict]:
 #     return [
 #         {"TimeUS": 1746269284621072, "Img": 2, "Points": [[0, 0], [img_w, img_h], [img_w, 0], [0, img_h]], "Epoch": 1746268941974857, "Delta_t": -932,
-#          "Feedback": {"time_usec": 342647147, "img_idx": 1393, "lat": 49.259629434902564, "lng": -123.24856966776673, "alt_msl": 0,
+#          "Feedback": {"time_usec": 342647147, "img_idx": 1393, "lat": 492596294, "lng": -1232485696, "alt_msl": 0,
 #                       "alt_rel": 100.0, "roll": 10.0, "pitch": 10.0,
 #                       "yaw": 10.0, "completed_captures": 64}}
 #
-#     ]
-# def load_trig_log(filename):
-#     return [
-#         # {"TimeUS": 1000, "I": 0, "Img": 1, "GPSTime": 0, "GPSWeek": 0, "Lat": 49.259629434902564, "Lng": -123.24856966776673, "Alt": 100.0, "RelAlt": 100.0, "GPSAlt": 100.0, "R": 10.0, "P": 10.0, "Y": 10.0},
-#         {"TimeUS": 1000, "I": 0, "Img": 1, "GPSTime": 0, "GPSWeek": 0, "Lat": 49.259629434902564, "Lng": -123.24856966776673, "Alt": 100.0, "RelAlt": 100.0, "GPSAlt": 100.0, "R": -10.0, "P": -10.0, "Y": -10.0}
-#
-#         # {"Timestamp": 1100, "Latitude": 37.7750, "Longitude": -122.4195, "Alt": 60, "Roll": 0, "Pitch": 0, "Yaw": 45},
-#         # {"Timestamp": 1200, "Latitude": 37.7751, "Longitude": -122.4196, "Alt": 70, "Roll": 2, "Pitch": 2, "Yaw": 2},
-#         # {"Timestamp": 1300, "Latitude": 37.7752, "Longitude": -122.4197, "Alt": 80, "Roll": 3, "Pitch": 3, "Yaw": 3},
-#         # {"Timestamp": 1400, "Latitude": 37.7753, "Longitude": -122.4198, "Alt": 90, "Roll": 4, "Pitch": 4, "Yaw": 4},
-#     ]
-#
-#
-# def load_detect_log(filename):
-#     return [
-#         # {"Img": 1, "TimeUS": 2000, "Points": [[0, 0], [img_w, img_h], [img_w, 0], [0, img_h]]},
-#         {"Img": 1, "TimeUS": 2000, "Points": [[0, 0], [img_w, img_h], [img_w, 0], [0, img_h]]},
-#
-#         # {"Timestamp": 2100, "Points": [[0, 0], [img_w, img_h], [img_w, 0], [0, img_h]]},
-#         # {"Timestamp": 2200, "Points": [[0, 0], [img_w, img_h], [img_w, 0], [0, img_h]]},
-#         # {"Timestamp": 2300, "Points": [[0, 0], [img_w, img_h], [img_w, 0], [0, img_h]]},
-#         # {"Timestamp": 2400, "Points": [[0, 0], [img_w, img_h], [img_w, 0], [0, img_h]]},
 #     ]
 
 
@@ -155,123 +113,177 @@ def compute_geoposition(lat: float, lng: float, x: float, y: float) -> Tuple[flo
     return new_lat, new_lng
 
 
-def plot_gps(coords, ground_truth=None):
-    color_scale = px.colors.sequential.Viridis  # or use 'Turbo', 'Plasma', etc.
+def plot_gps(coords, centroids=None):
+    """
+    Plot GPS coordinates on a map, optionally with cluster centroids.
 
+    Args:
+        coords: DataFrame with 'Lat' and 'Lng' columns for all points
+        centroids: DataFrame with 'Lat' and 'Lng' columns for cluster centroids (optional)
+    """
+    # Create figure with original points
     fig = px.scatter_map(
         coords,
         lat="Lat",
         lon="Lng",
-        hover_data=["ID", "Lat", "Lng", "RelAlt"],
-        color="RelAlt",
-        color_continuous_scale=color_scale,  # Gradient color
-        zoom=14
+        zoom=16,
+        color_discrete_sequence=['blue'],
+        opacity=0.7,
+        size_max=10,
+        map_style="dark",
     )
 
-    # If ground truth coordinates are provided, plot them on top with a different color or style
-    if ground_truth is not None:
-        fig.add_scattermap(
-            lat=ground_truth["Lat"],
-            lon=ground_truth["Lng"],
-            mode="markers",
-            marker=dict(color="red"),  # Customize marker size and color
-            name="Ground Truth"
-        )
+    # Add centroids if provided
+    if centroids is not None and not centroids.empty:
+        centroid_trace = px.scatter_map(
+            centroids,
+            lat="Lat",
+            lon="Lng",
+            color_discrete_sequence=['red'],
+            size_max=15,
+        ).data[0]
 
-    fig.update_layout(map_style="dark")
-    fig.update_layout(margin={"r": 0, "t": 0, "l": 0, "b": 0})
+        # Update marker size and symbol for centroids
+        centroid_trace.marker = dict(size=15, symbol="circle", color="red")
+        fig.add_trace(centroid_trace)
+
+    # Update layout
+    fig.update_layout(
+        margin={"r": 0, "t": 0, "l": 0, "b": 0},
+        legend=dict(
+            orientation="h",
+            yanchor="bottom",
+            y=1.02,
+            xanchor="right",
+            x=1
+        )
+    )
+
     fig.show()
 
 
-# def match_coords(predictions, ground_truth):
-#     results = []
-#
-#     for coord_p in predictions:
-#         min_distance = float('inf')
-#         closest = None
-#         for coord_g in ground_truth:
-#             g = geod.Inverse(coord_p[0], coord_p[1], coord_g[0], coord_g[1])
-#             dist = g['s12']  # Distance in meters
-#             if dist < min_distance:
-#                 min_distance = dist
-#                 closest = coord_b
-#         results.append({
-#             'from': coord_a,
-#             'to': closest_b,
-#             'distance_km': min_distance
-#         })
-#
-#     return results
+def cluster(coords):
+    """
+    Cluster coordinates using DBSCAN algorithm with haversine distance.
+
+    Args:
+        coords: DataFrame with 'Lat' and 'Lng' columns
+
+    Returns:
+        DataFrame with representative points for each cluster
+    """
+    # Convert to numpy array for DBSCAN
+    X = coords[["Lat", "Lng"]].values
+
+    # Define parameters for DBSCAN
+    meter_per_radian = 6371000.0  # Earth radius in meters
+    epsilon = 12 / meter_per_radian # 12 meters
+    min_samples = 3
+
+    # Apply DBSCAN
+    db = DBSCAN(eps=epsilon, min_samples=min_samples, algorithm='ball_tree', metric='haversine').fit(np.radians(X))
+    cluster_labels = db.labels_
+
+    # Filter out noise points (label -1)
+    unique_labels = [label for label in set(cluster_labels) if label != -1]
+    num_clusters = len(unique_labels)
+    print('Number of clusters: {}'.format(num_clusters))
+
+    # Create list to store centermost points
+    centermost_points = []
+    clusters = []
+    # Process each cluster
+    for label in unique_labels:
+        # Get points in the cluster
+        cluster_points = coords[cluster_labels == label]
+
+        # Extract coordinates as list of (lat, lng) tuples for MultiPoint
+        points_list = [(point.Lat, point.Lng) for _, point in cluster_points.iterrows()]
+        clusters.append(points_list)
+    largest_clusters = heapq.nlargest(8, clusters, key=len)
+
+    for points_list in largest_clusters:
+        # Create MultiPoint object
+        if points_list:
+            multi_point = MultiPoint(points_list)
+            centroid = (multi_point.centroid.x, multi_point.centroid.y)
+
+            centermost_points.append(centroid)
+
+    # If we found any clusters, create a DataFrame with the centermost points
+    if centermost_points:
+        lats, lngs = zip(*centermost_points)
+        rep_points = pd.DataFrame({'Lat': lats, 'Lng': lngs})
+        return rep_points
+    else:
+        # Return empty DataFrame if no clusters found
+        return pd.DataFrame(columns=['Lat', 'Lng'])
 
 
-# def coords_to_placemark_kml(coords, filename="output.kml", names=None, description=""):
-#     with open(filename, 'w') as f:
-#         f.write('<?xml version="1.0" encoding="UTF-8"?>\n')
-#         f.write('<kml xmlns="http://www.opengis.net/kml/2.2">\n')
-#         f.write(' <Document>\n')
-#
-#         for i, (lat, lon) in enumerate(coords):
-#             name = names[i] if names and i < len(names) else f"Hotspot {i}"
-#             desc = description if i == 0 else ""
-#             f.write('  <Placemark>\n')
-#             f.write(f'   <name>{name}</name>\n')
-#             if desc:
-#                 f.write(f'   <description>{desc}</description>\n')
-#             f.write('   <Point>\n')
-#             f.write(f'    <coordinates>{lon},{lat},0</coordinates>\n')
-#             f.write('   </Point>\n')
-#             f.write('  </Placemark>\n')
-#
-#         f.write(' </Document>\n')
-#         f.write('</kml>\n')
-# def coords_to_placemark_kml(coords, filename="output.kml"):
-#     with open(filename, 'w') as f:
-#         f.write('<?xml version="1.0" encoding="UTF-8"?>\n')
-#         f.write('<kml xmlns="http://www.opengis.net/kml/2.2">\n')
-#         f.write('   <Document>\n')
-#
-#         for i, (lat, lon) in enumerate(coords):
-#             f.write('       <Placemark>\n')
-#             f.write('           <Point>\n')
-#             f.write(f'              <coordinates>{lon},{lat},0</coordinates>\n')
-#             f.write('           </Point>\n')
-#             f.write('       </Placemark>\n')
-#
-#         f.write('   </Document>\n')
-#         f.write('</kml>\n')
+def generate_gps_cluster(center_lat, center_lon, num_points, radius_m=6):
+    cluster = []
+
+    for _ in range(num_points):
+        # Random bearing [0, 360) and distance [0, radius_m)
+        bearing = random.uniform(0, 360)
+        distance = random.uniform(0, radius_m)
+
+        # Compute destination point
+        destination = geod.Direct(center_lat, center_lon, bearing, distance)
+        cluster.append((destination['lat2'], destination['lon2']))
+
+    return cluster
+
+
+def get_centermost_point(cluster):
+    centroid = (MultiPoint(cluster).centroid.x, MultiPoint(cluster).centroid.y)
+    centermost_point = min(cluster, key=lambda point: great_circle(point, centroid).m)
+    return tuple(centermost_point)
+
+
 
 def main():
     parser = argparse.ArgumentParser(description="Process log files.")
     parser.add_argument('-l', '--log_path', type=str, help='Path to log file')
+    parser.add_argument('-d', '--detect_path', type=str, help='Path to detect file')
+
 
     args = parser.parse_args()
+    if args.log_path:
+        logs = load_log(args.log_path)
+        coords = []
 
-    logs = load_log(args.log_path)
-    coords = []
+        for l in logs:
+            drone_lat = l.get("Feedback").get("lat") / 1e7
+            drone_lng = l.get("Feedback").get("lng") / 1e7
+            alt = l.get("Feedback").get("alt_rel")
+            roll = l.get("Feedback").get("roll")
+            pitch = l.get("Feedback").get("pitch")
+            yaw = l.get("Feedback").get("yaw")
+            points = l.get("Points")
+            for p in points:
+                detect_lat, detect_lng = cam2Geoposition(pitch, roll, yaw, alt, p[0], p[1], drone_lat, drone_lng)
+                coords.append([detect_lat, detect_lng])
+        coords = pd.DataFrame(coords, columns=["Lat", "Lng"])
+        centroids = cluster(coords)
+        plot_gps(coords, centroids)
+        centroids.to_csv("hotspots.csv", index=False)
+    elif args.detect_path:
+        coords = pd.read_csv(args.detect_path)
+        # coords = generate_gps_cluster(49.2596294, -123.2485696, 5) + \
+        #          generate_gps_cluster(49.2599294, -123.2485696, 7) + \
+        #          generate_gps_cluster(49.2596294, -123.2489696, 3) + \
+        #          generate_gps_cluster(49.2599294, -123.2489696, 5) + \
+        #          generate_gps_cluster(49.2588294, -123.2469696, 12) + \
+        #          generate_gps_cluster(49.2588294, -123.2478696, 5) + \
+        #          generate_gps_cluster(49.2583294, -123.2470696, 5) + \
+        #          generate_gps_cluster(49.2583294, -123.2480696, 8) + \
+        #          generate_gps_cluster(49.2588294, -123.2460696, 4)
 
-    for l in logs:
-        drone_lat = l.get("Feedback").get("lat") / 1e7
-        drone_lng = l.get("Feedback").get("lng") / 1e7
-        alt = l.get("Feedback").get("alt_rel")
-        roll = l.get("Feedback").get("roll")
-        pitch = l.get("Feedback").get("pitch")
-        yaw = l.get("Feedback").get("yaw")
-        points = l.get("Points")
-        id = l.get("Img")
-        for p in points:
-            # TODO add limiter
-            detect_lat, detect_lng = cam2Geoposition(pitch, roll, yaw, alt, p[0], p[1], drone_lat, drone_lng)
-
-            # Store the values for plotting
-            # TODO: get id for image and log
-            coords.append([id, detect_lat, detect_lng, alt])
-
-    coords = pd.DataFrame(coords, columns=["ID", "Lat", "Lng", "RelAlt"])
-    # ground_truth = pd.DataFrame([[49.259629434902564, -123.24856966776673]], columns=["Lat", "Lng"])
-    # plot_gps(coords, ground_truth)
-    coords.to_csv('detections.csv')
-    print("Saved to detections.csv")
-    plot_gps(coords)
+        coords = pd.DataFrame(coords, columns=["Lat", "Lng"])
+        centroids = cluster(coords)
+        plot_gps(coords, centroids)
+        centroids.to_csv("hotspots.csv", index=False)
 
 
 def cam2Geoposition(pitch, roll, yaw, alt, pixel_x, pixel_y, drone_lat, drone_lng):
