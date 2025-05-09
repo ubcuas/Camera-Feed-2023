@@ -220,6 +220,11 @@ def plot_gps(coords, centroids=None):
         cx, cy = m(centroids['Lng'].values, centroids['Lat'].values)
         m.scatter(cx, cy, s=200, color='black', label='Centroids', marker='x')
 
+        # Label centroids with their coordinates
+        for lon, lat in zip(centroids['Lng'], centroids['Lat']):
+            x, y = m(lon, lat)
+            plt.text(x, y, f'({lat:.7f}, {lon:.7f})', fontsize=8, color='black', ha='left', va='bottom')
+
     plt.title("GPS Coordinates")
     buf = io.BytesIO()
     plt.savefig(buf, format='png')
@@ -323,7 +328,6 @@ def main():
     parser.add_argument('-l', '--log_path', type=str, required=True, help='Path to log file')
     # parser.add_argument('-d', '--detect_path', type=str, help='Path to detect file')
 
-
     args = parser.parse_args()
     if args.log_path:
         logs = load_log(args.log_path)
@@ -345,7 +349,7 @@ def main():
         plot_gps(coords, centers)
         centers.to_csv("hotspots.csv", index=False)
         print("Coords written to hotspots.csv")
-    #
+
     # coords = generate_gps_cluster(49.2596294, -123.2485696, 5) + \
     #          generate_gps_cluster(49.2599294, -123.2485696, 7) + \
     #          generate_gps_cluster(49.2596294, -123.2489696, 3) + \
