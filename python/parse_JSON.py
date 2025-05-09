@@ -5,13 +5,18 @@ import json
 import cv2
 import numpy as np
 from typing import List, Dict, Tuple
-import plotly.express as px
+from mpl_toolkits.basemap import Basemap
+
+import matplotlib.pyplot as plt
+
 import pandas as pd
 from sklearn.cluster import DBSCAN
 from geopy.distance import great_circle
 from shapely.geometry import MultiPoint
 import random
 from geographiclib.geodesic import Geodesic
+from PIL import Image
+import io
 
 
 # f_x, f_y = 2500, 2500       # focal length in pixels
@@ -121,53 +126,113 @@ def compute_geoposition(lat: float, lng: float, x: float, y: float) -> Tuple[flo
     return new_lat, new_lng
 
 
+# def plot_gps(coords, centroids=None):
+#     """
+#     Plot GPS coordinates on a map, optionally with cluster centroids.
+#
+#     Args:
+#         coords: DataFrame with 'Lat' and 'Lng' columns for all points
+#         centroids: DataFrame with 'Lat' and 'Lng' columns for cluster centroids (optional)
+#     """
+#     # Create figure with original points
+#     fig = px.scatter_map(
+#         coords,
+#         lat="Lat",
+#         lon="Lng",
+#         zoom=16,
+#         color_discrete_sequence=['blue'],
+#         opacity=0.7,
+#         size_max=10,
+#         map_style="dark",
+#     )
+#
+#     # Add centroids if provided
+#     if centroids is not None and not centroids.empty:
+#         centroid_trace = px.scatter_map(
+#             centroids,
+#             lat="Lat",
+#             lon="Lng",
+#             color_discrete_sequence=['red'],
+#             size_max=15,
+#         ).data[0]
+#
+#         # Update marker size and symbol for centroids
+#         centroid_trace.marker = dict(size=15, symbol="circle", color="red")
+#         fig.add_trace(centroid_trace)
+#
+#     # Update layout
+#     fig.update_layout(
+#         margin={"r": 0, "t": 0, "l": 0, "b": 0},
+#         legend=dict(
+#             orientation="h",
+#             yanchor="bottom",
+#             y=1.02,
+#             xanchor="right",
+#             x=1
+#         )
+#     )
+#
+#     fig.show()
+
 def plot_gps(coords, centroids=None):
     """
     Plot GPS coordinates on a map, optionally with cluster centroids.
 
     Args:
-        coords: DataFrame with 'Lat' and 'Lng' columns for all points
+        coords: DataFrame with 'Lat' and 'Lng' and 'cluster' columns for all points
         centroids: DataFrame with 'Lat' and 'Lng' columns for cluster centroids (optional)
     """
-    # Create figure with original points
-    fig = px.scatter_map(
-        coords,
-        lat="Lat",
-        lon="Lng",
-        zoom=16,
-        color_discrete_sequence=['blue'],
-        opacity=0.7,
-        size_max=10,
-        map_style="dark",
+    # Determine map bounds
+    lat_min, lat_max = coords['Lat'].min(), coords['Lat'].max()
+    lon_min, lon_max = coords['Lng'].min(), coords['Lng'].max()
+
+    # Create figure and Basemap instance
+    fig, ax = plt.subplots(figsize=(10, 8))
+    m = Basemap(
+        projection='merc',
+        llcrnrlat=lat_min-0.0001, urcrnrlat=lat_max+0.0001,
+        llcrnrlon=lon_min-0.0001, urcrnrlon=lon_max+0.0001,
+        resolution='c')
+    m.drawmapscale(
+        lon=(lon_min+lon_max)/2, lat=(lat_min+lat_min)/2-0.0001,  # location of the scale
+        lon0=lon_min,
+        lat0=lat_min,
+        length=200,
+        barstyle='fancy',
+        units='m'
     )
 
-    # Add centroids if provided
-    if centroids is not None and not centroids.empty:
-        centroid_trace = px.scatter_map(
-            centroids,
-            lat="Lat",
-            lon="Lng",
-            color_discrete_sequence=['red'],
-            size_max=15,
-        ).data[0]
+    # Assign colors to clusters
+    unique_clusters = sorted(coords['cluster'].unique())
+    cmap = plt.get_cmap('Set1', len(unique_clusters))
+    cluster_color_map = {label: cmap(i) for i, label in enumerate(unique_clusters)}
 
-        # Update marker size and symbol for centroids
-        centroid_trace.marker = dict(size=15, symbol="circle", color="red")
-        fig.add_trace(centroid_trace)
+    # Plot each cluster with its color
+    for label in unique_clusters:
+        cluster_points = coords[coords['cluster'] == label]
+        x, y = m(cluster_points['Lng'].values, cluster_points['Lat'].values)
+        color = cluster_color_map[label] if label != -1 else 'gray'
+        label_name = f'Cluster {label}' if label != -1 else 'Noise'
+        m.scatter(x, y, s=5, color=color, label=label_name, alpha=0.6)
 
-    # Update layout
-    fig.update_layout(
-        margin={"r": 0, "t": 0, "l": 0, "b": 0},
-        legend=dict(
-            orientation="h",
-            yanchor="bottom",
-            y=1.02,
-            xanchor="right",
-            x=1
-        )
-    )
+    # Plot centroids if provided
+    if centroids is not None:
+        cx, cy = m(centroids['Lng'].values, centroids['Lat'].values)
+        m.scatter(cx, cy, s=200, color='black', label='Centroids', marker='x')
 
-    fig.show()
+    plt.title("GPS Coordinates")
+    buf = io.BytesIO()
+    plt.savefig(buf, format='png')
+    buf.seek(0)
+
+    # Open with Pillow
+    img = Image.open(buf)
+
+    # (Optional) Show the Pillow image
+    img.show()
+
+    # Cleanup
+    buf.close()
 
 
 def cluster(coords):
@@ -191,6 +256,9 @@ def cluster(coords):
     # Apply DBSCAN
     db = DBSCAN(eps=epsilon, min_samples=min_samples, algorithm='ball_tree', metric='haversine').fit(np.radians(X))
     cluster_labels = db.labels_
+
+    coords = coords.copy()
+    coords['cluster'] = cluster_labels
 
     # Filter out noise points (label -1)
     unique_labels = [label for label in set(cluster_labels) if label != -1]
@@ -222,10 +290,10 @@ def cluster(coords):
     if centermost_points:
         lats, lngs = zip(*centermost_points)
         rep_points = pd.DataFrame({'Lat': lats, 'Lng': lngs})
-        return rep_points
     else:
         # Return empty DataFrame if no clusters found
-        return pd.DataFrame(columns=['Lat', 'Lng'])
+        rep_points = pd.DataFrame(columns=['Lat', 'Lng'])
+    return coords, rep_points
 
 
 def generate_gps_cluster(center_lat, center_lon, num_points, radius_m=12):
@@ -273,9 +341,9 @@ def main():
                 detect_lat, detect_lng = cam2Geoposition(pitch, roll, yaw, alt, p[0], p[1], drone_lat, drone_lng)
                 coords.append([detect_lat, detect_lng])
         coords = pd.DataFrame(coords, columns=["Lat", "Lng"])
-        centroids = cluster(coords)
-        plot_gps(coords, centroids)
-        centroids.to_csv("hotspots.csv", index=False)
+        coords, centers = cluster(coords)
+        plot_gps(coords, centers)
+        centers.to_csv("hotspots.csv", index=False)
         print("Coords written to hotspots.csv")
     #
     # coords = generate_gps_cluster(49.2596294, -123.2485696, 5) + \
@@ -289,9 +357,9 @@ def main():
     #          generate_gps_cluster(49.2588294, -123.2460696, 4)
     #
     # coords = pd.DataFrame(coords, columns=["Lat", "Lng"])
-    # centroids = cluster(coords)
-    # plot_gps(coords, centroids)
-    # centroids.to_csv("hotspots.csv", index=False)
+    # coords, centers = cluster(coords)
+    # plot_gps(coords, centers)
+    # centers.to_csv("hotspots.csv", index=False)
 
 
     # plotFrame(0, 0, 0, 100, 492596294/1e7, -1232485696/1e7, [[0, 0], [img_w, img_h], [img_w, 0], [0, img_h]])
