@@ -7,3 +7,4 @@
 /external/ArenaSDK_v0.1.49_Linux_ARM64
 .ipynb_checkpoints
 /data/
+CMakeUserPresets.json
