@@ -36,17 +36,25 @@ geod = Geodesic.WGS84
 def load_log(file_path: str) -> List[Dict]:
     log = []
     with open(file_path, "r") as file:
+        i = 1
         for line in file:
-            json_obj = json.loads(line.strip())
-            log.append(json_obj)
+            try:
+                json_obj = json.loads(line.strip())
+                if isinstance(json_obj.get("Points"), list) and len(json_obj["Points"]) > 0:
+                    log.append(json_obj)
+            except json.JSONDecodeError as e:
+                print(f"JSONDecodeError on line {i}: {e}")
+                print(f"Content: {line.strip()}")
+
+            i += 1
     return log
 
 # def load_log(file_path: str) -> List[Dict]:
 #     return [
 #         {"TimeUS": 1746269284621072, "Img": 2, "Points": [[0, 0], [img_w, img_h], [img_w, 0], [0, img_h]], "Epoch": 1746268941974857, "Delta_t": -932,
 #          "Feedback": {"time_usec": 342647147, "img_idx": 1393, "lat": 492596294, "lng": -1232485696, "alt_msl": 0,
-#                       "alt_rel": 100.0, "roll": 10.0, "pitch": 10.0,
-#                       "yaw": 10.0, "completed_captures": 64}}
+#                       "alt_rel": 100.0, "roll": 0, "pitch": 0,
+#                       "yaw": 0, "completed_captures": 64}}
 #
 #     ]
 
@@ -177,7 +185,7 @@ def cluster(coords):
 
     # Define parameters for DBSCAN
     meter_per_radian = 6371000.0  # Earth radius in meters
-    epsilon = 12 / meter_per_radian # 12 meters
+    epsilon = 12 / meter_per_radian  # 12 meters
     min_samples = 3
 
     # Apply DBSCAN
@@ -187,7 +195,7 @@ def cluster(coords):
     # Filter out noise points (label -1)
     unique_labels = [label for label in set(cluster_labels) if label != -1]
     num_clusters = len(unique_labels)
-    print('Number of clusters: {}'.format(num_clusters))
+    print('Number of clusters: {} (Choose 8 largest)'.format(num_clusters))
 
     # Create list to store centermost points
     centermost_points = []
@@ -220,7 +228,7 @@ def cluster(coords):
         return pd.DataFrame(columns=['Lat', 'Lng'])
 
 
-def generate_gps_cluster(center_lat, center_lon, num_points, radius_m=6):
+def generate_gps_cluster(center_lat, center_lon, num_points, radius_m=12):
     cluster = []
 
     for _ in range(num_points):
@@ -244,8 +252,8 @@ def get_centermost_point(cluster):
 
 def main():
     parser = argparse.ArgumentParser(description="Process log files.")
-    parser.add_argument('-l', '--log_path', type=str, help='Path to log file')
-    parser.add_argument('-d', '--detect_path', type=str, help='Path to detect file')
+    parser.add_argument('-l', '--log_path', type=str, required=True, help='Path to log file')
+    # parser.add_argument('-d', '--detect_path', type=str, help='Path to detect file')
 
 
     args = parser.parse_args()
@@ -268,23 +276,36 @@ def main():
         centroids = cluster(coords)
         plot_gps(coords, centroids)
         centroids.to_csv("hotspots.csv", index=False)
-    elif args.detect_path:
-        coords = pd.read_csv(args.detect_path)
-        # coords = generate_gps_cluster(49.2596294, -123.2485696, 5) + \
-        #          generate_gps_cluster(49.2599294, -123.2485696, 7) + \
-        #          generate_gps_cluster(49.2596294, -123.2489696, 3) + \
-        #          generate_gps_cluster(49.2599294, -123.2489696, 5) + \
-        #          generate_gps_cluster(49.2588294, -123.2469696, 12) + \
-        #          generate_gps_cluster(49.2588294, -123.2478696, 5) + \
-        #          generate_gps_cluster(49.2583294, -123.2470696, 5) + \
-        #          generate_gps_cluster(49.2583294, -123.2480696, 8) + \
-        #          generate_gps_cluster(49.2588294, -123.2460696, 4)
+        print("Coords written to hotspots.csv")
+    #
+    # coords = generate_gps_cluster(49.2596294, -123.2485696, 5) + \
+    #          generate_gps_cluster(49.2599294, -123.2485696, 7) + \
+    #          generate_gps_cluster(49.2596294, -123.2489696, 3) + \
+    #          generate_gps_cluster(49.2599294, -123.2489696, 5) + \
+    #          generate_gps_cluster(49.2588294, -123.2469696, 12) + \
+    #          generate_gps_cluster(49.2588294, -123.2478696, 5) + \
+    #          generate_gps_cluster(49.2583294, -123.2470696, 5) + \
+    #          generate_gps_cluster(49.2583294, -123.2480696, 8) + \
+    #          generate_gps_cluster(49.2588294, -123.2460696, 4)
+    #
+    # coords = pd.DataFrame(coords, columns=["Lat", "Lng"])
+    # centroids = cluster(coords)
+    # plot_gps(coords, centroids)
+    # centroids.to_csv("hotspots.csv", index=False)
 
-        coords = pd.DataFrame(coords, columns=["Lat", "Lng"])
-        centroids = cluster(coords)
-        plot_gps(coords, centroids)
-        centroids.to_csv("hotspots.csv", index=False)
 
+    # plotFrame(0, 0, 0, 100, 492596294/1e7, -1232485696/1e7, [[0, 0], [img_w, img_h], [img_w, 0], [0, img_h]])
+
+
+def plotFrame(pitch, roll, yaw, alt, drone_lat, drone_lng, points):
+    coords = []
+
+    for p in points:
+        detect_lat, detect_lng = cam2Geoposition(pitch, roll, yaw, alt, p[0], p[1], drone_lat, drone_lng)
+        coords.append([detect_lat, detect_lng])
+    coords = pd.DataFrame(coords, columns=["Lat", "Lng"])
+    center = pd.DataFrame([[drone_lat, drone_lng]], columns=["Lat", "Lng"])
+    plot_gps(coords, center)
 
 def cam2Geoposition(pitch, roll, yaw, alt, pixel_x, pixel_y, drone_lat, drone_lng):
     extrinsic = compute_extrinsic(roll, pitch, yaw)

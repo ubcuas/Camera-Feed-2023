@@ -49,12 +49,17 @@ cppcheck src/*.cpp src/*.hpp
 ```
 
 
-### Python ArenaSDK
-
-* Place the ArenaSDK wheel file in `wheel` directory.
-```
-pip install -r requirements.txt
-```
+## Hardware Setup
+Camera hardware docs
+https://support.thinklucid.com/phoenix-phx200s/ <br>
+Flight controller camera config docs <br>
+https://ardupilot.org/copter/docs/common-camera-shutter-with-servo.html#common-camera-shutter-with-servo-enhanced-camera-trigger-logging
+1. Power the computer (outlet, RPi GPIO pins)
+2. Connect ethernet cable from computer to camera
+3. Plug in camera GPIO connector to camera
+4. Plug in camera trigger wire into flight controller (Aux 6) (black to ground, brown line 2 to signal)
+5. Plug in camera feedback wire into flight controller (Aux 5) (brown line 3 to signal)
+6. Power camera (battery red wire, PoE)
 
 ## Authors
   
