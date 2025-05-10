@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<kml xmlns="http://www.opengis.net/kml/2.2">
+ <Document>
+  <Placemark>
+   <name>Source</name>
+   <description>Crashed Drone</description>
+   <Point>
+    <coordinates>1.0,1.0,0</coordinates>
+   </Point>
+  </Placemark>
+  <Placemark>
+   <name>Hotspot 1</name>
+   <Point>
+    <coordinates>-110.71750523333334,50.010645703333324,0</coordinates>
+   </Point>
+  </Placemark>
+ </Document>
+</kml>
