@@ -3,11 +3,14 @@
 #ifndef ICAMERA_HPP
 #define ICAMERA_HPP
 
+#include <memory>
 #include <opencv2/opencv.hpp>
+#include <string>
 
 struct ImageData {
   cv::Mat image;
   int64_t timestamp;
+  int32_t seq;
 };
 
 /**
@@ -39,10 +42,10 @@ class ICamera {
    */
   virtual void set_gain(float gain) = 0;
 
-  // /**
-  //  * @brief Enables or disables the manual trigger mode for the camera.
-  //  * @param trigger_on A boolean where true enables and false disables it.
-  //  */
+  /**
+   * @brief Enables or disables the manual trigger mode for the camera.
+   * @param trigger_on A boolean where true enables and false disables it.
+   */
   virtual void enable_trigger(bool trigger_on) = 0;
 
   /**
@@ -57,6 +60,10 @@ class ICamera {
    */
   virtual void stop_stream() = 0;
 
+  virtual void sensor_binning() = 0;
+
+  virtual void output_pulse() = 0;
+
   /**
    * @brief Retrieves an image from the camera.
    * @param pImage A pointer to an Arena::IImage pointer to store the retrieved
@@ -65,7 +72,7 @@ class ICamera {
    * timestamp.
    * @return A boolean indicating success (true) or failure (false).
    */
-  virtual std::unique_ptr<ImageData> get_image() = 0;
+  virtual std::unique_ptr<ImageData> get_image(int timeout) = 0;
 
   // /**
   //  * @brief Saves an image to disk.

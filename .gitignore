@@ -1,9 +1,10 @@
-/wheel/arena_api-2.3.3-py3-none-any.whl
 .vscode/
 .idea/
 .devcontainer/
 /build/
 /images/
 /venv/
-/external/
+/external/ArenaSDK_v0.1.49_Linux_ARM64
 .ipynb_checkpoints
+/data/
+CMakeUserPresets.json

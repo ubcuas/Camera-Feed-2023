@@ -1,0 +1,6 @@
+[requires]
+geographiclib/2.4
+
+[generators]
+CMakeDeps
+CMakeToolchain
