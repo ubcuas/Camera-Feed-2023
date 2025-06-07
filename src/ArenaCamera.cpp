@@ -3,17 +3,17 @@
 #include "ArenaCamera.hpp"
 
 #include "ArenaApi.h"
-// #include <stdio.h>
+
 #include <chrono>
 #include <fstream>
 #include <iostream>
 #include <vector>
+#include <string>
+#include <memory>
 
 #include <opencv2/opencv.hpp>
 
 #define IMAGE_TIMEOUT 100
-
-#define FILE_NAME_PATTERN "data/<timestampms>.raw"
 
 /*
 Should probably be a singleton, does not work with multiple devices
@@ -77,12 +77,13 @@ void ArenaCamera::set_gain(float gain) {
 
 void ArenaCamera::enable_trigger(bool enable) {
   if (enable) {
+    std::cout << "Trigger on\n";
     Arena::SetNodeValue<GenICam::gcstring>(
-      _pDevice->GetNodeMap(), "LineSelector", "Line2");
+        _pDevice->GetNodeMap(), "LineSelector", "Line2");
     Arena::SetNodeValue<GenICam::gcstring>(
-      _pDevice->GetNodeMap(), "LineMode", "Input");
+        _pDevice->GetNodeMap(), "LineMode", "Input");
     Arena::SetNodeValue<GenICam::gcstring>(
-      _pDevice->GetNodeMap(), "TriggerMode", "On");
+        _pDevice->GetNodeMap(), "TriggerMode", "On");
 
     Arena::SetNodeValue<GenICam::gcstring>(
         _pDevice->GetNodeMap(), "TriggerSelector", "FrameStart");
@@ -93,6 +94,7 @@ void ArenaCamera::enable_trigger(bool enable) {
 
     _trigger_state = true;
   } else {
+    std::cout << "Trigger off\n";
     Arena::SetNodeValue<GenICam::gcstring>(
         _pDevice->GetNodeMap(), "TriggerMode", "Off");
 
@@ -100,25 +102,47 @@ void ArenaCamera::enable_trigger(bool enable) {
   }
 }
 
-// void set_acquisitionmode(std::string acq_mode) {
-//   // GenICam::gcstring a = acq_mode.c_str();
-//   Arena::SetNodeValue<GenICam::gcstring>(
-//       _pDevice->GetNodeMap(), "AcquisitionMode", acq_mode.c_str()
-// }
+void ArenaCamera::sensor_binning() {
+  // Horizontal and vertical resolution halved, 4 pixels become 1
+  Arena::SetNodeValue<GenICam::gcstring>(
+    _pDevice->GetNodeMap(), "BinningSelector", "Sensor");
+  Arena::SetNodeValue<int64_t>(
+    _pDevice->GetNodeMap(), "BinningHorizontal", 2);
+  Arena::SetNodeValue<int64_t>(
+    _pDevice->GetNodeMap(), "BinningVertical", 2);
+
+  std::cout << "Sensor binning on\n";
+
+}
+
+void ArenaCamera::output_pulse() {
+  std::cout << "Enable output pulse 3ms" << "\n";
+
+  Arena::SetNodeValue<GenICam::gcstring>(_pDevice->GetNodeMap(), "LineSelector", "Line3");
+  Arena::SetNodeValue<GenICam::gcstring>(_pDevice->GetNodeMap(), "LineMode", "Output");
+  Arena::SetNodeValue<GenICam::gcstring>(_pDevice->GetNodeMap(), "LineSource", "Timer0Active");
+  
+  Arena::SetNodeValue<GenICam::gcstring>(_pDevice->GetNodeMap(), "TimerSelector", "Timer0");
+  Arena::SetNodeValue<GenICam::gcstring>(_pDevice->GetNodeMap(), "TimerTriggerSource", "ExposureStart");
+  Arena::SetNodeValue<GenICam::gcstring>(_pDevice->GetNodeMap(), "TimerTriggerActivation", "RisingEdge");
+  Arena::SetNodeValue<double>(_pDevice->GetNodeMap(), "TimerDelay", 0.0);
+  Arena::SetNodeValue<double>(_pDevice->GetNodeMap(), "TimerDuration", 3000.0);
+}
+
 
 void ArenaCamera::start_stream(int num_buffers) {
   std::cout << "Starting stream with " << num_buffers << " buffers\n";
   _pDevice->StartStream(num_buffers);
 
-  // if (trigger_state) {
-  //   std::cout << "Wait until trigger is armed\n";
-  //   bool triggerArmed = false;
+  if (_trigger_state) {
+    std::cout << "Wait until trigger is armed\n";
+    bool triggerArmed = false;
 
-  //   do {
-  //     triggerArmed =
-  //         Arena::GetNodeValue<bool>(_pDevice->GetNodeMap(), "TriggerArmed");
-  //   } while (triggerArmed == false);
-  // }
+    do {
+      triggerArmed =
+          Arena::GetNodeValue<bool>(_pDevice->GetNodeMap(), "TriggerArmed");
+    } while (triggerArmed == false);
+  }
 }
 
 void ArenaCamera::stop_stream() {
@@ -126,9 +150,9 @@ void ArenaCamera::stop_stream() {
   _pDevice->StopStream();
 }
 
-std::unique_ptr<ImageData> ArenaCamera::get_image() {
+std::unique_ptr<ImageData> ArenaCamera::get_image(int timeout) {
   try {
-    Arena::IImage* pImage = _pDevice->GetImage(IMAGE_TIMEOUT);
+    Arena::IImage* pImage = _pDevice->GetImage(timeout);
 
     if (pImage->IsIncomplete()) {
       std::cout << "Image incomplete\n";
@@ -139,7 +163,9 @@ std::unique_ptr<ImageData> ArenaCamera::get_image() {
                                 CV_8UC1,
                                 const_cast<uint8_t*>(pImage->GetData()))
                             .clone();
-    image_data->timestamp = _epoch + (pImage->GetTimestampNs() / 1000000);
+    image_data->timestamp = _epoch + (pImage->GetTimestampNs() / 1000);
+    image_data->seq = _seq;
+    _seq++;
     _pDevice->RequeueBuffer(pImage);
     return image_data;
   } catch (GenICam::TimeoutException& ge) {
@@ -147,24 +173,6 @@ std::unique_ptr<ImageData> ArenaCamera::get_image() {
   }
 }
 
-// std::string ArenaCamera::save_image(Arena::IImage *pImage, int64_t
-// timestamp) {
-//     std::vector<int> compression_params;
-//     compression_params.push_back(cv::IMWRITE_JPEG_QUALITY);
-//     compression_params.push_back(100); // Change the quality value (0-100)
-
-//     std::string extension = ".jpg";
-//     std::string timestamp_str = std::to_string(timestamp);
-//     std::string filename = timestamp_str + extension;
-
-//     cv::Mat img = cv::Mat((int)pImage->GetHeight(), (int)pImage->GetWidth(),
-//     CV_8UC3, (void *)pImage->GetData()); cv::imwrite(filename, img,
-//     compression_params);
-
-//     Arena::ImageFactory::Destroy(pImage);
-
-//     return filename;
-// }
 
 // void ArenaCamera::get_statistics() {
 //   // int missed_packets = Arena::GetNodeValue(_pDevice->GetTLStreamNodeMap(),
@@ -184,7 +192,6 @@ std::unique_ptr<ImageData> ArenaCamera::get_image() {
 // }
 
 void ArenaCamera::set_epoch() {
-  std::cout << "Setting epoch\n";
   // Get camera timestamp in ns
   int64_t timestamp =
       Arena::GetNodeValue<int64_t>(_pDevice->GetNodeMap(), "Timestamp");
@@ -193,17 +200,16 @@ void ArenaCamera::set_epoch() {
   std::chrono::system_clock::time_point currentTime =
       std::chrono::system_clock::now();
 
-  std::chrono::milliseconds duration =
-      std::chrono::duration_cast<std::chrono::milliseconds>(
+  std::chrono::microseconds duration =
+      std::chrono::duration_cast<std::chrono::microseconds>(
           currentTime.time_since_epoch());
 
   // Calculate _epoch reference time
-  _epoch = duration.count() - (timestamp / 1000000);
-  std::cout << "Current _epoch in milliseconds: " << _epoch << "\n";
+  _epoch = duration.count() - (timestamp / 1000);
+  std::cout << "Current epoch in microseconds: " << _epoch << "\n";
 }
 
 void ArenaCamera::set_default() {
-  std::cout << "Setting default configuration\n";
   // Reset to default settings
   Arena::SetNodeValue<GenICam::gcstring>(
       _pDevice->GetNodeMap(), "UserSetSelector", "Default");
@@ -220,6 +226,4 @@ void ArenaCamera::set_default() {
 
   Arena::SetNodeValue<int64_t>(
       _pDevice->GetNodeMap(), "DeviceLinkThroughputReserve", 10);
-
-  // set_pixelformat("BGR8");
 }

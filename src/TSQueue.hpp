@@ -17,13 +17,10 @@ struct AbortedPopException {};
 template <typename T>
 class TSQueue {
  private:
-  // Underlying queue
   std::queue<T> m_queue;
 
-  // mutex for thread synchronization
   std::mutex m_mutex;
 
-  // Condition variable for signaling
   std::condition_variable m_cond;
 
   mutable std::atomic<bool> abort_flag = false;
@@ -32,7 +29,7 @@ class TSQueue {
   // Pushes an element to the queue
   void push(T item) {
     // Acquire lock
-    std::unique_lock<std::mutex> lock(m_mutex);
+    std::lock_guard<std::mutex> lock(m_mutex);
 
     // Add item and transfers ownership to internal queue
     m_queue.push(std::move(item));
@@ -60,6 +57,7 @@ class TSQueue {
     return item;
   }
 
+  // Releases blocked threads
   void abort() {
     abort_flag = true;
     m_cond.notify_all();
