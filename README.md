@@ -22,7 +22,29 @@ sudo apt update && sudo apt upgrade -y
 sudo apt install cmake libssl-dev nghttp2 libopencv-dev libcurl4-openssl-dev -y
 ```
 
-Now go to the ArenaSDK download page and download the latest version of the SDK.
+Init the submodules
+```
+git submodule init
+git submodule update
+```
+
+Install pipx to prevent making virtual python environments
+```
+sudo apt-get install pipx
+pipx ensurepath 
+```
+
+Now refresh the terminal after installing `pipx`
+
+
+Install Conan
+```
+pipx install conan
+conan profile detect --force
+conan install . --outpu-folder=build --build=missing
+```
+
+Now go to the ArenaSDK download page and download the latest version of the SDK. (This is important to build the project)
 Extract the contents of the folder and put it into the external directory.
 
 Follow the README for Arena SDK for Linux to install the SDK.
