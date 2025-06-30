@@ -429,6 +429,7 @@ int main(int argc, char* argv[]) {
   bool fake = false;
   bool bin = false;
   bool auto_trig = false;
+  bool mav = false;
 
 
   std::string url = "";
@@ -453,6 +454,7 @@ int main(int argc, char* argv[]) {
   auto fake_opt = app.add_flag("-f,--fake", fake, "Use fake camera");
   auto bin_opt = app.add_flag("-b,--binning", bin, "Enable sensor binning");
   auto auto_opt = app.add_flag("-a,--auto", auto_trig, "Enable auto triggering (unreliable)");
+  auto auto_opt = app.add_flag("-m,--mavlink", auto_trig, "Enable mavlink connection");
 
   
   CLI11_PARSE(app, argc, argv);
@@ -476,12 +478,15 @@ int main(int argc, char* argv[]) {
   // }
   asio::io_context io_context;
 
-  std::shared_ptr<asio::serial_port> serial_port = connect(io_context);
-  if (!serial_port) {
-    std::cout << "No serial connection, exiting\n";
-    return 1;
+  std::shared_ptr<asio::serial_port> serial_port;
+  if (mav) {
+    serial_port = connect(io_context);
+    if (!serial_port) {
+      std::cout << "No serial connection, exiting\n";
+      return 1;
+    }
   }
-  
+
   std::shared_ptr<ICamera> camera;
   if (fake) {
     camera = std::make_shared<FakeCamera>();
@@ -515,62 +520,70 @@ int main(int argc, char* argv[]) {
   // }
   
   camera->start_stream();
+  std::thread reader;
+  std::thread tagger;
+
   // std::vector<mavlink_camera_feedback_t> feedback = synchr
-  std::this_thread::sleep_for(std::chrono::seconds(1));
+  if (mav) {
+    std::this_thread::sleep_for(std::chrono::seconds(1));
 
-  std::vector<mavlink_camera_feedback_t> feedbacks;
-  std::unique_ptr<ImageData> image_data;
-  mavlink_camera_feedback_t feedback_msg;
-  bool sync = false;
-  int attempts = 0;
-  while (!sync && attempts < 3) {
-      std::cout << "Trying to synchronize...\n";
-      std::this_thread::sleep_for(std::chrono::seconds(1));
-      feedbacks = synchronize(serial_port);
-      
-      if (feedbacks.size() == 0) {
-          std::cout << "No feedback detected\n";
-      } else if (feedbacks.size() > 1) {
-          std::cout << "Extra feedback detected, getting last\n";
-          sync = true; 
-      } else {  // feedbacks.size() == 1
-          std::cout << "Feedback detected\n";
-          sync = true;
-      }
-      
-      try {
-          image_data = camera->get_image(1000);
-      } catch (timeout_exception& te) {
-          sync = false;
-          feedbacks.clear();
-      }
-      
-      attempts++;  // Added increment
-  }
+    std::vector<mavlink_camera_feedback_t> feedbacks;
+    std::unique_ptr<ImageData> image_data;
+    mavlink_camera_feedback_t feedback_msg;
+    bool sync = false;
+    int attempts = 0;
+    while (!sync && attempts < 3) {
+        std::cout << "Trying to synchronize...\n";
+        std::this_thread::sleep_for(std::chrono::seconds(1));
+        feedbacks = synchronize(serial_port);
+        
+        if (feedbacks.size() == 0) {
+            std::cout << "No feedback detected\n";
+        } else if (feedbacks.size() > 1) {
+            std::cout << "Extra feedback detected, getting last\n";
+            sync = true; 
+        } else {  // feedbacks.size() == 1
+            std::cout << "Feedback detected\n";
+            sync = true;
+        }
+        
+        try {
+            image_data = camera->get_image(1000);
+        } catch (timeout_exception& te) {
+            sync = false;
+            feedbacks.clear();
+        }
+        
+        attempts++;  // Added increment
+    }
 
-  if (attempts >= 3 && !sync) {
-      std::cout << "Failed to synchronize, exiting\n";
-      camera->stop_stream();
+    if (attempts >= 3 && !sync) {
+        std::cout << "Failed to synchronize, exiting\n";
+        camera->stop_stream();
+        return 1;
+    }
+    
+    uint64_t sync_epoch = 0;
+    uint64_t id_diff = 0;
+    if (sync && image_data && !feedbacks.empty()) {  // Added validation
+        feedback_msg = feedbacks.back();
+        sync_epoch = image_data->timestamp - feedback_msg.time_usec;
+        id_diff = image_data->seq - feedback_msg.img_idx;
+        std::cout << "Successfully synchronized with epoch: " << sync_epoch << "ID difference: " << id_diff <<"\n";
+        std::this_thread::sleep_for(std::chrono::seconds(1));
+
+        reader = std::thread(feedback_reader, serial_port);
+        tagger = std::thread(image_tagger, sync_epoch, id_diff);
+    } else {
       return 1;
+    }
   }
   
-  uint64_t sync_epoch = 0;
-  uint64_t id_diff = 0;
-  if (sync && image_data && !feedbacks.empty()) {  // Added validation
-      feedback_msg = feedbacks.back();
-      sync_epoch = image_data->timestamp - feedback_msg.time_usec;
-      id_diff = image_data->seq - feedback_msg.img_idx;
-      std::cout << "Successfully synchronized with epoch: " << sync_epoch << "ID difference: " << id_diff <<"\n";
-  }
+
   if (seconds != 0) {
     const int numProcessors = 1;
     const int numSavers = 1;
     const int numSenders = 1;
-    std::thread producer = std::thread(image_producer, camera);
-    std::cout << "CAMERA ONLINE\n";
-
-    std::this_thread::sleep_for(std::chrono::seconds(1));
-
 
     std::vector<std::thread> processors;
     for (int i = 0; i < numProcessors; i++) {
@@ -585,23 +598,27 @@ int main(int argc, char* argv[]) {
       }
       std::cout << "WRITER ONLINE\n";
     }
+    
+    std::thread producer = std::thread(image_producer, camera);
+    std::cout << "CAMERA ONLINE\n";
+
     std::this_thread::sleep_for(std::chrono::seconds(1));
 
-    std::thread reader = std::thread(feedback_reader, serial_port);
-    std::thread tagger = std::thread(image_tagger, sync_epoch, id_diff);
+
+
     if (auto_trig) {
       mavlink_message_t msg;
       uint8_t buf[MAVLINK_MAX_PACKET_LEN];
-
+      
       mavlink_msg_command_long_pack(101, 101, &msg, 0, 0, MAV_CMD_IMAGE_START_CAPTURE, 0, 
-      0, 0.2, 18000, 0, 0, 0, 0);
+      0, 0.2, 0, 0, 0, 0, 0);
       // Serialize the message into buffer
       uint16_t len = mavlink_msg_to_send_buffer(buf, &msg);
 
       // Send the message over serial port
       asio::write(*serial_port, asio::buffer(buf, len));
 
-      std::cout << "Sent MAV_CMD_IMAGE_START_CAPTURE message" << "\n";
+      std::cout << "FCU IMAGE CAPTURE STARTED" << "\n";
     }
     
 
@@ -617,17 +634,38 @@ int main(int argc, char* argv[]) {
     // std::cout << "ALL SYSTEMS NOMINAL\n";
     run(seconds);
 
+    if (auto_trig) {
+      mavlink_message_t msg;
+      uint8_t buf[MAVLINK_MAX_PACKET_LEN];
+      
+      mavlink_msg_command_long_pack(101, 101, &msg, 0, 0, MAV_CMD_IMAGE_START_CAPTURE, 0, 
+      0, 0, 0, 0, 0, 0, 0);
+      // Serialize the message into buffer
+      uint16_t len = mavlink_msg_to_send_buffer(buf, &msg);
+
+      // Send the message over serial port
+      asio::write(*serial_port, asio::buffer(buf, len));
+
+      std::cout << "FCU IMAGE CAPTURE STOPPED" << "\n";
+    }
+
     producer.join();
 
-    tagger.join();
-    reader.join();
+    if (mav) {
+      tagger.join();
+      reader.join();
+    }
+
 
     for (std::thread& processor : processors) {
       processor.join();
     }
-    for (std::thread& saver : savers) {
-      saver.join();
+    if (write) {
+      for (std::thread& saver : savers) {
+        saver.join();
+      }
     }
+
     // for (std::thread& sender : senders) {
     //   sender.join();
     // }
