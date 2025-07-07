@@ -2,7 +2,8 @@
 #include <vector>
 
 static cv::UMat kernel =
-    cv::getStructuringElement(cv::MORPH_RECT, cv::Size(21, 21)).getUMat(cv::ACCESS_READ);
+    cv::getStructuringElement(cv::MORPH_RECT, cv::Size(21, 21))
+        .getUMat(cv::ACCESS_READ);
 
 std::vector<cv::Point2d> predict_tophat(const cv::UMat& image) {
   cv::UMat whitehat, mask;

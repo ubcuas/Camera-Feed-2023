@@ -73,7 +73,7 @@ bool HttpTransmitter::send_imgfile(const std::string &url,
     std::cout << "curl_mime_init() failed\n";
     return false;
   }
-  
+
   curl_easy_setopt(curl, CURLOPT_MIMEPOST, form);
   field = curl_mime_addpart(form);
   if (field == nullptr) {
@@ -87,7 +87,7 @@ bool HttpTransmitter::send_imgfile(const std::string &url,
     return false;
   }
 
-  res = curl_mime_filedata(field, file_path.c_str());  
+  res = curl_mime_filedata(field, file_path.c_str());
   if (res != CURLE_OK) {
     std::cout << "curl_mime_filedata() failed: " << error << "\n";
     return false;
@@ -100,7 +100,7 @@ bool HttpTransmitter::send_imgfile(const std::string &url,
   // field = curl_mime_addpart(form);
   // curl_mime_name(field, "timestamp");
   // curl_mime_data(field, timestamp_str.c_str(), CURL_ZERO_TERMINATED);
-  
+
   res = curl_easy_perform(curl);
   if (res != CURLE_OK) {
     std::cout << "curl_easy_perform() failed: " << error << "\n";

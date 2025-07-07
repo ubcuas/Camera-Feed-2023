@@ -103,32 +103,35 @@ void ArenaCamera::enable_trigger(bool enable) {
 }
 
 void ArenaCamera::sensor_binning() {
-  // Horizontal and vertical resolution halved using analog binning, 4 pixels become 1
+  // Horizontal and vertical resolution halved using analog binning, 4 pixels
+  // become 1
   Arena::SetNodeValue<GenICam::gcstring>(
-    _pDevice->GetNodeMap(), "BinningSelector", "Sensor");
-  Arena::SetNodeValue<int64_t>(
-    _pDevice->GetNodeMap(), "BinningHorizontal", 2);
-  Arena::SetNodeValue<int64_t>(
-    _pDevice->GetNodeMap(), "BinningVertical", 2);
+      _pDevice->GetNodeMap(), "BinningSelector", "Sensor");
+  Arena::SetNodeValue<int64_t>(_pDevice->GetNodeMap(), "BinningHorizontal", 2);
+  Arena::SetNodeValue<int64_t>(_pDevice->GetNodeMap(), "BinningVertical", 2);
 
   std::cout << "Sensor binning on\n";
-
 }
 
 void ArenaCamera::output_pulse() {
   std::cout << "Enable output pulse 3ms" << "\n";
 
-  Arena::SetNodeValue<GenICam::gcstring>(_pDevice->GetNodeMap(), "LineSelector", "Line3");
-  Arena::SetNodeValue<GenICam::gcstring>(_pDevice->GetNodeMap(), "LineMode", "Output");
-  Arena::SetNodeValue<GenICam::gcstring>(_pDevice->GetNodeMap(), "LineSource", "Timer0Active");
-  
-  Arena::SetNodeValue<GenICam::gcstring>(_pDevice->GetNodeMap(), "TimerSelector", "Timer0");
-  Arena::SetNodeValue<GenICam::gcstring>(_pDevice->GetNodeMap(), "TimerTriggerSource", "ExposureStart");
-  Arena::SetNodeValue<GenICam::gcstring>(_pDevice->GetNodeMap(), "TimerTriggerActivation", "RisingEdge");
+  Arena::SetNodeValue<GenICam::gcstring>(
+      _pDevice->GetNodeMap(), "LineSelector", "Line3");
+  Arena::SetNodeValue<GenICam::gcstring>(
+      _pDevice->GetNodeMap(), "LineMode", "Output");
+  Arena::SetNodeValue<GenICam::gcstring>(
+      _pDevice->GetNodeMap(), "LineSource", "Timer0Active");
+
+  Arena::SetNodeValue<GenICam::gcstring>(
+      _pDevice->GetNodeMap(), "TimerSelector", "Timer0");
+  Arena::SetNodeValue<GenICam::gcstring>(
+      _pDevice->GetNodeMap(), "TimerTriggerSource", "ExposureStart");
+  Arena::SetNodeValue<GenICam::gcstring>(
+      _pDevice->GetNodeMap(), "TimerTriggerActivation", "RisingEdge");
   Arena::SetNodeValue<double>(_pDevice->GetNodeMap(), "TimerDelay", 0.0);
   Arena::SetNodeValue<double>(_pDevice->GetNodeMap(), "TimerDuration", 3000.0);
 }
-
 
 void ArenaCamera::start_stream(int num_buffers) {
   std::cout << "Starting stream with " << num_buffers << " buffers\n";
@@ -172,7 +175,6 @@ std::unique_ptr<ImageData> ArenaCamera::get_image(int timeout) {
     throw timeout_exception("get_image() timed out");
   }
 }
-
 
 // void ArenaCamera::get_statistics() {
 //   // int missed_packets = Arena::GetNodeValue(_pDevice->GetTLStreamNodeMap(),
