@@ -103,7 +103,7 @@ void ArenaCamera::enable_trigger(bool enable) {
 }
 
 void ArenaCamera::sensor_binning() {
-  // Horizontal and vertical resolution halved, 4 pixels become 1
+  // Horizontal and vertical resolution halved using analog binning, 4 pixels become 1
   Arena::SetNodeValue<GenICam::gcstring>(
     _pDevice->GetNodeMap(), "BinningSelector", "Sensor");
   Arena::SetNodeValue<int64_t>(

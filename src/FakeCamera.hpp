@@ -14,7 +14,7 @@ class FakeCamera : public ICamera {
   int seq = 1;
 
  public:
-  FakeCamera() = default;  // Constructor
+  FakeCamera() = default;
 
   void set_pixelformat(const std::string &pixelformat) override {}
 
@@ -36,6 +36,7 @@ class FakeCamera : public ICamera {
   void stop_stream() override {}
 
   std::unique_ptr<ImageData> get_image(int timeout) override {
+    // creates a fake 1-channel image
     std::unique_ptr<ImageData> image_data = std::make_unique<ImageData>();
     image_data->image = cv::Mat::zeros(v_res, h_res, CV_8UC1);
     image_data->seq = seq;

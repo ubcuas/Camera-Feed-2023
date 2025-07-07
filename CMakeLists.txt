@@ -64,7 +64,7 @@ set(CMAKE_TOOLCHAIN_FILE "${CMAKE_SOURCE_DIR}/build/conan_toolchain.cmake")
 # find_package(MAVSDK REQUIRED)
 find_package(geographiclib REQUIRED)
 
-set(BUILD_LIST core,imgcodecs,highgui)
+set(BUILD_LIST core,imgcodecs,highgui,dnn)
 find_package(OpenCV REQUIRED)
 set(WITH_OPENCL ON)
 
@@ -154,7 +154,6 @@ target_link_libraries(curltest PRIVATE
 )
 
 
-# sudo apt-get install libssh2-1-dev
 
 message("Current build type: ${CMAKE_BUILD_TYPE}\n")
 # message("Current flags: ${CMAKE_CXX_FLAGS}\n")

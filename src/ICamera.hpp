@@ -60,8 +60,14 @@ class ICamera {
    */
   virtual void stop_stream() = 0;
 
+  /**
+   * @brief Halves vertical and horizontal resolution
+   */
   virtual void sensor_binning() = 0;
 
+  /**
+   * @brief Enables output pulse through wire on image capture
+   */
   virtual void output_pulse() = 0;
 
   /**

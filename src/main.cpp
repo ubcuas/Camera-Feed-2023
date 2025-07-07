@@ -203,7 +203,7 @@ void image_tagger(uint64_t sync_epoch, int64_t id_diff) {
     } catch (const AbortedPopException& e) {
       break;
     }
-    // Synchronize detect and feedback
+    // Synchronize detect and feedback, God knows if this works - Richard 2025.06.30
     while (!stop_flag) {
       int64_t diff = detect.seq - feedback.img_idx - id_diff;
 
@@ -316,6 +316,7 @@ void image_sender_imen(const std::string& url) {
 //     }
 // }
 
+// Creates directory if it doesn't already exist
 bool setup_dir(std::string pathname) {
   if (!std::filesystem::exists(pathname)) {
     if (std::filesystem::create_directory(pathname)) {
@@ -329,7 +330,9 @@ bool setup_dir(std::string pathname) {
   return true;
 }
 
+// Connects to the flight controller by USB. UART may be better.
 std::shared_ptr<asio::serial_port> connect(asio::io_context& io_context) {
+  // Searches for usb flight controller in serial devices, name is flight controller dependent (UART doesn't need fight controller name)
   std::string device_prefix = "/dev/serial/by-id/";
   std::regex pattern("usb-CubePilot_CubeOrange\\+_.*-if00");
 
@@ -352,6 +355,7 @@ std::shared_ptr<asio::serial_port> connect(asio::io_context& io_context) {
       return nullptr;
   }
 
+  // Create serial connection
   try {
       auto serial_port = std::make_shared<asio::serial_port>(io_context, matched_device);
       serial_port->set_option(asio::serial_port_base::baud_rate(57600));
@@ -366,7 +370,7 @@ std::shared_ptr<asio::serial_port> connect(asio::io_context& io_context) {
 }
 
 
-
+// Trigger an image and read feedback
 std::vector<mavlink_camera_feedback_t> synchronize(std::shared_ptr<asio::serial_port> serial_port) {
   
   mavlink_message_t msg;
@@ -456,16 +460,16 @@ int main(int argc, char* argv[]) {
   auto auto_opt = app.add_flag("-a,--auto", auto_trig, "Enable auto triggering (unreliable)");
   auto auto_opt = app.add_flag("-m,--mavlink", auto_trig, "Enable mavlink connection");
 
-  
   CLI11_PARSE(app, argc, argv);
 
+  // Detects if OpenCL device is available
   if (!cv::ocl::haveOpenCL()) {
     std::cerr << "OpenCL is not available." << "\n";
   } else {
     cv::ocl::setUseOpenCL(true);
   }
 
-
+  // setup image directory
   if (save_img) {
     bool dir = setup_dir("images");
     if (!dir) {
@@ -476,8 +480,9 @@ int main(int argc, char* argv[]) {
   // if (url_opt->count() > 0) {
   //   send = true;
   // }
-  asio::io_context io_context;
 
+  //
+  asio::io_context io_context;
   std::shared_ptr<asio::serial_port> serial_port;
   if (mav) {
     serial_port = connect(io_context);
