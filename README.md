@@ -15,6 +15,48 @@ A C++ program for the operation and integration a LUCID GigE Vision camera.
 Ctrl + Shift + P -> Docker: Add Docker Files to Workspace (root) -> C++ -> Yes
 Skip all the other parts
 
+### Docker setup
+1. Download "ArenaSDK_v0.1.104_Linux_x64.tar.gz" from https://thinklucid.com/downloads-hub/, do this by clicking the download button for "Arena SDK – x64 Ubuntu 22.04/24.04". 
+2. Take the untouched .tar.gz folder and put it into ./external/, do not extract it.
+3. Open docker desktop
+
+For the first build, run:
+```
+docker build . -t camerafeed:local --no-cache
+```
+
+For subsequent builds if you did not modify libraries or the dockerfile you can run:
+```
+docker build . -t camerafeed:local
+```
+
+**Some useful commands**:  
+Test w/ projection calculations
+```
+docker run --rm camerafeed-test ./curltest
+```
+
+Test w/ fake camera
+```
+docker run --rm camerafeed-test ./camerafeed --seconds 1 --fake
+```
+
+A real run
+```
+docker run --rm camerafeed-test ./camerafeed
+```
+
+See all options
+```
+docker run --rm camerafeed-test ./camerafeed --help
+```
+
+interactive shell
+```
+docker run -it --rm camerafeed-test /bin/bash
+```
+
+
 ### Dependencies
 * ArenaSDK (https://thinklucid.com/downloads-hub/)
 ```
