@@ -21,7 +21,7 @@
 #include "Detector.hpp"
 #include "projection.hpp"
 
-#include "ardupilotmega/mavlink.h"
+// #include "ardupilotmega/mavlink.h"  // Commented out since MAVLink code is not currently used
 
 namespace fs = std::filesystem;
 // using namespace mavsdk;

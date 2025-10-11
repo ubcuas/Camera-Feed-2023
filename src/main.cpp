@@ -476,10 +476,13 @@ int main(int argc, char* argv[]) {
   // }
   asio::io_context io_context;
 
-  std::shared_ptr<asio::serial_port> serial_port = connect(io_context);
-  if (!serial_port) {
-    std::cout << "No serial connection, exiting\n";
-    return 1;
+  std::shared_ptr<asio::serial_port> serial_port = nullptr;
+  if (!fake) {  // Only connect to serial if NOT using fake camera
+      serial_port = connect(io_context);
+      if (!serial_port) {
+          std::cout << "No serial connection, exiting\n";
+          return 1;
+      }
   }
   
   std::shared_ptr<ICamera> camera;
@@ -523,40 +526,58 @@ int main(int argc, char* argv[]) {
   mavlink_camera_feedback_t feedback_msg;
   bool sync = false;
   int attempts = 0;
-  while (!sync && attempts < 3) {
-      std::cout << "Trying to synchronize...\n";
-      std::this_thread::sleep_for(std::chrono::seconds(1));
-      feedbacks = synchronize(serial_port);
-      
-      if (feedbacks.size() == 0) {
-          std::cout << "No feedback detected\n";
-      } else if (feedbacks.size() > 1) {
-          std::cout << "Extra feedback detected, getting last\n";
-          sync = true; 
-      } else {  // feedbacks.size() == 1
-          std::cout << "Feedback detected\n";
-          sync = true;
-      }
-      
+  
+  if (fake) {
+      sync = true;
+      std::cout << "Fake camera mode - skipping synchronization\n";
       try {
           image_data = camera->get_image(1000);
       } catch (timeout_exception& te) {
-          sync = false;
-          feedbacks.clear();
+          std::cout << "Failed to get image from fake camera\n";
+          camera->stop_stream();
+          return 1;
       }
-      
-      attempts++;  // Added increment
-  }
+  } else {
+      while (!sync && attempts < 3) {
+          std::cout << "Trying to synchronize...\n";
+          std::this_thread::sleep_for(std::chrono::seconds(1));
+          feedbacks = synchronize(serial_port);
+          
+          if (feedbacks.size() == 0) {
+              std::cout << "No feedback detected\n";
+          } else if (feedbacks.size() > 1) {
+              std::cout << "Extra feedback detected, getting last\n";
+              sync = true; 
+          } else {  // feedbacks.size() == 1
+              std::cout << "Feedback detected\n";
+              sync = true;
+          }
+          
+          try {
+              image_data = camera->get_image(1000);
+          } catch (timeout_exception& te) {
+              sync = false;
+              feedbacks.clear();
+          }
+          
+          attempts++;  // Added increment
+      }
 
-  if (attempts >= 3 && !sync) {
-      std::cout << "Failed to synchronize, exiting\n";
-      camera->stop_stream();
-      return 1;
+      if (attempts >= 3 && !sync) {
+          std::cout << "Failed to synchronize, exiting\n";
+          camera->stop_stream();
+          return 1;
+      }
   }
   
   uint64_t sync_epoch = 0;
   uint64_t id_diff = 0;
-  if (sync && image_data && !feedbacks.empty()) {  // Added validation
+  if (fake) {
+      // For fake camera, set default values
+      sync_epoch = 0;
+      id_diff = 0;
+      std::cout << "Fake camera mode - using default sync values\n";
+  } else if (sync && image_data && !feedbacks.empty()) {
       feedback_msg = feedbacks.back();
       sync_epoch = image_data->timestamp - feedback_msg.time_usec;
       id_diff = image_data->seq - feedback_msg.img_idx;
@@ -587,21 +608,29 @@ int main(int argc, char* argv[]) {
     }
     std::this_thread::sleep_for(std::chrono::seconds(1));
 
-    std::thread reader = std::thread(feedback_reader, serial_port);
-    std::thread tagger = std::thread(image_tagger, sync_epoch, id_diff);
-    if (auto_trig) {
-      mavlink_message_t msg;
-      uint8_t buf[MAVLINK_MAX_PACKET_LEN];
+    std::thread reader;
+    std::thread tagger;
+    
+    if (!fake) {
+        reader = std::thread(feedback_reader, serial_port);
+        tagger = std::thread(image_tagger, sync_epoch, id_diff);
+        
+        if (auto_trig) {
+            mavlink_message_t msg;
+            uint8_t buf[MAVLINK_MAX_PACKET_LEN];
 
-      mavlink_msg_command_long_pack(101, 101, &msg, 0, 0, MAV_CMD_IMAGE_START_CAPTURE, 0, 
-      0, 0.2, 18000, 0, 0, 0, 0);
-      // Serialize the message into buffer
-      uint16_t len = mavlink_msg_to_send_buffer(buf, &msg);
+            mavlink_msg_command_long_pack(101, 101, &msg, 0, 0, MAV_CMD_IMAGE_START_CAPTURE, 0, 
+            0, 0.2, 18000, 0, 0, 0, 0);
+            // Serialize the message into buffer
+            uint16_t len = mavlink_msg_to_send_buffer(buf, &msg);
 
-      // Send the message over serial port
-      asio::write(*serial_port, asio::buffer(buf, len));
+            // Send the message over serial port
+            asio::write(*serial_port, asio::buffer(buf, len));
 
-      std::cout << "Sent MAV_CMD_IMAGE_START_CAPTURE message" << "\n";
+            std::cout << "Sent MAV_CMD_IMAGE_START_CAPTURE message" << "\n";
+        }
+    } else {
+        std::cout << "Fake camera mode - skipping feedback reader and auto trigger\n";
     }
     
 
@@ -619,8 +648,10 @@ int main(int argc, char* argv[]) {
 
     producer.join();
 
-    tagger.join();
-    reader.join();
+    if (!fake) {
+        tagger.join();
+        reader.join();
+    }
 
     for (std::thread& processor : processors) {
       processor.join();
