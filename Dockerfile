@@ -27,13 +27,25 @@ COPY . /app
 RUN rm -rf /app/build /app/CMakeCache.txt /app/CMakeFiles || true
 
 # extract/install arena sdk in external in its tar.gz
-COPY /external/ArenaSDK_v0.1.104_Linux_x64.tar.gz /tmp/ArenaSDK.tar.gz
+# Build arguments for architecture-specific settings
+ARG ARENA_SDK_VERSION=0.1.78
+ARG ARENA_SDK_ARCH=ARM64
+# Derived values - user shouldn't need to override these
+ARG ARENA_SDK_FILE=ArenaSDK_v${ARENA_SDK_VERSION}_Linux_${ARENA_SDK_ARCH}.tar.gz
+ARG ARENA_SDK_EXTRACTED_DIR=ArenaSDK_Linux_${ARENA_SDK_ARCH}
+
+# Copy the Arena SDK based on build arg
+COPY /external/${ARENA_SDK_FILE} /tmp/ArenaSDK.tar.gz
+
 RUN tar -xzvf /tmp/ArenaSDK.tar.gz -C /tmp
-RUN mv /tmp/ArenaSDK_Linux_x64 /opt/arena_sdk
+RUN mv /tmp/${ARENA_SDK_EXTRACTED_DIR} /opt/arena_sdk
 
 # configure library paths so the arena SDK libraries can be found
-RUN echo "/opt/arena_sdk/lib64" > /etc/ld.so.conf.d/Arena_SDK.conf && \
-    echo "/opt/arena_sdk/GenICam/library/lib/Linux64_x64" >> /etc/ld.so.conf.d/Arena_SDK.conf
+# Use find to automatically discover all Linux64* lib directories (works for ARM, x64, etc.)
+RUN echo "/opt/arena_sdk/lib" > /etc/ld.so.conf.d/Arena_SDK.conf && \
+    echo "/opt/arena_sdk/lib64" >> /etc/ld.so.conf.d/Arena_SDK.conf && \
+    find /opt/arena_sdk/GenICam/library/lib -type d -name "Linux64*" \
+      -exec bash -c 'echo "{}" >> /etc/ld.so.conf.d/Arena_SDK.conf' \;
 
 # update dynamic linker cache so system can find our libraries
 RUN ldconfig
@@ -42,11 +54,15 @@ RUN ldconfig
 RUN rm /tmp/ArenaSDK.tar.gz
 
 # set up metavision SDK (bundled w/ arena SDK, need symlinks for version compatibility)
-RUN echo "/opt/arena_sdk/Metavision/lib" > /etc/ld.so.conf.d/Metavision_SDK.conf && \
-    cd /opt/arena_sdk/Metavision/lib && \
-    ln -sf libmetavision_sdk_core.so.4.6.2 libmetavision_sdk_core.so.4 && \
-    ln -sf libmetavision_sdk_base.so.4.6.2 libmetavision_sdk_base.so.4 && \
-    ldconfig
+RUN if [ -d /opt/arena_sdk/Metavision/lib ]; then \
+      echo "/opt/arena_sdk/Metavision/lib" > /etc/ld.so.conf.d/Metavision_SDK.conf && \
+      cd /opt/arena_sdk/Metavision/lib && \
+      ln -sf libmetavision_sdk_core.so.4.6.2 libmetavision_sdk_core.so.4 && \
+      ln -sf libmetavision_sdk_base.so.4.6.2 libmetavision_sdk_base.so.4 && \
+      ldconfig; \
+    else \
+      echo "No Metavision SDK found for this architecture, skipping"; \
+    fi
 
 # initialize git submodules for external dependencies
 RUN git submodule init && git submodule update
@@ -82,7 +98,12 @@ RUN apt-get update && \
 # copy arena SDK and library configurations from build stage
 COPY --from=build /opt/arena_sdk /opt/arena_sdk
 COPY --from=build /etc/ld.so.conf.d/Arena_SDK.conf /etc/ld.so.conf.d/Arena_SDK.conf
-COPY --from=build /etc/ld.so.conf.d/Metavision_SDK.conf /etc/ld.so.conf.d/Metavision_SDK.conf
+
+# copy Metavision SDK config if it exists (conditional)
+RUN if [ -f /opt/arena_sdk/Metavision/lib ]; then \
+      echo "/opt/arena_sdk/Metavision/lib" > /etc/ld.so.conf.d/Metavision_SDK.conf; \
+    fi
+
 RUN ldconfig
 
 # copy compiled binaries from the build stage

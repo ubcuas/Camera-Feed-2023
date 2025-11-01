@@ -16,44 +16,70 @@ Ctrl + Shift + P -> Docker: Add Docker Files to Workspace (root) -> C++ -> Yes
 Skip all the other parts
 
 ### Docker setup
-1. Download "ArenaSDK_v0.1.104_Linux_x64.tar.gz" from https://thinklucid.com/downloads-hub/, do this by clicking the download button for "Arena SDK – x64 Ubuntu 22.04/24.04". 
-2. Take the untouched .tar.gz folder and put it into ./external/, do not extract it.
-3. Open docker desktop
 
-For the first build, run:
-```
-docker build . -t camerafeed:local --no-cache
-```
+#### Prerequisites
+1. Download the appropriate Arena SDK from https://thinklucid.com/downloads-hub/
+   - **For x64 (Intel/AMD)**: "Arena SDK – x64 Ubuntu 22.04/24.04"
+   - **For ARM64 (ARM-based systems)**: "Arena SDK – ARM64 Ubuntu 22.04/24.04"
+2. Place the **untouched .tar.gz file** into `./external/` directory (do not extract it)
+3. Open Docker Desktop
 
-For subsequent builds if you did not modify libraries or the dockerfile you can run:
-```
-docker build . -t camerafeed:local
-```
+#### Building for Different Architectures
 
-**Some useful commands**:  
-Test w/ projection calculations
-```
-docker run --rm camerafeed-test ./curltest
+**For ARM64 (default):**
+```bash
+docker build -t camerafeed:local .
 ```
 
-Test w/ fake camera
-```
-docker run --rm camerafeed-test ./camerafeed --seconds 1 --fake
-```
-
-A real run
-```
-docker run --rm camerafeed-test ./camerafeed
+**For x64 (Intel/AMD):**
+```bash
+docker build \
+  --build-arg ARENA_SDK_ARCH=x64 \
+  --build-arg ARENA_SDK_VERSION=0.1.104 \
+  -t camerafeed:local .
 ```
 
-See all options
-```
-docker run --rm camerafeed-test ./camerafeed --help
+**For a different SDK version on ARM64:**
+```bash
+docker build \
+  --build-arg ARENA_SDK_VERSION=0.1.104 \
+  -t camerafeed:local .
 ```
 
-interactive shell
+**First build with no cache:**
+```bash
+docker build -t camerafeed:local --no-cache .
 ```
-docker run -it --rm camerafeed-test /bin/bash
+
+> **Note:** Make sure the Arena SDK filename matches the pattern:  
+> `ArenaSDK_v{VERSION}_Linux_{ARCH}.tar.gz`  
+> Example: `ArenaSDK_v0.1.78_Linux_ARM64.tar.gz`
+
+#### Running the Container
+
+**Test with projection calculations:**
+```bash
+docker run --rm camerafeed:local ./curltest
+```
+
+**Test with fake camera:**
+```bash
+docker run --rm camerafeed:local ./camerafeed --seconds 10 --fake
+```
+
+**Production run:**
+```bash
+docker run --rm camerafeed:local ./camerafeed
+```
+
+**See all options:**
+```bash
+docker run --rm camerafeed:local ./camerafeed --help
+```
+
+**Interactive shell for debugging:**
+```bash
+docker run -it --rm camerafeed:local /bin/bash
 ```
 
 
