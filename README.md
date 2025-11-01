@@ -15,6 +15,74 @@ A C++ program for the operation and integration a LUCID GigE Vision camera.
 Ctrl + Shift + P -> Docker: Add Docker Files to Workspace (root) -> C++ -> Yes
 Skip all the other parts
 
+### Docker setup
+
+#### Prerequisites
+1. Download the appropriate Arena SDK from https://thinklucid.com/downloads-hub/
+   - **For x64 (Intel/AMD)**: "Arena SDK – x64 Ubuntu 22.04/24.04"
+   - **For ARM64 (ARM-based systems)**: "Arena SDK – ARM64 Ubuntu 22.04/24.04"
+2. Place the **untouched .tar.gz file** into `./external/` directory (do not extract it)
+3. Open Docker Desktop
+
+#### Building for Different Architectures
+
+**For ARM64 (default):**
+```bash
+docker build -t camerafeed:local .
+```
+
+**For x64 (Intel/AMD):**
+```bash
+docker build \
+  --build-arg ARENA_SDK_ARCH=x64 \
+  --build-arg ARENA_SDK_VERSION=0.1.104 \
+  -t camerafeed:local .
+```
+
+**For a different SDK version on ARM64:**
+```bash
+docker build \
+  --build-arg ARENA_SDK_VERSION=0.1.104 \
+  -t camerafeed:local .
+```
+
+**First build with no cache:**
+```bash
+docker build -t camerafeed:local --no-cache .
+```
+
+> **Note:** Make sure the Arena SDK filename matches the pattern:  
+> `ArenaSDK_v{VERSION}_Linux_{ARCH}.tar.gz`  
+> Example: `ArenaSDK_v0.1.78_Linux_ARM64.tar.gz`
+
+#### Running the Container
+
+**Test with projection calculations:**
+```bash
+docker run --rm camerafeed:local ./curltest
+```
+
+**Test with fake camera:**
+```bash
+docker run --rm camerafeed:local ./camerafeed --seconds 10 --fake
+```
+
+**Production run:**
+```bash
+docker run --rm camerafeed:local ./camerafeed
+```
+
+**See all options:**
+```bash
+docker run --rm camerafeed:local ./camerafeed --help
+```
+
+**Interactive shell for debugging:**
+```bash
+docker run -it --rm camerafeed:local /bin/bash
+```
+
+
 ### Dependencies
 * ArenaSDK (https://thinklucid.com/downloads-hub/)
 ```
