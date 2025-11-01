@@ -151,6 +151,8 @@ target_link_libraries(curltest PRIVATE
     ${CURL_LIBRARIES}
     CLI11::CLI11
     GeographicLib::GeographicLib
+    pthread
+    m
 )
 
 
