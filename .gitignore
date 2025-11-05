@@ -11,3 +11,4 @@ CMakeUserPresets.json
 detect.csv
 *.csv
 *.tar.gz
+*.npy
