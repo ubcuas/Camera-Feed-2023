@@ -33,6 +33,9 @@
 #include "Pipeline.hpp"
 #include "Detector.hpp"
 #include "projection.hpp"
+#include "ISerialPort.hpp"
+#include "RealSerialPort.hpp"
+#include "FakeSerialPort.hpp"
 
 
 #include "ardupilotmega/mavlink.h"
@@ -148,7 +151,7 @@ void image_processor() {
 
 
 
-void feedback_reader(std::shared_ptr<asio::serial_port> serial_port) {
+void feedback_reader(std::shared_ptr<ISerialPort> serial_port) {
   std::vector<uint8_t> buffer(2048);  
   mavlink_message_t msg;
   bool ack = false;
@@ -331,7 +334,7 @@ bool setup_dir(std::string pathname) {
   return true;
 }
 
-std::shared_ptr<asio::serial_port> connect(asio::io_context& io_context) {
+std::shared_ptr<ISerialPort> connect(asio::io_context& io_context) {
   std::string device_prefix = "/dev/serial/by-id/";
   std::regex pattern("usb-CubePilot_CubeOrange\\+_.*-if00");
 
@@ -355,7 +358,8 @@ std::shared_ptr<asio::serial_port> connect(asio::io_context& io_context) {
   }
 
   try {
-      auto serial_port = std::make_shared<asio::serial_port>(io_context, matched_device);
+      auto asio_serial_port = std::make_shared<asio::serial_port>(io_context, matched_device);
+      auto serial_port = std::make_shared<RealSerialPort>(asio_serial_port);
       serial_port->set_option(asio::serial_port_base::baud_rate(57600));
       serial_port->set_option(asio::serial_port_base::character_size(8));
       serial_port->set_option(asio::serial_port_base::stop_bits(asio::serial_port_base::stop_bits::one));
@@ -369,7 +373,7 @@ std::shared_ptr<asio::serial_port> connect(asio::io_context& io_context) {
 
 
 
-std::vector<mavlink_camera_feedback_t> synchronize(std::shared_ptr<asio::serial_port> serial_port) {
+std::vector<mavlink_camera_feedback_t> synchronize(std::shared_ptr<ISerialPort> serial_port) {
   
   mavlink_message_t msg;
   uint8_t buf[MAVLINK_MAX_PACKET_LEN];
@@ -384,7 +388,7 @@ std::vector<mavlink_camera_feedback_t> synchronize(std::shared_ptr<asio::serial_
   uint16_t len = mavlink_msg_to_send_buffer(buf, &msg);
 
   // Send the message over serial port
-  asio::write(*serial_port, asio::buffer(buf, len));
+  serial_port->write_some(asio::buffer(buf, len));
 
   std::cout << "Sent MAV_CMD_DO_DIGICAM_CONTROL message" << "\n";
 
@@ -478,13 +482,17 @@ int main(int argc, char* argv[]) {
   // }
   asio::io_context io_context;
 
-  std::shared_ptr<asio::serial_port> serial_port = nullptr;
+  std::shared_ptr<ISerialPort> serial_port = nullptr;
+
   if (!fake) {  // Only connect to serial if NOT using fake camera
       serial_port = connect(io_context);
       if (!serial_port) {
           std::cout << "No serial connection, exiting\n";
           return 1;
       }
+  } else {
+    serial_port = std::make_shared<FakeSerialPort>();
+    
   }
   
   std::shared_ptr<ICamera> camera;
@@ -627,7 +635,7 @@ int main(int argc, char* argv[]) {
             uint16_t len = mavlink_msg_to_send_buffer(buf, &msg);
 
             // Send the message over serial port
-            asio::write(*serial_port, asio::buffer(buf, len));
+            serial_port->write_some(asio::buffer(buf, len));
 
             std::cout << "Sent MAV_CMD_IMAGE_START_CAPTURE message" << "\n";
         }

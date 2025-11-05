@@ -10,16 +10,17 @@
 /*
 https://think-async.com/Asio/asio-1.11.0/doc/asio/reference/serial_port.html
 */
+#include "ISerialPort.hpp"
 #include "TSQueue.hpp"
 #include "ardupilotmega/mavlink.h"
 
-class FakeSerialPort {
+class FakeSerialPort : public ISerialPort {
  public:
   FakeSerialPort() = default;
   ~FakeSerialPort() {abort();}
 
   // mavlink camera feedback frames generated on demand
-  std::size_t read_some(asio::mutable_buffer buffer) {
+  std::size_t read_some(asio::mutable_buffer buffer) override {
     if (aborted_) return 0;
     if (pending.empty()) {
       generate_feedback_into_pending();
@@ -32,7 +33,7 @@ class FakeSerialPort {
   }
 
   // Optional write, doesnt do anything in testing so should be synced with FakeCamera
-  std::size_t write(asio::const_buffer buffer) {
+  std::size_t write_some(asio::const_buffer buffer) override {
     return buffer.size();
   }
 
@@ -41,8 +42,10 @@ class FakeSerialPort {
   }
 
   //These are just simulations for when they are called; doesnt do anything in testing
-  void set_option(const asio::serial_port_base::baud_rate& o) { baud_rate_ = o.value(); }
-  void set_option(const asio::serial_port_base::character_size& o) { char_size_ = o.value(); }
+  void set_option(const asio::serial_port_base::baud_rate& o) override { baud_rate_ = o.value(); }
+  void set_option(const asio::serial_port_base::character_size& o) override { char_size_ = o.value(); }
+  void set_option(const asio::serial_port_base::stop_bits& o) override { /* no-op */ }
+  void set_option(const asio::serial_port_base::parity& o) override { /* no-op */ }
   void set_period_ms(unsigned ms) { period_ms_ = ms; }
   void set_location_deg(double lat_deg, double lon_deg) {
     lat_e7_ = static_cast<int32_t>(lat_deg * 1e7);
