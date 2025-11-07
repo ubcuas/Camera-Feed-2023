@@ -10,9 +10,9 @@ WORKDIR /app
 # install all dependencies
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
-      build-essential cmake git python3-pip libssl-dev nghttp2 \
-      libopencv-dev libcurl4-openssl-dev tzdata libgeographic-dev \
-      geographiclib-tools wget && \
+    build-essential cmake git python3-pip libssl-dev nghttp2 \
+    libopencv-dev libcurl4-openssl-dev tzdata libgeographic-dev \
+    geographiclib-tools wget tmux && \
     ln -fs /usr/share/zoneinfo/$TZ /etc/localtime && \
     dpkg-reconfigure --frontend noninteractive tzdata && \
     rm -rf /var/lib/apt/lists/*
@@ -45,7 +45,7 @@ RUN mv /tmp/${ARENA_SDK_EXTRACTED_DIR} /opt/arena_sdk
 RUN echo "/opt/arena_sdk/lib" > /etc/ld.so.conf.d/Arena_SDK.conf && \
     echo "/opt/arena_sdk/lib64" >> /etc/ld.so.conf.d/Arena_SDK.conf && \
     find /opt/arena_sdk/GenICam/library/lib -type d -name "Linux64*" \
-      -exec bash -c 'echo "{}" >> /etc/ld.so.conf.d/Arena_SDK.conf' \;
+    -exec bash -c 'echo "{}" >> /etc/ld.so.conf.d/Arena_SDK.conf' \;
 
 # update dynamic linker cache so system can find our libraries
 RUN ldconfig
@@ -53,16 +53,12 @@ RUN ldconfig
 # clean up the tarball to save space
 RUN rm /tmp/ArenaSDK.tar.gz
 
-# set up metavision SDK (bundled w/ arena SDK, need symlinks for version compatibility)
-RUN if [ -d /opt/arena_sdk/Metavision/lib ]; then \
-      echo "/opt/arena_sdk/Metavision/lib" > /etc/ld.so.conf.d/Metavision_SDK.conf && \
-      cd /opt/arena_sdk/Metavision/lib && \
-      ln -sf libmetavision_sdk_core.so.4.6.2 libmetavision_sdk_core.so.4 && \
-      ln -sf libmetavision_sdk_base.so.4.6.2 libmetavision_sdk_base.so.4 && \
-      ldconfig; \
-    else \
-      echo "No Metavision SDK found for this architecture, skipping"; \
-    fi
+# set up metavision SDK (bundled w/ arena SDK, need symlinks for version compatibility, ArenaSDK needs it to build)
+RUN echo "/opt/arena_sdk/Metavision/lib" > /etc/ld.so.conf.d/Metavision_SDK.conf && \
+    cd /opt/arena_sdk/Metavision/lib && \
+    ln -sf libmetavision_sdk_core.so.4.6.2 libmetavision_sdk_core.so.4 && \
+    ln -sf libmetavision_sdk_base.so.4.6.2 libmetavision_sdk_base.so.4 && \
+    ldconfig
 
 # initialize git submodules for external dependencies
 RUN git submodule init && git submodule update
@@ -90,7 +86,7 @@ WORKDIR /app
 # install only runtime dependencies
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
-      libssl-dev libopencv-dev libcurl4-openssl-dev nghttp2 tzdata && \
+    libssl-dev libopencv-dev libcurl4-openssl-dev nghttp2 tzdata tmux && \
     ln -fs /usr/share/zoneinfo/$TZ /etc/localtime && \
     dpkg-reconfigure --frontend noninteractive tzdata && \
     rm -rf /var/lib/apt/lists/*
@@ -99,10 +95,8 @@ RUN apt-get update && \
 COPY --from=build /opt/arena_sdk /opt/arena_sdk
 COPY --from=build /etc/ld.so.conf.d/Arena_SDK.conf /etc/ld.so.conf.d/Arena_SDK.conf
 
-# copy Metavision SDK config if it exists (conditional)
-RUN if [ -f /opt/arena_sdk/Metavision/lib ]; then \
-      echo "/opt/arena_sdk/Metavision/lib" > /etc/ld.so.conf.d/Metavision_SDK.conf; \
-    fi
+# copy Metavision SDK config (ArenaSDK needs it to build)
+RUN echo "/opt/arena_sdk/Metavision/lib" > /etc/ld.so.conf.d/Metavision_SDK.conf;
 
 RUN ldconfig
 

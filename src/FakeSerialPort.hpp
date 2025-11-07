@@ -58,7 +58,7 @@ class FakeSerialPort : public ISerialPort {
 
   static inline uint64_t now_us() {
     using namespace std::chrono;
-    return duration_cast<microseconds>(steady_clock::now().time_since_epoch()).count();
+    return duration_cast<microseconds>(system_clock::now().time_since_epoch()).count();
   }
 
   void generate_feedback_into_pending() {
@@ -67,21 +67,21 @@ class FakeSerialPort : public ISerialPort {
 
     const uint64_t time_usec = now_us();
     mavlink_msg_camera_feedback_pack(
-      1, 1, &msg,
-      time_usec,
-      0,                 // target_system
-      0,                 // cam_idx
-      img_idx_,          // img_idx
-      lat_e7_,           // lat
-      lon_e7_,           // lng
-      alt_msl_,          // alt_msl
-      alt_rel_,          // alt_rel
-      roll_deg_,         // roll
-      pitch_deg_,        // pitch
-      yaw_deg_,          // yaw
-      foc_len_,          // foc_len
-      flags_,            // flags
-      completed_captures_// completed_captures
+      1, 1, &msg,           
+      time_usec,            
+      0,                    // target_system
+      0,                    // cam_idx
+      img_idx_,             // img_idx
+      lat_e7_,              // lat
+      lon_e7_,              // lng
+      alt_msl_,             // alt_msl
+      alt_rel_,             // alt_rel
+      roll_deg_,            // roll
+      pitch_deg_,           // pitch
+      yaw_deg_,             // yaw
+      foc_len_,             // foc_len
+      flags_,               // flags
+      completed_captures_   // completed_captures
     );
 
     const uint16_t len = mavlink_msg_to_send_buffer(buf, &msg);
@@ -103,7 +103,7 @@ class FakeSerialPort : public ISerialPort {
 
   // Dummy mavlink_camera_feedback_t state
   uint16_t completed_captures_ = 0;
-  uint16_t img_idx_ = 0;
+  uint16_t img_idx_ = 1;
   int32_t lat_e7_ = static_cast<int32_t>(1.1* 1e7);
   int32_t lon_e7_ = static_cast<int32_t>(-1.1 * 1e7);
   float alt_msl_ = 0.0f;
