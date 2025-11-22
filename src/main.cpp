@@ -85,13 +85,17 @@ void run(int seconds) {
   std::cout << "Aborting pop\n";
 }
 
-void image_producer(const std::shared_ptr<ICamera>& camera) {
+void image_producer(const std::shared_ptr<ICamera>& camera, const std::shared_ptr<ISerialPort>& serial_port) {
   while (!stop_flag) {
     try {
       std::shared_ptr<ImageData> image_data = camera->get_image(IMAGE_TIMEOUT);
       data_queue.push(image_data);
       if (save_img) {
         save_queue.push(std::move(image_data));
+      }
+      if (serial_port) {
+        uint8_t dummy_buffer[1] = {0};
+        serial_port->write_some(asio::buffer(dummy_buffer, 1));
       }
 
     } catch (timeout_exception& te) {
@@ -246,7 +250,7 @@ void image_tagger(uint64_t sync_epoch, int64_t id_diff) {
     nlohmann::ordered_json j = {
         {"TimeUS", image->timestamp},
         {"Img", image->seq},
-        {"Path", "images/" + std::to_string(timestamp) + ".jpg"},
+        {"Path", "images/" + std::to_string(image->timestamp) + ".jpg"},
         {"Epoch", sync_epoch},
         {"Delta_t", delta_t},
         {"Feedback",
@@ -573,7 +577,7 @@ int main(int argc, char* argv[]) {
     //const int numProcessors = 1;
     const int numSavers = 1;
     const int numSenders = 1;
-    std::thread producer = std::thread(image_producer, camera);
+    std::thread producer = std::thread(image_producer, camera, fake ? serial_port : nullptr);
     std::cout << "CAMERA ONLINE\n";
 
     std::this_thread::sleep_for(std::chrono::seconds(1));
