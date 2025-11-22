@@ -101,10 +101,16 @@ void run(int seconds) {
 
 // Continuously capture images and push them to processing (and save queue if
 // enabled)
-void image_producer(const std::shared_ptr<ICamera>& camera) {
+void image_producer(const std::shared_ptr<ICamera>& camera,
+                   const std::shared_ptr<ISerialPort>& serial_port = nullptr) {
   while (!stop_flag) {
     try {
       std::shared_ptr<ImageData> image_data = camera->get_image(IMAGE_TIMEOUT);
+      // to sync with fake serial port trigger
+      if (serial_port) {
+        uint8_t dummy_buffer[1] = {0};
+        serial_port->write_some(asio::buffer(dummy_buffer, 1));
+      }
       data_queue.push(image_data);
 
       if (save_img) {
@@ -678,8 +684,9 @@ int main(int argc, char* argv[]) {
     const int numSavers = 1;
     const int numSenders = 1;
 
-    // Producer
-    std::thread producer = std::thread(image_producer, camera);
+    // Producer - pass serial_port in fake mode to trigger feedback generation
+    std::thread producer = std::thread(image_producer, camera, 
+                                      fake ? serial_port : nullptr);
     std::cout << "CAMERA ONLINE\n";
     std::this_thread::sleep_for(std::chrono::seconds(1));
 

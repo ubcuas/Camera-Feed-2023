@@ -23,9 +23,9 @@ class FakeSerialPort : public ISerialPort {
   std::size_t read_some(asio::mutable_buffer buffer) override {
     if (aborted_) return 0;
     if (pending.empty()) {
-      generate_feedback_into_pending();
+      return 0; // No data to read
     }
-    if (aborted_ || pending.empty()) return 0;
+
     const std::size_t n = std::min<std::size_t>(pending.size(), buffer.size());
     std::memcpy(buffer.data(), pending.data(), n);
     pending.erase(pending.begin(), pending.begin() + n);
@@ -34,6 +34,9 @@ class FakeSerialPort : public ISerialPort {
 
   // Optional write, doesnt do anything in testing so should be synced with FakeCamera
   std::size_t write_some(asio::const_buffer buffer) override {
+    // In fake mode, writes don't do anything special
+    // Feedback is generated continuously by read_some
+    generate_feedback_into_pending();
     return buffer.size();
   }
 
@@ -113,5 +116,5 @@ class FakeSerialPort : public ISerialPort {
   float yaw_deg_ = 0.0f;
   float foc_len_ = 0.0f;
   uint8_t flags_ = 0;
-  unsigned period_ms_ = 200;
+  unsigned period_ms_ = 1000;  // Match FakeCamera 1 second interval
 };
