@@ -90,7 +90,7 @@ WORKDIR /app
 # install only runtime dependencies
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
-      libssl-dev libopencv-dev libcurl4-openssl-dev nghttp2 tzdata && \
+      libssl-dev libopencv-dev libcurl4-openssl-dev nghttp2 tzdata tmux dos2unix && \
     ln -fs /usr/share/zoneinfo/$TZ /etc/localtime && \
     dpkg-reconfigure --frontend noninteractive tzdata && \
     rm -rf /var/lib/apt/lists/*
@@ -100,7 +100,7 @@ COPY --from=build /opt/arena_sdk /opt/arena_sdk
 COPY --from=build /etc/ld.so.conf.d/Arena_SDK.conf /etc/ld.so.conf.d/Arena_SDK.conf
 
 # copy Metavision SDK config if it exists (conditional)
-RUN if [ -f /opt/arena_sdk/Metavision/lib ]; then \
+RUN if [ -d /opt/arena_sdk/Metavision/lib ]; then \
       echo "/opt/arena_sdk/Metavision/lib" > /etc/ld.so.conf.d/Metavision_SDK.conf; \
     fi
 
