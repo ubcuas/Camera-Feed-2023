@@ -24,6 +24,7 @@
 #include <opencv2/opencv.hpp>
 #include <opencv2/core/ocl.hpp>
 #include <nlohmann/json.hpp>
+#include "telemetry.pb.h"
 #include <asio.hpp>
 
 // Vendor /SDK
@@ -100,7 +101,8 @@ void run(int seconds) {
 
 // Continuously capture images and push them to processing (and save queue if
 // enabled)
-void image_producer(const std::shared_ptr<ICamera>& camera, const std::shared_ptr<ISerialPort>& serial_port) {
+void image_producer(const std::shared_ptr<ICamera>& camera,
+                    const std::shared_ptr<ISerialPort>& serial_port) {
   while (!stop_flag) {
     try {
       std::shared_ptr<ImageData> image_data = camera->get_image(IMAGE_TIMEOUT);
@@ -224,26 +226,35 @@ void image_tagger(uint64_t sync_epoch, int64_t id_diff) {
 
     int64_t delta_t = image->timestamp - feedback.time_usec - sync_epoch;
 
-    nlohmann::ordered_json j = {
-        {"TimeUS", image->timestamp},
-        {"Img", image->seq},
-        {"Path", "images/" + std::to_string(image->timestamp) + ".jpg"},
-        {"Epoch", sync_epoch},
-        {"Delta_t", delta_t},
-        {"Feedback",
-         {{"time_usec", static_cast<uint64_t>(feedback.time_usec)},
-          {"img_idx", static_cast<uint16_t>(feedback.img_idx)},
-          {"lat", static_cast<int32_t>(feedback.lat)},
-          {"lng", static_cast<int32_t>(feedback.lng)},
-          {"alt_msl", static_cast<float>(feedback.alt_msl)},
-          {"alt_rel", static_cast<float>(feedback.alt_rel)},
-          {"roll", static_cast<float>(feedback.roll)},
-          {"pitch", static_cast<float>(feedback.pitch)},
-          {"yaw", static_cast<float>(feedback.yaw)},
-          {"completed_captures",
-           static_cast<uint16_t>(feedback.completed_captures)}}}};
+    telemetry::TelemetryRecord record;
+    record.set_timeus(image->timestamp);
+    record.set_img(image->seq);
+    record.set_path("images/" + std::to_string(image->timestamp) + ".jpg");
+    record.set_epoch(sync_epoch);
+    record.set_deltat(delta_t);
 
-    json_file << j.dump() << std::endl;
+    telemetry::Feedback* fb = record.mutable_feedback();
+    fb->set_timeusec(static_cast<uint64_t>(feedback.time_usec));
+    fb->set_imgidx(static_cast<uint32_t>(feedback.img_idx));
+    fb->set_lat(static_cast<int32_t>(feedback.lat));
+    fb->set_lng(static_cast<int32_t>(feedback.lng));
+    fb->set_altmsl(static_cast<float>(feedback.alt_msl));
+    fb->set_altrel(static_cast<float>(feedback.alt_rel));
+    fb->set_roll(static_cast<float>(feedback.roll));
+    fb->set_pitch(static_cast<float>(feedback.pitch));
+    fb->set_yaw(static_cast<float>(feedback.yaw));
+    fb->set_completedcaptures(static_cast<uint32_t>(feedback.completed_captures));
+
+    std::string debug_line = record.ShortDebugString();
+    json_file << debug_line << '\n';
+
+    // ros payload initialization
+    std::string ros_payload;
+    if (!record.SerializeToString(&ros_payload)) {
+        std::cerr << "Failed to serialize TelemetryRecord to bytes\n";
+    } else {
+    std::vector<uint8_t> ros_bytes(ros_payload.begin(), ros_payload.end());
+    }
 
     // Update sync reference
     sync_epoch = image->timestamp - feedback.time_usec;
@@ -525,7 +536,8 @@ int main(int argc, char* argv[]) {
     const int numSenders = 1;
 
     // Producer
-    std::thread producer = std::thread(image_producer, camera, fake ? serial_port : nullptr);
+    std::thread producer =
+        std::thread(image_producer, camera, fake ? serial_port : nullptr);
     std::cout << "CAMERA ONLINE\n";
     std::this_thread::sleep_for(std::chrono::seconds(1));
 
