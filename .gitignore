@@ -8,3 +8,8 @@
 .ipynb_checkpoints
 /data/
 CMakeUserPresets.jsonexternal/ArenaSDK_v0.1.78_Linux_ARM64.tar.gz
+CMakeUserPresets.json
+detect.csv
+*.csv
+*.tar.gz
+*.npy

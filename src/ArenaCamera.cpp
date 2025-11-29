@@ -160,7 +160,7 @@ std::unique_ptr<ImageData> ArenaCamera::get_image(int timeout) {
     std::unique_ptr<ImageData> image_data = std::make_unique<ImageData>();
     image_data->image = cv::Mat(static_cast<int>(pImage->GetHeight()),
                                 static_cast<int>(pImage->GetWidth()),
-                                CV_8UC1,
+                                CV_8UC1, // 8 bit color, 1 channel
                                 const_cast<uint8_t*>(pImage->GetData()))
                             .clone();
     image_data->timestamp = _epoch + (pImage->GetTimestampNs() / 1000);

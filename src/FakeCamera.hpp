@@ -37,7 +37,7 @@ class FakeCamera : public ICamera {
 
   std::unique_ptr<ImageData> get_image(int timeout) override {
     std::unique_ptr<ImageData> image_data = std::make_unique<ImageData>();
-    image_data->image = cv::Mat::zeros(v_res, h_res, CV_8UC1);
+    image_data->image = cv::Mat::zeros(v_res, h_res, CV_8UC1);//TOCHANGE
     image_data->seq = seq;
     seq++;
 

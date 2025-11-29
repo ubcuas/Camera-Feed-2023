@@ -10,7 +10,6 @@ endif()
 project(camerafeed)
 set(CMAKE_CXX_STANDARD 20)
 
-
 add_executable(${PROJECT_NAME} 
     ${CMAKE_SOURCE_DIR}/src/main.cpp
     ${CMAKE_SOURCE_DIR}/src/ArenaCamera.cpp
@@ -60,6 +59,16 @@ set(CMAKE_PREFIX_PATH "${CMAKE_SOURCE_DIR}/build/")
 
 # Set the toolchain file path
 set(CMAKE_TOOLCHAIN_FILE "${CMAKE_SOURCE_DIR}/build/conan_toolchain.cmake")
+
+find_package(Protobuf REQUIRED)
+
+file(GLOB PROTO_SRCS "${CMAKE_SOURCE_DIR}/src/*.pb.cc")
+
+target_sources(${PROJECT_NAME} PRIVATE ${PROTO_SRCS})
+target_sources(curltest PRIVATE ${PROTO_SRCS})
+
+target_link_libraries(${PROJECT_NAME} PRIVATE protobuf::libprotobuf)
+target_link_libraries(curltest PRIVATE protobuf::libprotobuf)
 
 # find_package(MAVSDK REQUIRED)
 find_package(geographiclib REQUIRED)

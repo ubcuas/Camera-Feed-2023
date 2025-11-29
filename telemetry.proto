@@ -1,0 +1,28 @@
+syntax = "proto3";
+
+package telemetry;
+
+// Mavlink feedback fields
+message Feedback {
+  uint64 timeUsec = 1;
+  uint32 imgIdx = 2;
+  int32 lat = 3;
+  int32 lng = 4;
+  float altMsl = 5;
+  float altRel = 6;
+  float roll = 7;
+  float pitch = 8;
+  float yaw = 9;
+  uint32 completedCaptures = 10;
+}
+
+// Telemtetry record protobuf
+message TelemetryRecord {
+  uint64 timeUs = 1;
+  uint64 img = 2;
+  string path = 3;
+  uint64 epoch = 4;
+  int64 deltaT = 5;
+
+  Feedback feedback = 6;
+}
