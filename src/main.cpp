@@ -246,7 +246,7 @@ void image_tagger(uint64_t sync_epoch, int64_t id_diff) {
     fb->set_completedcaptures(static_cast<uint32_t>(feedback.completed_captures));
 
     std::string debug_line = record.ShortDebugString();
-    json_file << debug_line << '\n';
+    json_file << debug_line << '\n' << std::flush;
 
     // ros payload initialization
     std::string ros_payload;
