@@ -39,7 +39,6 @@
 #include "TSQueue.hpp"
 #include "Pipeline.hpp"
 #include "Detector.hpp"
-#include "projection.hpp"
 #include "ISerialPort.hpp"
 #include "RealSerialPort.hpp"
 #include "FakeSerialPort.hpp"

@@ -19,7 +19,6 @@
 
 
 #include "Detector.hpp"
-#include "projection.hpp"
 
 // #include "ardupilotmega/mavlink.h"  // Commented out since MAVLink code is not currently used
 
