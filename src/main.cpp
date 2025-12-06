@@ -39,7 +39,6 @@
 #include "TSQueue.hpp"
 #include "Pipeline.hpp"
 #include "Detector.hpp"
-#include "projection.hpp"
 #include "ISerialPort.hpp"
 #include "RealSerialPort.hpp"
 #include "FakeSerialPort.hpp"
@@ -243,17 +242,18 @@ void image_tagger(uint64_t sync_epoch, int64_t id_diff) {
     fb->set_roll(static_cast<float>(feedback.roll));
     fb->set_pitch(static_cast<float>(feedback.pitch));
     fb->set_yaw(static_cast<float>(feedback.yaw));
-    fb->set_completedcaptures(static_cast<uint32_t>(feedback.completed_captures));
+    fb->set_completedcaptures(
+        static_cast<uint32_t>(feedback.completed_captures));
 
     std::string debug_line = record.ShortDebugString();
-    json_file << debug_line << '\n';
+    json_file << debug_line << '\n' << std::flush;
 
     // ros payload initialization
     std::string ros_payload;
     if (!record.SerializeToString(&ros_payload)) {
-        std::cerr << "Failed to serialize TelemetryRecord to bytes\n";
+      std::cerr << "Failed to serialize TelemetryRecord to bytes\n";
     } else {
-    std::vector<uint8_t> ros_bytes(ros_payload.begin(), ros_payload.end());
+      std::vector<uint8_t> ros_bytes(ros_payload.begin(), ros_payload.end());
     }
 
     // Update sync reference

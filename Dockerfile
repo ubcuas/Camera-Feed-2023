@@ -9,14 +9,11 @@ WORKDIR /app
 # install all dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential cmake git python3-pip libssl-dev nghttp2 \
-    libopencv-dev libcurl4-openssl-dev tzdata libgeographic-dev \
-    geographiclib-tools wget protobuf-compiler libprotobuf-dev && \
+    libopencv-dev libcurl4-openssl-dev tzdata \
+    wget protobuf-compiler libprotobuf-dev && \
     ln -fs /usr/share/zoneinfo/$TZ /etc/localtime && \
     dpkg-reconfigure --frontend noninteractive tzdata && \
     rm -rf /var/lib/apt/lists/*
-
-# install conan package manager for dependencies
-RUN pip install --no-cache-dir conan
 
 # copy source code into the container
 COPY . /app
@@ -25,12 +22,11 @@ COPY . /app
 RUN rm -rf /app/build /app/CMakeCache.txt /app/CMakeFiles || true
 
 # regenerate protobuf sources inside the build stage so versions match
-RUN protoc --cpp_out=./src ./telemetry.proto || protoc --cpp_out=./src ./src/telemetry.proto
+RUN protoc --cpp_out=./src ./telemetry.proto
 
 # arena SDK extract / configuration (kept same as you had)
 ARG ARENA_SDK_VERSION=0.1.78
 ARG ARENA_SDK_ARCH=ARM64
-# Derived values - user shouldn't need to override these
 ARG ARENA_SDK_FILE=ArenaSDK_v${ARENA_SDK_VERSION}_Linux_${ARENA_SDK_ARCH}.tar.gz
 ARG ARENA_SDK_EXTRACTED_DIR=ArenaSDK_Linux_${ARENA_SDK_ARCH}
 
@@ -65,11 +61,8 @@ RUN if [ -d /opt/arena_sdk/Metavision/lib ]; then \
 # initialize git submodules for external dependencies
 RUN git submodule init && git submodule update
 
-# conan install
-RUN conan profile detect && conan install . --output-folder=build --build=missing
-
 # configure & build
-RUN cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=build/conan_toolchain.cmake
+RUN cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
 RUN cmake --build build -- -j$(nproc)
 
 
@@ -101,7 +94,6 @@ RUN ldconfig
 
 # copy compiled binaries from the build stage
 COPY --from=build /app/build/camerafeed /app/
-COPY --from=build /app/build/curltest /app/
 
 # copy runtime data files that the application needs
 COPY --from=build /app/external /app/external

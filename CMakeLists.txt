@@ -15,18 +15,7 @@ add_executable(${PROJECT_NAME}
     ${CMAKE_SOURCE_DIR}/src/ArenaCamera.cpp
     ${CMAKE_SOURCE_DIR}/src/HttpTransmitter.cpp
     ${CMAKE_SOURCE_DIR}/src/Detector.cpp
-    # ${CMAKE_SOURCE_DIR}/src/AravisCamera.cpp
-    # ${CMAKE_SOURCE_DIR}/src/CprHTTP.cpp
-    ${CMAKE_SOURCE_DIR}/src/Pipeline.cpp
-    ${CMAKE_SOURCE_DIR}/src/projection.cpp)
-
-
-add_executable(curltest
-    ${CMAKE_SOURCE_DIR}/src/curltest.cpp
-    ${CMAKE_SOURCE_DIR}/src/HttpTransmitter.cpp
-    ${CMAKE_SOURCE_DIR}/src/Detector.cpp
-    ${CMAKE_SOURCE_DIR}/src/projection.cpp
-    )
+    ${CMAKE_SOURCE_DIR}/src/Pipeline.cpp)
 
 add_definitions(-DASIO_STANDALONE)
 
@@ -65,21 +54,12 @@ find_package(Protobuf REQUIRED)
 file(GLOB PROTO_SRCS "${CMAKE_SOURCE_DIR}/src/*.pb.cc")
 
 target_sources(${PROJECT_NAME} PRIVATE ${PROTO_SRCS})
-target_sources(curltest PRIVATE ${PROTO_SRCS})
 
 target_link_libraries(${PROJECT_NAME} PRIVATE protobuf::libprotobuf)
-target_link_libraries(curltest PRIVATE protobuf::libprotobuf)
-
-# find_package(MAVSDK REQUIRED)
-find_package(geographiclib REQUIRED)
 
 set(BUILD_LIST core,imgcodecs,highgui)
 find_package(OpenCV REQUIRED)
 set(WITH_OPENCL ON)
-
-# find_package(PkgConfig REQUIRED)
-# set(DEPENDENCIES "gobject-2.0" "glib-2.0" "aravis-0.8")
-# pkg_check_modules(DEPS REQUIRED IMPORTED_TARGET ${DEPENDENCIES})
 
 
 include(FetchContent)
@@ -141,32 +121,11 @@ target_link_libraries(${PROJECT_NAME}  PRIVATE
     ${CURL_LIBRARIES}
     CLI11::CLI11
     nlohmann_json::nlohmann_json
-    GeographicLib::GeographicLib
 
     # asio
     # cpr::cpr
     # PkgConfig::DEPS
 )
 
-target_include_directories(curltest  PRIVATE
-    ${OpenCV_INCLUDE_DIRS}
-    ${CURL_INCLUDE_DIR}
-    ${CMAKE_SOURCE_DIR}/external/c_library_v2
-    ${CMAKE_SOURCE_DIR}/external/asio/asio/include
-)
-
-target_link_libraries(curltest PRIVATE
-    ${OpenCV_LIBS}
-    ${CURL_LIBRARIES}
-    CLI11::CLI11
-    GeographicLib::GeographicLib
-    pthread
-    m
-)
-
-
-# sudo apt-get install libssh2-1-dev
-
 message("Current build type: ${CMAKE_BUILD_TYPE}\n")
-# message("Current flags: ${CMAKE_CXX_FLAGS}\n")
 
